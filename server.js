@@ -3,16 +3,22 @@ const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const path = require('path');
+const gistRoutes = require('./server/routes/gists');
 
 const app = express();
 const port = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.REACT_APP_FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, 'build')));
 
+// GitHub OAuth route
 app.post('/api/auth/github', async (req, res) => {
   const { code } = req.body;
 
@@ -38,6 +44,9 @@ app.post('/api/auth/github', async (req, res) => {
     res.status(500).json({ error: 'Authentication failed' });
   }
 });
+
+// Gist routes
+app.use('/api/gists', gistRoutes);
 
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.

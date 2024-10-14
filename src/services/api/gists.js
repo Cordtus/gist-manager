@@ -1,4 +1,4 @@
-import githubApi from './github';
+import { githubApi } from '../services/api/github';
 
 export const getGists = async () => {
   try {

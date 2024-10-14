@@ -1,7 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
-const Header = ({ user }) => {
+const Header = () => {
+  const { user, logout } = useAuth();
+
   return (
     <header className="bg-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -13,7 +16,12 @@ const Header = ({ user }) => {
           </div>
           <div className="flex items-center">
             {user ? (
-              <span className="text-sm font-medium text-gray-700">Welcome, {user.login}!</span>
+              <>
+                <span className="text-sm font-medium text-gray-700 mr-4">Welcome, {user.login}!</span>
+                <button onClick={logout} className="text-sm font-medium text-gray-700 hover:text-gray-900">
+                  Logout
+                </button>
+              </>
             ) : (
               <a
                 href={`https://github.com/login/oauth/authorize?client_id=${process.env.REACT_APP_GITHUB_CLIENT_ID}&scope=gist`}

@@ -1,57 +1,70 @@
 # Gist Manager
 
-A self-hosted web application for managing GitHub Gists. It provides a convenient interface for creating, editing, and organizing your Gists, with additional features like file conversion and templating.
+Gist Manager is a web application for managing GitHub Gists with additional features like file conversion and templating.
 
 ## Features
 
+- GitHub OAuth integration
 - Create, read, update, and delete GitHub Gists
 - Convert various file formats to/from Markdown
 - Use templates for quick Gist creation
-- Seamless GitHub authentication
-- Local backup of Gists
 
-## Getting Started
-
-### Prerequisites
+## Prerequisites
 
 - Node.js (v14 or later)
-- Yarn package manager
-- GitHub account
+- npm or Yarn package manager
+- GitHub account and OAuth application
 
-### Installation
+## Installation
 
 1. Clone the repository:
-   ```
-   git clone https://github.com/Cordtus/gist-manager.git
+
+   ```shell
+   git clone https://github.com/yourusername/gist-manager.git
    cd gist-manager
    ```
 
 2. Install dependencies:
-   ```
-   yarn install
+
+   ```shell
+   npm install
    ```
 
 3. Set up environment variables:
    Create a `.env` file in the root directory and add your GitHub OAuth credentials:
-   ```
+
+   ```shell
    REACT_APP_GITHUB_CLIENT_ID=your_client_id
    REACT_APP_GITHUB_CLIENT_SECRET=your_client_secret
    ```
 
-4. Start the development server:
+## Running the Application
+
+1. Start the backend server:
+
+   ```shell
+   npm run server
    ```
-   yarn start
+
+2. In a new terminal, start the React frontend:
+
+   ```shell
+   npm start
    ```
 
-5. Open `http://localhost:3000` in your browser.
+3. Open `http://localhost:3000` in your browser.
 
-## Usage
+## Testing
 
-[Add usage instructions here once the application is more developed]
+To run tests:
+
+```shell
+npm test
+```
 
 ## Contributing
 
-[Add contribution guidelines here]
+To contribute please make a PR. I hope to maintain this one longer than the other short-lived free-to-use Gist manager prjects.
 
 ## License
 
