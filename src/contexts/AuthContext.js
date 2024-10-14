@@ -1,6 +1,5 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { setAuthToken } from '../services/api/github';
-import { authenticateWithGitHub, getCurrentUser } from '../services/api/auth';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { setAuthToken, api } from '../services/api/github';
 
 const AuthContext = createContext();
 
@@ -22,10 +21,13 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const userData = await getCurrentUser();
-      setUser(userData);
+      const response = await api.get('/user');
+      setUser(response.data);
     } catch (error) {
       console.error('Error fetching user:', error);
+      // If there's an error fetching the user, clear the token
+      localStorage.removeItem('github_token');
+      setAuthToken(null);
     } finally {
       setLoading(false);
     }
@@ -33,9 +35,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (code) => {
     try {
-      const token = await authenticateWithGitHub(code);
-      localStorage.setItem('github_token', token);
-      setAuthToken(token);
+      const response = await api.post('/api/auth/github', { code });
+      const { access_token } = response.data;
+      localStorage.setItem('github_token', access_token);
+      setAuthToken(access_token);
       await fetchUser();
       return true;
     } catch (error) {
@@ -50,12 +53,9 @@ export const AuthProvider = ({ children }) => {
     setAuthToken(null);
   };
 
-  const value = {
-    user,
-    login,
-    logout,
-    loading,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

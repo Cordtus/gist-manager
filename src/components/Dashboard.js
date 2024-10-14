@@ -1,46 +1,92 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaListAlt, FaPlus, FaExchangeAlt } from 'react-icons/fa';
+import { getGists } from '../services/api/github';
+import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard = () => {
+  const [gists, setGists] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      fetchGists();
+    }
+  }, [user]);
+
+  const fetchGists = async () => {
+    try {
+      setLoading(true);
+      const gistsData = await getGists();
+      setGists(gistsData.slice(0, 5)); // Show only the 5 most recent gists
+    } catch (error) {
+      console.error('Error fetching gists:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="text-center">
+        <h2 className="text-2xl font-bold mb-4">Welcome to Gist Manager</h2>
+        <p>Please log in to view your dashboard.</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <Link
-        to="/gists"
-        className="bg-white overflow-hidden shadow rounded-lg p-6 hover:bg-gray-50"
-      >
-        <div className="flex items-center">
-          <FaListAlt className="text-gray-500 mr-3 h-6 w-6" />
-          <h3 className="text-lg font-medium text-gray-900">My Gists</h3>
+    <div>
+      <h2 className="text-2xl font-bold mb-4">Dashboard</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h3 className="text-xl font-semibold mb-2">Recent Gists</h3>
+          <ul className="bg-white shadow overflow-hidden sm:rounded-md">
+            {gists.map(gist => (
+              <li key={gist.id}>
+                <Link to={`/gist/${gist.id}`} className="block hover:bg-gray-50">
+                  <div className="px-4 py-4 sm:px-6">
+                    <p className="text-sm font-medium text-indigo-600 truncate">
+                      {gist.description || 'Untitled Gist'}
+                    </p>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Updated: {new Date(gist.updated_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <Link to="/gists" className="mt-4 inline-block text-indigo-600 hover:text-indigo-800">
+            View all gists
+          </Link>
         </div>
-        <div className="mt-2 text-sm text-gray-500">
-          View and manage your GitHub Gists
+        <div>
+          <h3 className="text-xl font-semibold mb-2">Quick Actions</h3>
+          <div className="bg-white shadow overflow-hidden sm:rounded-md">
+            <ul className="divide-y divide-gray-200">
+              <li>
+                <Link to="/gist" className="block hover:bg-gray-50">
+                  <div className="px-4 py-4 sm:px-6">
+                    <p className="text-sm font-medium text-indigo-600">Create New Gist</p>
+                  </div>
+                </Link>
+              </li>
+              <li>
+                <Link to="/convert" className="block hover:bg-gray-50">
+                  <div className="px-4 py-4 sm:px-6">
+                    <p className="text-sm font-medium text-indigo-600">Convert File</p>
+                  </div>
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
-      </Link>
-      <Link
-        to="/gist"
-        className="bg-white overflow-hidden shadow rounded-lg p-6 hover:bg-gray-50"
-      >
-        <div className="flex items-center">
-          <FaPlus className="text-gray-500 mr-3 h-6 w-6" />
-          <h3 className="text-lg font-medium text-gray-900">New Gist</h3>
-        </div>
-        <div className="mt-2 text-sm text-gray-500">
-          Create a new GitHub Gist
-        </div>
-      </Link>
-      <Link
-        to="/convert"
-        className="bg-white overflow-hidden shadow rounded-lg p-6 hover:bg-gray-50"
-      >
-        <div className="flex items-center">
-          <FaExchangeAlt className="text-gray-500 mr-3 h-6 w-6" />
-          <h3 className="text-lg font-medium text-gray-900">File Converter</h3>
-        </div>
-        <div className="mt-2 text-sm text-gray-500">
-          Convert files to and from various formats
-        </div>
-      </Link>
+      </div>
     </div>
   );
 };

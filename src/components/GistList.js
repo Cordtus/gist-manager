@@ -1,14 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getGists } from '../services/api/gists';
+import { getGists, deleteGist } from '../services/api/github';
+import { useAuth } from '../contexts/AuthContext';
+import ConfirmationDialog from './ConfirmationDialog';
 
 const GistList = () => {
   const [gists, setGists] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [gistToDelete, setGistToDelete] = useState(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
-    fetchGists();
-  }, []);
+    if (user) {
+      fetchGists();
+    }
+  }, [user]);
 
   const fetchGists = async () => {
     try {
@@ -21,6 +28,28 @@ const GistList = () => {
       setLoading(false);
     }
   };
+
+  const handleDeleteClick = (gist) => {
+    setGistToDelete(gist);
+    setIsConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (gistToDelete) {
+      try {
+        await deleteGist(gistToDelete.id);
+        setGists(gists.filter(g => g.id !== gistToDelete.id));
+      } catch (error) {
+        console.error('Error deleting gist:', error);
+      }
+    }
+    setIsConfirmOpen(false);
+    setGistToDelete(null);
+  };
+
+  if (!user) {
+    return <div>Please log in to view your gists.</div>;
+  }
 
   if (loading) {
     return <div>Loading...</div>;
@@ -49,12 +78,28 @@ const GistList = () => {
                       {new Date(gist.updated_at).toLocaleDateString()}
                     </p>
                   </div>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleDeleteClick(gist);
+                    }}
+                    className="text-sm text-red-600 hover:text-red-900"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             </Link>
           </li>
         ))}
       </ul>
+      <ConfirmationDialog
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={confirmDelete}
+        title="Confirm Delete"
+        message="Are you sure you want to delete this gist? This action cannot be undone."
+      />
     </div>
   );
 };

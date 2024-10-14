@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useHistory } from 'react-router-dom';
-import { createGist, updateGist, getGist } from '../services/api/gists';
+import { createGist, updateGist, getGist } from '../services/api/github';
+import { useAuth } from '../contexts/AuthContext';
 
 const GistEditor = () => {
   const [gist, setGist] = useState({ description: '', files: {} });
   const [loading, setLoading] = useState(false);
   const { id } = useParams();
   const history = useHistory();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (id) {
@@ -52,6 +54,10 @@ const GistEditor = () => {
       }
     }));
   };
+
+  if (!user) {
+    return <div>Please log in to edit gists.</div>;
+  }
 
   if (loading) {
     return <div>Loading...</div>;
