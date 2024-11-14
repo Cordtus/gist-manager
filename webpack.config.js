@@ -21,7 +21,7 @@ module.exports = {
     static: {
       directory: path.join(__dirname, 'build'),
     },
-    historyApiFallback: true, // Ensures proper routing with React Router
+    historyApiFallback: true,
     compress: true,
     port: 3000,
     setupMiddlewares(middlewares, devServer) {

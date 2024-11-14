@@ -1,6 +1,5 @@
 const axios = require('axios');
 const NodeCache = require('node-cache');
-const rateLimit = require('express-rate-limit');
 const winston = require('winston');
 
 // Setup logger
@@ -22,12 +21,6 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Setup cache
 const cache = new NodeCache({ stdTTL: 300 }); // Cache for 5 minutes
-
-// Setup rate limiter
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
 
 exports.getGists = async (req, res) => {
   try {
@@ -99,8 +92,3 @@ exports.deleteGist = async (req, res) => {
     res.status(500).json({ error: 'Error deleting gist', details: error.message });
   }
 };
-
-// Apply rate limiter to all exports
-Object.keys(exports).forEach(key => {
-  exports[key] = limiter(exports[key]);
-});

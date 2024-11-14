@@ -23,12 +23,12 @@ const Header = () => {
                 </button>
               </>
             ) : (
-              <a
-                href={`https://github.com/login/oauth/authorize?client_id=${process.env.REACT_APP_GITHUB_CLIENT_ID}&scope=gist`}
-                className="text-sm font-medium text-gray-700 hover:text-gray-900"
-              >
-                Login with GitHub
-              </a>
+                <a
+                  href={`https://github.com/login/oauth/authorize?client_id=${process.env.REACT_APP_GITHUB_CLIENT_ID}&scope=gist`}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900"
+                >
+                  Login with GitHub
+                </a>
             )}
           </div>
         </div>

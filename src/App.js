@@ -2,7 +2,9 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
+import Header from './components/Header';
 import Dashboard from './components/Dashboard';
+import Callback from './components/Callback';
 import GistList from './components/GistList';
 import GistEditor from './components/GistEditor';
 import FileConverter from './components/FileConverter';
@@ -18,8 +20,10 @@ const AppContent = () => {
 
   return (
     <Layout>
+      <Header />
       <Routes>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/callback" element={<Callback />} />
         <Route path="/gists" element={<GistList />} />
         <Route path="/gist/:id?" element={<GistEditor />} />
         <Route path="/convert" element={<FileConverter />} />
@@ -29,14 +33,12 @@ const AppContent = () => {
   );
 };
 
-const App = () => {
-  return (
-    <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </AuthProvider>
-  );
-};
+const App = () => (
+  <AuthProvider>
+    <Router>
+      <AppContent />
+    </Router>
+  </AuthProvider>
+);
 
 export default App;
