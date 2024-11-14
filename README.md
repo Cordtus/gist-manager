@@ -68,4 +68,4 @@ To contribute please make a PR. I hope to maintain this one longer than the othe
 
 ## License
 
-[Add license information here]
+This project is licensed under the GNU Affero General Public License v3.0. See the [LICENSE](https://github.com/Cordtus/gist-manager/blob/main/LICENSE) file for details.
