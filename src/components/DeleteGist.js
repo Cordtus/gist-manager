@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useHistory } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { getGist, deleteGist } from '../services/api/github';
 import { useAuth } from '../contexts/AuthContext';
 import ConfirmationDialog from './ConfirmationDialog';
@@ -10,16 +10,10 @@ const DeleteGist = () => {
   const [deleting, setDeleting] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const { id } = useParams();
-  const history = useHistory();
+  const navigate = useNavigate();
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (user && id) {
-      fetchGist();
-    }
-  }, [user, id]);
-
-  const fetchGist = async () => {
+  const fetchGist = useCallback(async () => {
     try {
       const gistData = await getGist(id);
       setGist(gistData);
@@ -28,9 +22,15 @@ const DeleteGist = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const handleDelete = async () => {
+  useEffect(() => {
+    if (user && id) {
+      fetchGist();
+    }
+  }, [user, id, fetchGist]);
+
+  const handleDelete = () => {
     setIsConfirmOpen(true);
   };
 
@@ -38,7 +38,7 @@ const DeleteGist = () => {
     setDeleting(true);
     try {
       await deleteGist(id);
-      history.push('/gists');
+      navigate('/gists');
     } catch (error) {
       console.error('Error deleting gist:', error);
       setDeleting(false);
@@ -73,7 +73,7 @@ const DeleteGist = () => {
       </div>
       <div className="flex justify-end space-x-4">
         <button
-          onClick={() => history.push('/gists')}
+          onClick={() => navigate('/gists')}
           className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
           Cancel

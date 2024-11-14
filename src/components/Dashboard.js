@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getGists } from '../services/api/github';
 import { useAuth } from '../contexts/AuthContext';
+import Spinner from './common/Spinner';
 
 const Dashboard = () => {
   const [gists, setGists] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -17,10 +19,12 @@ const Dashboard = () => {
   const fetchGists = async () => {
     try {
       setLoading(true);
+      setError(null);
       const gistsData = await getGists();
       setGists(gistsData.slice(0, 5)); // Show only the 5 most recent gists
     } catch (error) {
       console.error('Error fetching gists:', error);
+      setError('Failed to fetch gists. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -36,7 +40,11 @@ const Dashboard = () => {
   }
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <Spinner />;
+  }
+
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
   }
 
   return (

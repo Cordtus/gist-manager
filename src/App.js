@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
@@ -18,13 +18,13 @@ const AppContent = () => {
 
   return (
     <Layout>
-      <Switch>
-        <Route exact path="/" component={Dashboard} />
-        <Route path="/gists" component={GistList} />
-        <Route path="/gist/:id?" component={GistEditor} />
-        <Route path="/convert" component={FileConverter} />
-        <Route path="/delete/:id" component={DeleteGist} />
-      </Switch>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/gists" element={<GistList />} />
+        <Route path="/gist/:id?" element={<GistEditor />} />
+        <Route path="/convert" element={<FileConverter />} />
+        <Route path="/delete/:id" element={<DeleteGist />} />
+      </Routes>
     </Layout>
   );
 };

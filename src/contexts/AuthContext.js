@@ -12,20 +12,23 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('github_token');
     if (token) {
-      setAuthToken(token);
+      setAuthToken(token); // Set the token for future API requests
       fetchUser();
     } else {
-      setLoading(false);
+      setLoading(false); // No token found, stop loading
     }
   }, []);
 
   const fetchUser = async () => {
     try {
-      const response = await api.get('/user');
+      const response = await api.get('/api/auth/me', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('github_token')}`,
+        },
+      });
       setUser(response.data);
     } catch (error) {
       console.error('Error fetching user:', error);
-      // If there's an error fetching the user, clear the token
       localStorage.removeItem('github_token');
       setAuthToken(null);
     } finally {
@@ -37,20 +40,23 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await api.post('/api/auth/github', { code });
       const { access_token } = response.data;
+      
+      // Store access token in localStorage
       localStorage.setItem('github_token', access_token);
-      setAuthToken(access_token);
-      await fetchUser();
-      return true;
+      setAuthToken(access_token); // Set the token for future API requests
+      
+      await fetchUser(); // Fetch user data after login
+      return true; // Indicate successful login
     } catch (error) {
       console.error('Login error:', error);
-      return false;
+      return false; // Indicate failed login
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('github_token');
-    setUser(null);
-    setAuthToken(null);
+    localStorage.removeItem('github_token'); // Remove token from storage
+    setUser(null); // Clear user data
+    setAuthToken(null); // Remove token from future requests
   };
 
   return (
@@ -59,3 +65,5 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
+export default AuthContext;

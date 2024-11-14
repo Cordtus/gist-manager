@@ -4,6 +4,7 @@ import Sidebar from './Sidebar';
 import { useAuth } from '../contexts/AuthContext';
 
 const Layout = ({ children }) => {
+// eslint-disable-next-line no-unused-vars
   const { user } = useAuth();
 
   return (
