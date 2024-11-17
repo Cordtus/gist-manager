@@ -1,5 +1,6 @@
-require('dotenv').config();
+// server.js
 
+require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
@@ -81,25 +82,28 @@ app.use(morgan('combined', {
   }
 }));
 
-// Serve static files
+// Serve static files from build folder
 app.use(express.static(path.join(__dirname, 'build')));
 
+// GitHub OAuth login route
 app.get('/api/auth/github/login', (req, res) => {
   const state = crypto.randomBytes(16).toString('hex');
   req.session.oauth_state = state;
+
   const params = new URLSearchParams({
     client_id: process.env.GITHUB_CLIENT_ID,
     redirect_uri: process.env.REDIRECT_URI,
     scope: 'gist user',
-    state: state
+    state
   });
-  res.json({
-    url: `https://github.com/login/oauth/authorize?${params.toString()}`
-  });
+
+  res.json({ url: `https://github.com/login/oauth/authorize?${params.toString()}` });
 });
 
+// GitHub OAuth callback route to exchange code for an access token
 app.post('/api/auth/github', async (req, res) => {
   const { code, state } = req.body;
+
   if (!code) {
     return res.status(400).json({ error: 'Authorization code is required' });
   }
@@ -115,52 +119,48 @@ app.post('/api/auth/github', async (req, res) => {
         client_id: process.env.GITHUB_CLIENT_ID,
         client_secret: process.env.GITHUB_CLIENT_SECRET,
         code,
-        redirect_uri: process.env.REDIRECT_URI
+        redirect_uri: process.env.REDIRECT_URI,
       },
-      {
-        headers: {
-          Accept: 'application/json'
-        }
-      }
+      { headers: { Accept: 'application/json' } }
     );
 
     const { access_token } = tokenResponse.data;
 
+    // Fetch user data from GitHub API using access token
     const userResponse = await axios.get('https://api.github.com/user', {
-      headers: {
-        Authorization: `Bearer ${access_token}`
-      }
+      headers: { Authorization: `Bearer ${access_token}` }
     });
 
-    res.json({
-      access_token,
-      user: userResponse.data
-    });
+    res.json({ access_token, user: userResponse.data });
+    
   } catch (error) {
     console.error('GitHub OAuth error:', error);
     res.status(500).json({ error: 'Authentication failed' });
   }
 });
 
+// Fetch current authenticated user details
 app.get('/api/auth/me', async (req, res, next) => {
   const authHeader = req.headers.authorization;
+  
   if (!authHeader?.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Invalid authorization header' });
   }
 
   const token = authHeader.split(' ')[1];
+
   try {
     const response = await axios.get('https://api.github.com/user', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/vnd.github.v3+json'
-      }
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json' }
     });
+
     res.json(response.data);
+    
   } catch (error) {
     if (error.response?.status === 401) {
       return res.status(401).json({ error: 'Invalid token' });
     }
+
     logger.error('GitHub API error:', error);
     next(error);
   }
@@ -169,12 +169,12 @@ app.get('/api/auth/me', async (req, res, next) => {
 // Gist routes
 app.use('/api/gists', gistRoutes);
 
-// Catchall handler
+// Catchall handler for serving React app (SPA)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
-// Error handler
+// Error handler middleware
 app.use((err, req, res, next) => {
   logger.error(err);
   res.status(err.status || 500).json({
