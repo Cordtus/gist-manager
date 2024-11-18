@@ -13,31 +13,32 @@ const Callback = () => {
     const handleCallback = async () => {
       const searchParams = new URLSearchParams(location.search);
       const code = searchParams.get('code');
-      const state = searchParams.get('state'); 
-
-      if (!code) {
-        console.error('No code received from GitHub');
+      const returnedState = searchParams.get('state'); // Get state from URL
+  
+      const savedState = localStorage.getItem('oauth_state'); // Get saved state
+  
+      if (!code || !returnedState || returnedState !== savedState) {
+        console.error('Invalid state parameter');
         navigate('/');
         return;
       }
-
+  
       try {
-        // Pass both code and state to login function
-        const success = await login(code, state);
+        const success = await login(code, returnedState);
         if (success) {
-          navigate('/dashboard');  // Redirect to dashboard after successful login
+          navigate('/dashboard');
         } else {
-          navigate('/');  // Redirect to home if login fails
+          navigate('/');
         }
       } catch (error) {
         console.error('Authentication error:', error);
-        navigate('/');  // Redirect to home on error
+        navigate('/');
       }
     };
-
+  
     handleCallback();
   }, [login, location, navigate]);
-
+  
   return (
     <div>Processing authentication...</div>
   );
