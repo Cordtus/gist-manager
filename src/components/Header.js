@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Header = () => {
-  const { user, logout, initiateGithubLogin } = useAuth(); // Added initiateGithubLogin for login action
+  const { user, logout, initiateGithubLogin } = useAuth();
 
   return (
     <header className="bg-white shadow-md">

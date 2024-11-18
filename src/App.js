@@ -1,9 +1,9 @@
 // App.js
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
-import Header from './components/Header';
 import Dashboard from './components/Dashboard';
 import Callback from './components/Callback';
 import GistList from './components/GistList';
@@ -21,7 +21,6 @@ const AppContent = () => {
 
   return (
     <Layout>
-      <Header />
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/callback" element={<Callback />} />

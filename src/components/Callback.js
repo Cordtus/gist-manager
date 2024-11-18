@@ -1,4 +1,5 @@
 // components/Callback.js
+
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,7 +13,7 @@ const Callback = () => {
     const handleCallback = async () => {
       const searchParams = new URLSearchParams(location.search);
       const code = searchParams.get('code');
-      const state = searchParams.get('state');  // Retrieve state
+      const state = searchParams.get('state'); 
 
       if (!code) {
         console.error('No code received from GitHub');
@@ -24,13 +25,13 @@ const Callback = () => {
         // Pass both code and state to login function
         const success = await login(code, state);
         if (success) {
-          navigate('/dashboard');
+          navigate('/dashboard');  // Redirect to dashboard after successful login
         } else {
-          navigate('/');
+          navigate('/');  // Redirect to home if login fails
         }
       } catch (error) {
         console.error('Authentication error:', error);
-        navigate('/');
+        navigate('/');  // Redirect to home on error
       }
     };
 

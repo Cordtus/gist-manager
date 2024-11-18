@@ -1,3 +1,5 @@
+// services/api/auth.js
+
 import axios from 'axios';
 import { setAuthToken } from './github';
 

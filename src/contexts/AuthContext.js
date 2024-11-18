@@ -1,3 +1,5 @@
+// AuthContext.js
+
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { setAuthToken, api } from '../services/api/github';
 
@@ -25,11 +27,18 @@ export const AuthProvider = ({ children }) => {
     setAuthToken(null);                       // Clear token from API service
   }, []);
 
-  // Fetch the current authenticated user from the backend
+  // Fetch the current authenticated user directly from GitHub
   const fetchUser = useCallback(async () => {
     try {
-      const response = await api.get('/api/auth/me');  // Fetch user details from backend
-      setUser(response.data);                          // Set user data in state
+      const response = await api.get('https://api.github.com/user', {
+        headers: {
+          Authorization: `token ${localStorage.getItem('github_token')}`,
+        },
+      });
+      
+      console.log('Fetched User Data:', response.data);  // Log user data
+
+      setUser(response.data);  // Set user data in state
     } catch (error) {
       console.error('Error fetching user:', error);
       logout();                                        // Logout on error
@@ -90,12 +99,14 @@ export const AuthProvider = ({ children }) => {
       setAuthToken(access_token);                                 // Set token for future API requests
       
       await fetchUser();                                          // Fetch user details with the new token
-      return true;
+      
+      return true;                                                // Return success
       
     } catch (error) {
       console.error('Login error:', error);
       logout();                                                   // Logout on failure (e.g., invalid code or state)
-      return false;
+      
+      return false;                                               // Return failure status
     }
   };
 
