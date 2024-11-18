@@ -1,3 +1,5 @@
+// server/routes/gists.js
+
 const express = require('express');
 const router = express.Router();
 const gistController = require('../controllers/gistController');

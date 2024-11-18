@@ -8,6 +8,7 @@ const path = require('path');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const winston = require('winston');
+const authRoutes = require('./server/routes/auth');
 const gistRoutes = require('./server/routes/gists');
 const session = require('express-session');
 const crypto = require('crypto');
@@ -38,6 +39,9 @@ if (process.env.NODE_ENV !== 'production') {
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/api/auth', authRoutes);
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // CORS configuration
 app.use(cors({

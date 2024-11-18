@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { createGist, updateGist, getGist } from '../services/api/github';
+import { createGist, updateGist, getGist } from '../services/api/gists';
 import { useAuth } from '../contexts/AuthContext';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { darcula } from 'react-syntax-highlighter/dist/esm/styles/prism';

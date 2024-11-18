@@ -1,7 +1,7 @@
-// AuthContext.js
+// contexts/AuthContext.js
 
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import { setAuthToken, api } from '../services/api/github';
+import { api, githubApi, setAuthToken } from '../services/api/github';
 
 // Create AuthContext
 const AuthContext = createContext();
@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
   // Fetch the current authenticated user directly from GitHub
   const fetchUser = useCallback(async () => {
     try {
-      const response = await api.get('https://api.github.com/user', {
+      const response = await githubApi.get('/user', {
         headers: {
           Authorization: `token ${localStorage.getItem('github_token')}`,
         },
@@ -60,18 +60,18 @@ export const AuthProvider = ({ children }) => {
 
   // Function to initiate GitHub login by redirecting to GitHub's OAuth page
   const initiateGithubLogin = () => {
-    const state = generateRandomString(32);            // Generate a random state string for security (CSRF protection)
+    const state = generateRandomString(32);            // Generate random state string for security (CSRF protection)
     localStorage.setItem('oauth_state', state);        // Save state to validate later
 
     const params = new URLSearchParams({
-      client_id: process.env.REACT_APP_GITHUB_CLIENT_ID,  // Use environment variable for client ID
-      redirect_uri: process.env.REACT_APP_REDIRECT_URI,   // Use environment variable for redirect URI
+      client_id: process.env.REACT_APP_GITHUB_CLIENT_ID,
+      redirect_uri: process.env.REACT_APP_REDIRECT_URI,
       scope: 'gist user',                                // Request necessary scopes (e.g., access to gists)
-      state: state,
+      state,
     });
 
     console.log('Login URL:', `https://github.com/login/oauth/authorize?${params}`);
-    window.location.href = `https://github.com/login/oauth/authorize?${params}`;  // Redirect to GitHub OAuth page
+    window.location.href = `https://github.com/login/oauth/authorize?${params}`;
   };
 
   // Function to handle login after receiving authorization code and state from GitHub
@@ -79,21 +79,18 @@ export const AuthProvider = ({ children }) => {
     try {
       const savedState = localStorage.getItem('oauth_state');     // Retrieve saved OAuth state
 
-      // Validate the state parameter to prevent CSRF attacks
-      if (!state || state !== savedState) {
+      if (!state || state !== savedState) {                       // Validate the state parameter to prevent CSRF attacks
         throw new Error('Invalid state parameter');
       }
 
       localStorage.removeItem('oauth_state');                     // Remove used OAuth state
 
-      // Exchange authorization code for access token via backend API
+      // Exchange authorization code for access token via backend API call.
       const response = await api.post('/api/auth/github', { code });
       
       const { access_token } = response.data;
       
-      if (!access_token) {
-        throw new Error('No access token received');
-      }
+      if (!access_token) throw new Error('No access token received');
 
       localStorage.setItem('github_token', access_token);         // Store access token locally in browser storage
       setAuthToken(access_token);                                 // Set token for future API requests
@@ -120,16 +117,15 @@ export const AuthProvider = ({ children }) => {
   const isAuthenticated = () => {
     return !!user && !!localStorage.getItem('github_token');
   };
-
   return (
     <AuthContext.Provider 
       value={{ 
-        user,               // Current authenticated user's information
-        login,              // Function to handle login after receiving authorization code and state from GitHub
-        logout,             // Function to log out and clear tokens/user data
-        loading,            // Loading status during authentication processes (e.g., fetching user data)
-        initiateGithubLogin,// Function to initiate GitHub login by redirecting users to GitHub's OAuth page
-        isAuthenticated     // Function to check if a user is authenticated based on presence of a valid token and user data
+        user,
+        login,
+        logout,
+        loading,
+        initiateGithubLogin,
+        isAuthenticated: () => !!user && !!localStorage.getItem('github_token') 
       }}
     >
       {children}

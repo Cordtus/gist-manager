@@ -3,7 +3,7 @@
 import axios from 'axios';
 import { setAuthToken } from './github';
 
-const API_BASE_URL = 'http://localhost:5000'; // Adjust if your server runs on a different port
+const API_BASE_URL = 'http://localhost:5000';
 
 export const authenticateWithGitHub = async (code) => {
   try {

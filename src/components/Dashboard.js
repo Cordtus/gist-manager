@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getGists } from '../services/api/github';
+import { getGists } from '../services/api/gists';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from './common/Spinner';
 

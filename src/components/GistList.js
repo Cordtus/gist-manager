@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getGists, deleteGist } from '../services/api/github';
+import { getGists, deleteGist } from '../services/api/gists';
 import { useAuth } from '../contexts/AuthContext';
 import ConfirmationDialog from './ConfirmationDialog';
 import Spinner from './common/Spinner';
