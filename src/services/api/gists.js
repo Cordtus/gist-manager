@@ -1,77 +1,53 @@
 // services/api/gists.js
 
-import axios from 'axios';
+import { handleApiError } from '../../utils/errorHandler.js'
 import { githubApi } from './github';
 
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000'; 
-
-// Create an Axios instance for both backend and GitHub API requests.
-const api = axios.create({
-  baseURL: API_BASE_URL,
-});
-
-// Handle errors globally.
-const handleApiError = (error) => {
-  console.error('API Error:', error);
-  
-  if (error.response) throw new Error(error.response.data.message || 'An error occurred');
-  
-  if (error.request) throw new Error('No response received from server');
-  
-  throw new Error('Error setting up request');
-};
-
-// GitHub-specific functions.
+// Fetch Gists from Backend or Directly from GitHub API
 export const getGists = async () => {
   try {
-    const response = await api.get('/gists');
+    const response = await githubApi.get('/gists');
     return response.data;
   } catch (error) {
     handleApiError(error);
-    console.error('Error - No gists found:', error);
-    throw error;
   }
 };
 
+// Fetch Single Gist by ID
 export const getGist = async (id) => {
   try {
-    const response = await api.get(`/gists/${id}`);
+    const response = await githubApi.get(`/gists/${id}`);
     return response.data;
   } catch (error) {
     handleApiError(error);
-    console.error('Error fetching gist:', error);
-    throw error;
   }
 };
 
+// Create a New Gist
 export const createGist = async (gistData) => {
   try {
     const response = await githubApi.post('/gists', gistData);
     return response.data;
   } catch (error) {
     handleApiError(error);
-    console.error('Error creating gist:', error);
-    throw error;
   }
 };
 
+// Update an Existing Gist by ID
 export const updateGist = async (gistId, gistData) => {
   try {
     const response = await githubApi.patch(`/gists/${gistId}`, gistData);
     return response.data;
   } catch (error) {
-    handleApiError(error);
-    console.error('Error updating gist:', error);
-    throw error;
-  }
+   handleApiError(error);
+ }
 };
 
+// Delete a Gist by ID
 export const deleteGist = async (gistId) => {
-  try {
-    await githubApi.delete(`/gists/${gistId}`);
-  } catch (error) {
-    handleApiError(error);
-    console.error('Error deleting gist:', error);
-    throw error;
-  }
+   try { 
+     await githubApi.delete(`/gists/${gistId}`);
+   } catch (error) { 
+     handleApiError(error); 
+   }
 };

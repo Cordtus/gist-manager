@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Header = () => {
-  const { user, logout, initiateGithubLogin } = useAuth();
+  const { user, initiateGithubLogin } = useAuth(); // Access user data and auth functions
 
   return (
     <header className="bg-white shadow-md">
@@ -20,16 +20,8 @@ const Header = () => {
           {/* Show login/logout based on authentication status */}
           <div className="flex items-center">
             {user ? (
-              <>
-                {/* Show user's GitHub username */}
-                <span className="text-sm font-medium text-gray-700 mr-4">Welcome, {user.login}!</span>
-
-                {/* Logout button */}
-                <button onClick={logout} className="text-sm font-medium text-gray-700 hover:text-gray-900">
-                  Logout
-                </button>
-
-              </>
+              /* Show user's GitHub username */
+              <span className="text-sm font-medium text-gray-700 mr-4">{user.name || user.login}</span> // Display name or username
             ) : (
               /* Login button */
               <button

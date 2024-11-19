@@ -1,4 +1,4 @@
-// contexts/AuthContext.js
+// /contexts/AuthContext.js
 
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { api, githubApi, setAuthToken } from '../services/api/github';
@@ -11,33 +11,28 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);  // Store user details
+  const [token, setToken] = useState(null);  // Store token in memory (not localStorage)
   const [loading, setLoading] = useState(true);  // Loading state for authentication
-
-  // Log client ID and redirect URI for debugging purposes
-  useEffect(() => {
-    console.log('Client ID:', process.env.REACT_APP_GITHUB_CLIENT_ID);
-    console.log('Redirect URI:', process.env.REACT_APP_REDIRECT_URI);
-  }, []);
 
   // Logout function to clear tokens and reset user state
   const logout = useCallback(() => {
-    localStorage.removeItem('github_token');  // Remove GitHub token from localStorage
     localStorage.removeItem('oauth_state');   // Remove OAuth state from localStorage
     setUser(null);                            // Reset user state
+    setToken(null);                           // Clear token from memory
     setAuthToken(null);                       // Clear token from API service
   }, []);
 
   // Fetch the current authenticated user directly from GitHub
   const fetchUser = useCallback(async () => {
+    if (!token) return;  // If no token, skip fetching user
+
     try {
       const response = await githubApi.get('/user', {
         headers: {
-          Authorization: `token ${localStorage.getItem('github_token')}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       
-      console.log('Fetched User Data:', response.data);  // Log user data
-
       setUser(response.data);  // Set user data in state
     } catch (error) {
       console.error('Error fetching user:', error);
@@ -45,16 +40,17 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);                               // Stop loading after fetching user data
     }
-  }, [logout]);
+  }, [token, logout]);
 
   // Check if a token exists in local storage and fetch user data if it does
   useEffect(() => {
-    const token = localStorage.getItem('github_token');
-    if (token) {
-      setAuthToken(token);  // Set the token in the API service for future requests
-      fetchUser();          // Fetch user details with the token
+    const storedToken = localStorage.getItem('github_token');
+    if (storedToken) {
+      setToken(storedToken);     // Set token in memory
+      setAuthToken(storedToken); // Set the token in the API service for future requests
+      fetchUser();               // Fetch user details with the token
     } else {
-      setLoading(false);    // No token means no need to fetch user data
+      setLoading(false);         // No token means no need to fetch user data
     }
   }, [fetchUser]);
 
@@ -66,11 +62,10 @@ export const AuthProvider = ({ children }) => {
     const params = new URLSearchParams({
       client_id: process.env.REACT_APP_GITHUB_CLIENT_ID,
       redirect_uri: process.env.REACT_APP_REDIRECT_URI,
-      scope: 'gist user',                                // Request necessary scopes (e.g., access to gists)
+      scope: 'gist user',                              // Request necessary scopes (e.g., access to gists)
       state,
     });
 
-    console.log('Login URL:', `https://github.com/login/oauth/authorize?${params}`);
     window.location.href = `https://github.com/login/oauth/authorize?${params}`;
   };
 
@@ -92,7 +87,7 @@ export const AuthProvider = ({ children }) => {
       
       if (!access_token) throw new Error('No access token received');
 
-      localStorage.setItem('github_token', access_token);         // Store access token locally in browser storage
+      setToken(access_token);                                     // Store access token in memory (not localStorage)
       setAuthToken(access_token);                                 // Set token for future API requests
       
       await fetchUser();                                          // Fetch user details with the new token
@@ -107,16 +102,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Helper function to generate a random string (used for OAuth state)
-  const generateRandomString = (length) => {
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    return Array.from({ length }, () => possible.charAt(Math.floor(Math.random() * possible.length))).join('');
-  };
-
-  // Function to check if a user is authenticated by verifying if a token exists in localStorage
-  const isAuthenticated = () => {
-    return !!user && !!localStorage.getItem('github_token');
-  };
   return (
     <AuthContext.Provider 
       value={{ 
@@ -125,7 +110,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         loading,
         initiateGithubLogin,
-        isAuthenticated: () => !!user && !!localStorage.getItem('github_token') 
+        isAuthenticated: () => !!user && !!token 
       }}
     >
       {children}
@@ -134,3 +119,9 @@ export const AuthProvider = ({ children }) => {
 };
 
 export default AuthContext;
+
+// Helper function to generate a random string (used for OAuth state)
+const generateRandomString = (length) => {
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  return Array.from({ length }, () => possible.charAt(Math.floor(Math.random() * possible.length))).join('');
+};

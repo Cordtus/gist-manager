@@ -1,36 +1,37 @@
 // Dashboard.js
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { getGists } from '../services/api/gists';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from './common/Spinner';
+import { UserProfile } from './UserProfile';
 
 const Dashboard = () => {
   const [gists, setGists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
-  useEffect(() => {
-    if (user) {
-      fetchGists();
-    }
-  }, [user]);
-
-  const fetchGists = async () => {
+  const fetchGists = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const gistsData = await getGists();
-      setGists(gistsData.slice(0, 5)); // Show only the 5 most recent gists
+      const gistsData = await getGists(token);
+      setGists(gistsData.slice(0, 5));
     } catch (error) {
       console.error('Error fetching gists:', error);
       setError('Failed to fetch gists. Please try again later.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (user && token) {
+      fetchGists();
+    }
+  }, [user, token, fetchGists]);
 
   if (!user) {
     return (
@@ -51,52 +52,37 @@ const Dashboard = () => {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-4">Dashboard</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <h3 className="text-xl font-semibold mb-2">Recent Gists</h3>
-          <ul className="bg-white shadow overflow-hidden sm:rounded-md">
-            {gists.map(gist => (
-              <li key={gist.id}>
-                <Link to={`/gist/${gist.id}`} className="block hover:bg-gray-50">
-                  <div className="px-4 py-4 sm:px-6">
-                    <p className="text-sm font-medium text-indigo-600 truncate">
-                      {gist.description || 'Untitled Gist'}
-                    </p>
-                    <p className="mt-1 text-sm text-gray-500">
-                      Updated: {new Date(gist.updated_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <Link to="/gists" className="mt-4 inline-block text-indigo-600 hover:text-indigo-800">
-            View all gists
-          </Link>
-        </div>
-        <div>
-          <h3 className="text-xl font-semibold mb-2">Quick Actions</h3>
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
-              <li>
-                <Link to="/gist" className="block hover:bg-gray-50">
-                  <div className="px-4 py-4 sm:px-6">
-                    <p className="text-sm font-medium text-indigo-600">Create New Gist</p>
-                  </div>
-                </Link>
-              </li>
-              <li>
-                <Link to="/convert" className="block hover:bg-gray-50">
-                  <div className="px-4 py-4 sm:px-6">
-                    <p className="text-sm font-medium text-indigo-600">Convert File</p>
-                  </div>
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
+      {/* Display full user profile details */}
+      <UserProfile /> {/* Reuse UserProfile component */}
+
+      {/* Gist list */}
+      <h2 className="text-xl font-bold mb-4">Recent Gists</h2>
+      <ul className="bg-white shadow overflow-hidden sm:rounded-md">
+        {Array.isArray(gists) && gists.length > 0 ? (
+          gists.map(gist => (
+            <li key={gist.id}>
+              <Link to={`/gist/${gist.id}`} className="block hover:bg-gray-50">
+                <div className="px-4 py-4 sm:px-6">
+                  <p className="text-sm font-medium text-indigo-600 truncate">
+                    {gist.description || 'Untitled Gist'}
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Updated: {new Date(gist.updated_at).toLocaleDateString()}
+                  </p>
+                </div>
+              </Link>
+            </li>
+          ))
+        ) : (
+          <p>No gists available</p>
+        )}
+      </ul>
+
+      {/* Link to view all gists */}
+      <Link to="/gists" className="mt-4 inline-block text-indigo-600 hover:text-indigo-800">
+        View all gists
+      </Link>
+
     </div>
   );
 };

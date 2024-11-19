@@ -1,3 +1,5 @@
+// components/GistEditor.js
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { createGist, updateGist, getGist } from '../services/api/gists';

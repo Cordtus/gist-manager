@@ -40,8 +40,6 @@ if (process.env.NODE_ENV !== 'production') {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // CORS configuration
 app.use(cors({
@@ -59,7 +57,8 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    sameSite: 'lax'
+    sameSite: 'lax',
+    maxAge: 3600000 // Set session expiration (1 hour)
   }
 }));
 
@@ -69,8 +68,8 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       connectSrc: ["'self'", "https://api.github.com", "https://github.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"], // Consider removing unsafe-inline
+      styleSrc: ["'self'", "'unsafe-inline'"], // Consider removing unsafe-inline
       imgSrc: ["'self'", "data:", "https:"],
       frameSrc: ["'none'"]
     }
@@ -85,9 +84,6 @@ app.use(morgan('combined', {
     write: message => logger.info(message.trim())
   }
 }));
-
-// Serve static files from build folder
-app.use(express.static(path.join(__dirname, 'build')));
 
 // GitHub OAuth login route
 app.get('/api/auth/github/login', (req, res) => {
@@ -130,12 +126,20 @@ app.post('/api/auth/github', async (req, res) => {
 
     const { access_token } = tokenResponse.data;
 
-    // Fetch user data from GitHub API using access token
-    const userResponse = await axios.get('https://api.github.com/user', {
-      headers: { Authorization: `Bearer ${access_token}` }
+    // Store access_token securely in an HTTP-only cookie
+    res.cookie('access_token', access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Strict',
+      maxAge: 3600000 // Token valid for 1 hour
     });
 
-    res.json({ access_token, user: userResponse.data });
+    // Fetch user data from GitHub API using access token
+    const userResponse = await axios.get('https://api.github.com/user', {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+
+    res.json({ user: userResponse.data });
     
   } catch (error) {
     console.error('GitHub OAuth error:', error);
@@ -143,19 +147,17 @@ app.post('/api/auth/github', async (req, res) => {
   }
 });
 
-// Fetch current authenticated user details
-app.get('/api/auth/me', async (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Invalid authorization header' });
-  }
+// Fetch current authenticated user details using access token from cookies
+app.get('/api/auth/me', async (req, res) => {
+  const accessToken = req.cookies.access_token;
 
-  const token = authHeader.split(' ')[1];
+  if (!accessToken) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
 
   try {
     const response = await axios.get('https://api.github.com/user', {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github.v3+json' }
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
 
     res.json(response.data);
@@ -166,16 +168,19 @@ app.get('/api/auth/me', async (req, res, next) => {
     }
 
     logger.error('GitHub API error:', error);
-    next(error);
+    res.status(500).json({ error: 'Failed to fetch user data' });
   }
 });
 
 // Gist routes
 app.use('/api/gists', gistRoutes);
 
+// Serve static files from build folder (for React frontend)
+app.use(express.static(path.join(__dirname, 'build')));
+
 // Catchall handler for serving React app (SPA)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 // Error handler middleware

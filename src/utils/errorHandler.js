@@ -1,6 +1,8 @@
+// utils.errorHandler.jse
+
 export const handleApiError = (error, setError) => {
   if (error.response) {
-    setError(`Error: ${error.response.data.message || 'Something went wrong'}`);
+    setError(`Error: Unexpected response - ${error.response.data.message || 'Something went wrong'}`);
   } else if (error.request) {
     setError('No response received from the server');
   } else {

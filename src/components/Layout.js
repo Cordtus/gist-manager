@@ -1,11 +1,11 @@
 import React from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
-import { useAuth } from '../contexts/AuthContext';
+import { UserProfile } from './UserProfile';
 
 const Layout = ({ children }) => {
 // eslint-disable-next-line no-unused-vars
-  const { user } = useAuth();
+  const { user } = UserProfile();
 
   return (
     <div className="flex h-screen bg-gray-100">

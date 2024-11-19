@@ -6,10 +6,15 @@ const router = express.Router();
 
 // POST /auth/github route to exchange authorization code for access token
 router.post('/auth/github', async (req, res) => {
-  const { code } = req.body;
+  const { code, state } = req.body;
 
-  if (!code) {
-    return res.status(400).json({ error: 'Authorization code is required' });
+  if (!code || !state) {
+    return res.status(400).json({ error: 'Authorization code and state are required' });
+  }
+
+  // Validate state parameter to prevent CSRF attacks
+  if (state !== req.session.oauth_state) {
+    return res.status(400).json({ error: 'Invalid state parameter' });
   }
 
   try {
@@ -31,10 +36,9 @@ router.post('/auth/github', async (req, res) => {
       return res.status(400).json({ error: 'Failed to obtain access token' });
     }
 
-    // Return access token to frontend
     res.json({ access_token: accessToken });
   } catch (error) {
-    console.error('Error exchanging code for token:', error);
+    console.error('Error exchanging code for token:', error.message); // Log only the message
     res.status(500).json({ error: 'Failed to exchange code for token' });
   }
 });
