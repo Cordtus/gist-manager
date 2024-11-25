@@ -1,0 +1,128 @@
+/* Ensure the editor uses full height and prevents scrolling */
+.gist-editor-form {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Full height of the browser window */
+  box-sizing: border-box;
+  padding: 10px;
+  overflow: hidden; /* Prevent the entire page from scrolling */
+}
+
+/* Buttons container for mode and save buttons (Separate from toolbar) */
+.buttons-container {
+  display: flex;
+  justify-content: flex-start;  /* Align to the left in editor mode, center in preview mode */
+  align-items: center;
+  margin-top: 10px;
+  padding: 0 10px;
+  gap: 10px;
+  flex-shrink: 0; /* Prevent it from shrinking */
+  flex-grow: 0; /* Prevent it from growing */
+  flex-basis: auto; /* Ensure the height is respected */
+  height: 60px; /* Fixed height to prevent expanding */
+  width: 100%; /* Ensure it takes the full available width */
+}
+
+.buttons-container.preview {
+  justify-content: center; /* Center buttons in preview mode */
+}
+
+.wrap-text label {
+  font-size: 0.875rem;
+  color: #555;
+}
+
+/* File container and its header */
+.file-container {
+  margin-bottom: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.file-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.file-name {
+  flex: 1;
+  padding: 5px;
+  margin-right: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.remove-file {
+  color: red;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+/* Adjust the flex container for the main editor area to ensure it stays fixed in height */
+.editor-container {
+  display: flex;
+  flex-direction: row;
+  height: calc(100vh - 60px); /* Adjust height to accommodate buttons container */
+  box-sizing: border-box;
+  overflow: hidden;
+  /* Ensure the editor and preview containers will have space */
+}
+
+/* Ensure the editor and preview panes occupy available space correctly */
+.editor, .preview {
+  flex: 1;
+  padding: 10px;
+  font-family: monospace;
+  resize: none;
+  box-sizing: border-box;
+  min-height: 100%; /* Expand to fill space but no scroll */
+  max-height: 100%;  /* Ensure the text area stays inside the available space */
+  overflow: auto; /* Enable scrolling for content inside */
+}
+
+.editor.no-wrap {
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.editor.wrap {
+  white-space: pre-wrap;
+}
+
+.preview {
+  background-color: #f9f9f9;
+  border-left: 1px solid #ccc; /* Distinguish the preview pane */
+}
+
+/* Ensure toolbar remains fixed over left editor */
+.toolbar {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 5px 10px;
+  background-color: #f4f4f4;
+  border-bottom: 1px solid #ccc;
+  position: sticky; /* Fix toolbar above the left editor */
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10; /* Ensure it's above other content */
+}
+
+/* Ensure responsive layout */
+@media (max-width: 768px) {
+  .buttons-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+  }
+  .editor, .preview {
+    min-height: 200px;
+  }
+}
