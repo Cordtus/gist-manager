@@ -3,12 +3,24 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+/* Global reset styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
 body {
-  font-family: Arial, sans-serif; /* Define a basic font family */
+  font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
-  /* Remove overflow-y: hidden to prevent clipping */
-  /* overflow-y: hidden; */
+  height: 100%;  /* Ensure body takes full height */
+}
+
+/* Sidebar styles */
+.sidebar-container {
+  position: fixed;
+  z-index: 10;
+  /* Ensure the sidebar is always visible */
 }
 
 h1, h2, h3 {
@@ -24,6 +36,28 @@ a:hover {
   text-decoration: underline;
 }
 
+/* Buttons container (fixed height and independent of parent) */
+.buttons-container {
+  display: flex;
+  align-items: center;
+  background-color: transparent;
+  font-size: 14px;
+  margin-top: 10px;
+  padding: 0 10px;
+  gap: 10px;
+  flex-shrink: 0; /* Prevent it from shrinking */
+  flex-grow: 0; /* Prevent it from growing */
+  height: 60px; /* Fixed height to prevent expanding */
+  width: 100%; /* Ensure it takes the full available width */
+  overflow: hidden; /* Prevent any overflow */
+}
+
+/* Ensure no changes between editor and preview mode */
+.buttons-container.preview {
+  background-color: transparent; /* No background change */
+}
+
+/* Global Button Styles - To ensure consistency across both modes */
 button {
   padding: 10px 15px;
   border-radius: 5px;
@@ -31,22 +65,42 @@ button {
   border: none;
   font-size: 14px;
   transition: background-color 0.3s ease;
+  background-color: white; /* Always white background */
+  color: #4f46e5; /* Consistent text color */
+  text-transform: none; /* Prevent text transformation */
+}
+/* Buttons with primary and secondary classes */
+button.primary {
+  background-color: white;
+  color: #4f46e5;
+  border: 1px solid #4f46e5; /* Outline for primary button */
 }
 
-button.primary {
+button.primary:hover {
   background-color: #4f46e5;
   color: white;
 }
 
-button.primary:hover {
-  background-color: #4338ca;
+button.secondary {
+  background-color: white;
+  color: #6366f1;
+  border: 1px solid #6366f1; /* Outline for secondary button */
 }
 
-button.secondary {
+button.secondary:hover {
   background-color: #6366f1;
   color: white;
 }
 
-button.secondary:hover {
-  background-color: #4f46e5;
+/* Disabled button styles */
+button:disabled {
+  background-color: #d1d5db;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+/* Wrap Text Checkbox */
+.wrap-text label {
+  font-size: 0.875rem;
+  color: #555;
 }

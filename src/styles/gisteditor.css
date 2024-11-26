@@ -1,35 +1,11 @@
-/* Ensure the editor uses full height and prevents scrolling */
+/* Ensure layout is fixed, with no expansion in preview mode */
 .gist-editor-form {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Full height of the browser window */
+  min-height: 80%; /* Ensure the form takes up the full height */
   box-sizing: border-box;
   padding: 10px;
   overflow: hidden; /* Prevent the entire page from scrolling */
-}
-
-/* Buttons container for mode and save buttons (Separate from toolbar) */
-.buttons-container {
-  display: flex;
-  justify-content: flex-start;  /* Align to the left in editor mode, center in preview mode */
-  align-items: center;
-  margin-top: 10px;
-  padding: 0 10px;
-  gap: 10px;
-  flex-shrink: 0; /* Prevent it from shrinking */
-  flex-grow: 0; /* Prevent it from growing */
-  flex-basis: auto; /* Ensure the height is respected */
-  height: 60px; /* Fixed height to prevent expanding */
-  width: 100%; /* Ensure it takes the full available width */
-}
-
-.buttons-container.preview {
-  justify-content: center; /* Center buttons in preview mode */
-}
-
-.wrap-text label {
-  font-size: 0.875rem;
-  color: #555;
 }
 
 /* File container and its header */
@@ -63,25 +39,21 @@
   font-size: 0.875rem;
 }
 
-/* Adjust the flex container for the main editor area to ensure it stays fixed in height */
+/* Ensure editor area and preview are contained within the editor-container */
 .editor-container {
   display: flex;
   flex-direction: row;
-  height: calc(100vh - 60px); /* Adjust height to accommodate buttons container */
+  height: calc(80vh - 60px); /* Subtract the height of the buttons container */
   box-sizing: border-box;
-  overflow: hidden;
-  /* Ensure the editor and preview containers will have space */
+  overflow: hidden;  /* Prevent overflow of editor and preview */
 }
 
 /* Ensure the editor and preview panes occupy available space correctly */
 .editor, .preview {
-  flex: 1;
+  flex: 1;  /* Take up all remaining space */
   padding: 10px;
   font-family: monospace;
-  resize: none;
   box-sizing: border-box;
-  min-height: 100%; /* Expand to fill space but no scroll */
-  max-height: 100%;  /* Ensure the text area stays inside the available space */
   overflow: auto; /* Enable scrolling for content inside */
 }
 
@@ -117,11 +89,6 @@
 
 /* Ensure responsive layout */
 @media (max-width: 768px) {
-  .buttons-container {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 5px;
-  }
   .editor, .preview {
     min-height: 200px;
   }
