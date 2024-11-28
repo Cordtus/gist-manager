@@ -95,85 +95,82 @@ const GistEditor = () => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="gist-editor-form">
-      {/* Buttons area (Save/Mode/Wrap Text) */}
-      <div className={`buttons-container ${previewMode ? 'preview' : ''}`}>
-        <button
-          type="button"
-          onClick={() => setPreviewMode(!previewMode)}
-          className="button secondary"
-        >
-          {previewMode ? 'Editor Mode' : 'Preview Mode'}
-        </button>
-        <button
-          type="submit"
-          className="button primary"
-          disabled={loading}
-        >
-          {loading ? 'Saving...' : 'Save Gist'}
-        </button>
-        <label className="wrap-text">
-          <input
-            type="checkbox"
-            checked={wrapText}
-            onChange={toggleWrapText}
-          />
-          Wrap Text
-        </label>
-      </div>
-
-      {/* Toolbar */}
-      <div className="toolbar">
-        <button type="button" className="toolbar-button">B</button>
-        <button type="button" className="toolbar-button">I</button>
-        <button type="button" className="toolbar-button">H1</button>
-        {/* Add more toolbar buttons as needed */}
-      </div>
-
-      {/* Files Editor */}
-      {Object.entries(gist.files).map(([fileName, file]) => (
-        <div key={fileName} className="file-container">
-          <div className="file-header">
-            <input
-              type="text"
-              value={fileName}
-              onChange={(e) => {
-                const newFiles = { ...gist.files };
-                newFiles[e.target.value] = newFiles[fileName];
-                delete newFiles[fileName];
-                setGist({ ...gist, files: newFiles });
-              }}
-              className="file-name"
-            />
-            <button
-              type="button"
-              onClick={() => handleFileChange(fileName, '')}
-              className="remove-file"
-            >
-              Remove
-            </button>
-          </div>
-          <div className={`editor-container ${previewMode ? 'split-view' : ''}`}>
-            <textarea
-              ref={editorRef}
-              value={file.content}
-              onChange={(e) => handleFileChange(fileName, e.target.value)}
-              onScroll={syncScroll}
-              className={`editor ${wrapText ? 'wrap' : 'no-wrap'}`}
-            />
-            {previewMode && (
-              <div
-                ref={previewRef}
-                className="preview"
-                onScroll={syncScroll}
+          <form onSubmit={handleSubmit} className="gist-editor-form flex flex-col min-h-[80%] box-border p-3 overflow-hidden">
+            <div className={`buttons-container flex items-center gap-3 h-14 p-2 mt-2`}>
+              <button
+                type="button"
+                onClick={() => setPreviewMode(!previewMode)}
+                className={`button secondary ${previewMode && 'bg-gray-200'}`}
               >
-                <ReactMarkdown>{file.content}</ReactMarkdown>
+                {previewMode ? 'Editor Mode' : 'Preview Mode'}
+              </button>
+              <button
+                type="submit"
+                className="button primary"
+                disabled={loading}
+              >
+                {loading ? 'Saving...' : 'Save Gist'}
+              </button>
+              <label className="wrap-text text-sm">
+                <input
+                  type="checkbox"
+                  checked={wrapText}
+                  onChange={toggleWrapText}
+                  className="mr-2"
+                />
+                Wrap Text
+              </label>
+            </div>
+
+            <div className="toolbar flex gap-2 justify-start items-center p-2 bg-gray-50 border-b sticky top-0 left-0 z-10">
+              <button type="button" className="toolbar-button">B</button>
+              <button type="button" className="toolbar-button">I</button>
+              <button type="button" className="toolbar-button">H1</button>
+            </div>
+
+            {Object.entries(gist.files).map(([fileName, file]) => (
+              <div key={fileName} className="file-container mb-5 flex flex-col">
+                <div className="file-header flex justify-between items-center mb-2">
+                  <input
+                    type="text"
+                    value={fileName}
+                    onChange={(e) => {
+                      const newFiles = { ...gist.files };
+                      newFiles[e.target.value] = newFiles[fileName];
+                      delete newFiles[fileName];
+                      setGist({ ...gist, files: newFiles });
+                    }}
+                    className="file-name flex-1 p-2 mr-3 border border-gray-300 rounded text-sm box-border"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleFileChange(fileName, '')}
+                    className="remove-file text-red-500 cursor-pointer text-sm"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div className={`editor-container flex ${previewMode && 'h-[calc(80vh_-_60px)]'}`}>
+                  <textarea
+                    ref={editorRef}
+                    value={file.content}
+                    onChange={(e) => handleFileChange(fileName, e.target.value)}
+                    onScroll={syncScroll}
+                    className={`editor flex-1 p-3 font-mono box-border overflow-auto ${wrapText ? 'whitespace-pre-wrap' : 'whitespace-pre overflow-x-auto'}`}
+                  />
+                  {previewMode && (
+                    <div
+                      ref={previewRef}
+                      className="preview flex-1 bg-gray-50 border-l border-gray-300"
+                      onScroll={syncScroll}
+                    >
+                      <ReactMarkdown>{file.content}</ReactMarkdown>
+                    </div>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        </div>
-      ))}
-    </form>
+            ))}
+          </form>
   );
 };
 

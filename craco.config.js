@@ -1,7 +1,4 @@
-// craco.config.js
-
 const path = require('path');
-const { whenDev } = require('@craco/craco');
 
 module.exports = {
   webpack: {
@@ -37,6 +34,14 @@ module.exports = {
         throw new Error('webpack-dev-server is not defined');
       }
       return middlewares;
+    },
+  },
+  style: {
+    postcss: {
+      plugins: [
+        require('tailwindcss'),
+        require('autoprefixer'),
+      ],
     },
   },
   plugins: [

@@ -7,7 +7,6 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "@types/node": "^22.9.0",
-    "autoprefixer": "^10.4.20",
     "axios": "^1.7.7",
     "cors": "^2.8.5",
     "express": "^4.21.1",
@@ -16,7 +15,6 @@
     "marked": "^14.1.2",
     "morgan": "^1.10.0",
     "node-cache": "^5.1.2",
-    "postcss": "^8.4.49",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.3.0",
@@ -25,16 +23,15 @@
     "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^15.6.1",
     "showdown": "^2.1.0",
-    "tailwindcss": "^3.4.14",
     "turndown": "^7.2.0",
     "winston": "^3.17.0"
   },
-"scripts": {
-  "server": "nodemon --no-deprecation server.js",
-  "start": "craco start",
-  "build": "craco build",
-  "dev": "concurrently \"yarn server\" \"yarn start\""
-},
+  "scripts": {
+    "server": "nodemon --no-deprecation server.js",
+    "start": "craco start",
+    "build": "craco build",
+    "dev": "concurrently \"yarn server\" \"yarn start\""
+  },
   "eslintConfig": {
     "extends": [
       "react-app",
@@ -64,6 +61,7 @@
     "@craco/craco": "^7.1.0",
     "@testing-library/dom": "^10.4.0",
     "@types/react": "^18.3.12",
+    "autoprefixer": "^10.4.20",
     "babel-loader": "^9.2.1",
     "concurrently": "^9.1.0",
     "css-loader": "^7.1.2",
@@ -71,6 +69,8 @@
     "html-webpack-plugin": "^5.6.3",
     "mini-css-extract-plugin": "^2.9.2",
     "nodemon": "^3.1.7",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
     "typescript": "^5.6.3",
     "webpack": "^5.96.1",
     "webpack-cli": "^5.1.4",
