@@ -1,22 +1,34 @@
-// components/Layout.js
+// Layout.js
 
 import React from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
-import { UserProfile } from './UserProfile';
+import { useLocation } from 'react-router-dom';
+
+// DebugRouter Component (kept local to Layout)
+const DebugRouter = () => {
+  const location = useLocation();
+  console.log('Current route:', location.pathname); // Logs the current route
+  return null; // No UI rendering
+};
 
 const Layout = ({ children }) => {
-  // eslint-disable-next-line no-unused-vars
-  const { user } = UserProfile();
-
+  console.log('Rendering Layout');
   return (
     <div className="flex h-screen bg-gray-100">
+      {/* Sidebar */}
       <Sidebar />
+
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Debug Router */}
+        <DebugRouter />
+
+        {/* Header */}
         <Header />
-        <main className="bg-gray-200 p-6 overflow-auto">
-          {children}
-        </main>
+
+        {/* Main Content */}
+        <main className="main-container">{children}</main>
       </div>
     </div>
   );

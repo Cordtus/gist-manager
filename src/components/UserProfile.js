@@ -1,4 +1,5 @@
-// components/UserProfile.js
+// UserProfile.js
+// Displays the user's profile details.
 
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -10,17 +11,22 @@ export const UserProfile = () => {
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div>
-      <h1>User Profile</h1>
+    <div className="bg-white p-6 rounded shadow">
+      <h2 className="text-xl font-bold mb-4">User Profile</h2>
       {user ? (
         <div>
-          <p>Name: {user.name}</p>
-          <p>Username: {user.login}</p>
-          <p>Email: {user.email}</p>
-          {/* Add more user details as needed */}
+          <p>
+            <span className="font-medium">Name:</span> {user.name}
+          </p>
+          <p>
+            <span className="font-medium">Username:</span> {user.login}
+          </p>
+          <p>
+            <span className="font-medium">Email:</span> {user.email}
+          </p>
         </div>
       ) : (
-        <p>No user data available</p>
+        <p className="text-gray-500">No user data available.</p>
       )}
     </div>
   );

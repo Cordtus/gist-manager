@@ -1,4 +1,5 @@
-// components/FileConverter.js
+// FileConverter.js
+// A file format converter supporting Markdown, HTML, and Plain Text.
 
 import React, { useState } from 'react';
 import { marked } from 'marked';
@@ -36,7 +37,7 @@ const FileConverter = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6 p-6 bg-white rounded shadow">
       <div>
         <label htmlFor="inputFormat" className="block text-sm font-medium text-gray-700">
           Input Format
@@ -45,7 +46,7 @@ const FileConverter = () => {
           id="inputFormat"
           value={inputFormat}
           onChange={(e) => setInputFormat(e.target.value)}
-          className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          className="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
         >
           <option value="markdown">Markdown</option>
           <option value="html">HTML</option>
@@ -61,7 +62,7 @@ const FileConverter = () => {
           value={inputContent}
           onChange={(e) => setInputContent(e.target.value)}
           rows="10"
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          className="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
         />
       </div>
       <div>
@@ -72,7 +73,7 @@ const FileConverter = () => {
           id="outputFormat"
           value={outputFormat}
           onChange={(e) => setOutputFormat(e.target.value)}
-          className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          className="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
         >
           <option value="markdown">Markdown</option>
           <option value="html">HTML</option>
@@ -81,7 +82,7 @@ const FileConverter = () => {
       </div>
       <button
         onClick={handleConvert}
-        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        className="w-full py-2 px-4 bg-indigo-600 text-white rounded shadow-sm hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
       >
         Convert
       </button>
@@ -94,7 +95,7 @@ const FileConverter = () => {
           value={outputContent}
           readOnly
           rows="10"
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-gray-50"
+          className="mt-1 block w-full border-gray-300 rounded shadow-sm bg-gray-50 sm:text-sm"
         />
       </div>
     </div>

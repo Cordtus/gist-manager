@@ -5,65 +5,67 @@
 
 /* Reset styles */
 *, *::before, *::after {
-  @apply box-border m-0;
+  @apply box-border m-0 p-0; /* Normalize margins and paddings globally */
 }
 
 body {
-  @apply h-full m-0 p-0 font-sans;
+  @apply h-full font-sans; /* Full-height layout with sans-serif font */
 }
 
 /* Utility Classes */
 .sidebar-container {
-  @apply fixed z-10;
+  @apply fixed z-10; /* Ensure the sidebar is layered correctly */
 }
 
 h1, h2, h3 {
-  @apply text-gray-800;
+  @apply text-gray-800; /* Unified heading colors */
 }
 
 a {
-  @apply text-blue-500 no-underline;
+  @apply text-blue-500 no-underline; /* Standard link styles */
 }
 
 a:hover {
-  @apply underline;
+  @apply underline; /* Add underline only on hover */
 }
 
 /* Buttons container */
 .buttons-container {
-  @apply flex items-center bg-transparent text-sm mt-2 px-2 gap-2 flex-shrink-0 flex-grow-0 h-15 w-full overflow-hidden;
+  @apply flex items-center bg-transparent text-sm mt-2 px-2 gap-2 
+  flex-shrink-0 flex-grow-0 h-16 w-full overflow-hidden; /* Unified button layout */
 }
 
 .buttons-container.preview {
-  @apply bg-transparent;
+  @apply bg-transparent; /* Preview-specific button container */
 }
 
 /* Buttons */
 button {
-  @apply px-4 py-2 rounded cursor-pointer text-sm transition-all ease-in-out bg-white text-indigo-600 border-none;
+  @apply px-4 py-2 rounded cursor-pointer text-sm transition-all ease-in-out 
+  bg-white text-indigo-600 border-none; /* Base button styles */
 }
 
 button.primary {
-  @apply bg-white text-indigo-600 border border-indigo-600;
+  @apply bg-white text-indigo-600 border border-indigo-600; /* Primary button */
 }
 
 button.primary:hover {
-  @apply bg-indigo-600 text-white;
+  @apply bg-indigo-600 text-white; /* Hover effect for primary buttons */
 }
 
 button.secondary {
-  @apply bg-white text-indigo-500 border border-indigo-500;
+  @apply bg-white text-indigo-500 border border-indigo-500; /* Secondary button */
 }
 
 button.secondary:hover {
-  @apply bg-indigo-500 text-white;
+  @apply bg-indigo-500 text-white; /* Hover effect for secondary buttons */
 }
 
 button:disabled {
-  @apply bg-gray-300 text-gray-500 cursor-not-allowed;
+  @apply bg-gray-300 text-gray-500 cursor-not-allowed; /* Disabled button styles */
 }
 
 /* Wrap text checkbox */
 .wrap-text label {
-  @apply text-sm text-gray-700;
+  @apply text-sm text-gray-700; /* Styling for labels next to wrap text checkboxes */
 }

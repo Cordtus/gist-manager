@@ -45,6 +45,7 @@ export const AuthProvider = ({ children }) => {
   // Check if a token exists in local storage and fetch user data if it does
   useEffect(() => {
     const storedToken = localStorage.getItem('github_token');
+    console.log('Stored Token:', storedToken);
     if (storedToken) {
       setToken(storedToken);     // Set token in memory
       setAuthToken(storedToken); // Set the token in the API service for future requests

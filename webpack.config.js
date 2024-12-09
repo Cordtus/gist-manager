@@ -1,72 +1,64 @@
-// webpack.config.js
-
-const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const path = require('path');
 
 module.exports = {
-  // Entry point for your application
   entry: './src/index.js',
-
-  // Output configuration
   output: {
     path: path.resolve(__dirname, 'build'),
     filename: 'bundle.js',
-    publicPath: '/',
+    publicPath: '/', // Ensure it loads assets from the root
   },
-
-  // Mode can be 'development' or 'production'
-  mode: process.env.NODE_ENV || 'development',
-
-  // DevServer configuration for hot reloading
+  module: {
+    rules: [
+      {
+        test: /\.jsx?$/,
+        exclude: /node_modules/,
+        use: 'babel-loader', // Transpile JSX/JavaScript
+      },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader', 'postcss-loader'], // Tailwind and CSS support
+      },
+      {
+        test: /\.(png|jpg|gif|svg|ico|webp)$/,
+        type: 'asset/resource', // Handle image files
+        generator: {
+          filename: 'assets/[name][hash][ext]', // Output images in 'assets/' with hash
+        },
+      },
+      {
+        test: /\.json$/,
+        type: 'asset/resource', // Ensures JSON files are served as static assets
+        include: path.resolve(__dirname, 'public'), // Ensure it includes the public directory
+        generator: {
+          filename: '[name][ext]', // Keeps the original name, e.g., manifest.json
+        },
+      },      
+    ],
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: './public/index.html', // Path to your HTML template
+      filename: 'index.html', // Output HTML file
+      inject: true, // Automatically injects scripts and styles
+      favicon: './public/favicon.ico', // Adds favicon to the output HTML
+    }),
+  ],
+  resolve: {
+    extensions: ['.js', '.jsx'], // Resolve both JavaScript and JSX files
+  },
   devServer: {
+    historyApiFallback: true, // Enables React Router to handle routing
     static: {
-      directory: path.join(__dirname, 'build'),
+      directory: path.join(__dirname, 'public'), // Serve static files
     },
-    historyApiFallback: true,
-    compress: true,
-    port: 3000,
-    setupMiddlewares(middlewares, devServer) {
-      if (!devServer) throw new Error('webpack-dev-server is not defined');
+    compress: true, // Gzip compression
+    port: 3000, // Development server port
+    hot: true, // Enable Hot Module Replacement (HMR)
+    setupMiddlewares: (middlewares, devServer) => {
+      // Your middleware logic here (if needed)
+      console.log('Setting up middlewares...');
       return middlewares;
     },
   },
-
-  // Module rules for processing different file types
-  module: {
-    rules: [
-      // Babel loader to transpile modern JavaScript (React JSX)
-      {
-        test: /\.(js|jsx)$/,
-        exclude: /node_modules/,
-        use: ['babel-loader'],
-      },
-      // CSS loader to process CSS files
-      {
-        test: /\.css$/,
-        use: [MiniCssExtractPlugin.loader, 'css-loader'],
-      },
-      // File loader for images and fonts
-      {
-        test: /\.(png|jpg|gif|svg|woff|woff2|eot|ttf|otf)$/,
-        use: ['file-loader'],
-      },
-    ],
-  },
-
-  // Resolve extensions so you can import files without specifying extensions
-  resolve: {
-    extensions: ['*', '.js', '.jsx'],
-  },
-
-  // Plugins for additional functionality
-  plugins: [
-    new HtmlWebpackPlugin({
-      template: './public/index.html', // Use your public/index.html as a template
-    }),
-    new MiniCssExtractPlugin({
-      filename: '[name].css',
-      chunkFilename: '[id].css',
-    }),
-  ],
 };

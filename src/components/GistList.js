@@ -1,4 +1,5 @@
-// /components/GistList.js
+// GistList.js
+// Displays a list of gists with pagination, sorting, searching, and delete confirmation.
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -14,7 +15,7 @@ const GistList = () => {
   const [gistToDelete, setGistToDelete] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [gistsPerPage] = useState(10);
+  const gistsPerPage = 10;
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOption, setSortOption] = useState('updated_at');
   const [sortDirection, setSortDirection] = useState('desc');
@@ -49,7 +50,7 @@ const GistList = () => {
     if (gistToDelete) {
       try {
         await deleteGist(gistToDelete.id);
-        setGists(gists.filter(g => g.id !== gistToDelete.id));
+        setGists(gists.filter((g) => g.id !== gistToDelete.id));
       } catch (error) {
         console.error('Error deleting gist:', error);
         setError('Failed to delete gist. Please try again later.');
@@ -73,16 +74,16 @@ const GistList = () => {
     }
   };
 
-  const filteredGists = gists.filter(gist =>
-    gist.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    Object.keys(gist.files).some(filename => 
+  const filteredGists = gists.filter((gist) =>
+    gist.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    Object.keys(gist.files).some((filename) =>
       filename.toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
 
   const sortedGists = filteredGists.sort((a, b) => {
     if (sortOption === 'description') {
-      return sortDirection === 'asc' 
+      return sortDirection === 'asc'
         ? a.description.localeCompare(b.description)
         : b.description.localeCompare(a.description);
     } else {
@@ -99,7 +100,7 @@ const GistList = () => {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   if (!user) {
-    return <div>Please log in to view your gists.</div>;
+    return <div className="text-center text-gray-700">Please log in to view your gists.</div>;
   }
 
   if (loading) {
@@ -111,65 +112,71 @@ const GistList = () => {
   }
 
   return (
-    <div>
+    <div className="p-6 max-w-4xl mx-auto bg-white rounded shadow">
       <div className="mb-4">
         <input
           type="text"
           placeholder="Search gists..."
           value={searchTerm}
           onChange={handleSearch}
-          className="p-2 border rounded"
+          className="w-full p-2 border rounded focus:outline-none focus:ring focus:ring-indigo-500"
         />
       </div>
-      <div className="mb-4">
-        <button onClick={() => handleSort('created_at')} className="mr-2">Sort by Created Date</button>
-        <button onClick={() => handleSort('updated_at')} className="mr-2">Sort by Updated Date</button>
-        <button onClick={() => handleSort('description')}>Sort Alphabetically</button>
+      <div className="mb-4 space-x-2">
+        <button
+          onClick={() => handleSort('created_at')}
+          className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100"
+        >
+          Sort by Created Date
+        </button>
+        <button
+          onClick={() => handleSort('updated_at')}
+          className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100"
+        >
+          Sort by Updated Date
+        </button>
+        <button
+          onClick={() => handleSort('description')}
+          className="px-4 py-2 border rounded text-gray-700 hover:bg-gray-100"
+        >
+          Sort Alphabetically
+        </button>
       </div>
-      <div className="bg-white shadow overflow-hidden sm:rounded-md">
+      <div className="bg-gray-50 shadow overflow-hidden sm:rounded-md">
         <ul className="divide-y divide-gray-200">
-          {currentGists.map(gist => (
-            <li key={gist.id}>
-              <Link to={`/gist/${gist.id}`} className="block hover:bg-gray-50">
-                <div className="px-4 py-4 sm:px-6">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-indigo-600 truncate">
-                      {gist.description || 'Untitled Gist'}
-                    </p>
-                    <div className="ml-2 flex-shrink-0 flex">
-                      <p className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                        {Object.keys(gist.files).length} files
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-2 sm:flex sm:justify-between">
-                    <div className="sm:flex">
-                      <p className="flex items-center text-sm text-gray-500">
-                        Updated: {new Date(gist.updated_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleDeleteClick(gist);
-                      }}
-                      className="text-sm text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
-                  </div>
+          {currentGists.map((gist) => (
+            <li key={gist.id} className="hover:bg-gray-100">
+              <Link to={`/gist/${gist.id}`} className="block px-4 py-4">
+                <div className="flex justify-between items-center">
+                  <p className="text-sm font-medium text-indigo-600 truncate">
+                    {gist.description || 'Untitled Gist'}
+                  </p>
+                  <p className="ml-4 text-sm text-gray-500">
+                    {Object.keys(gist.files).length} files
+                  </p>
+                </div>
+                <div className="text-sm text-gray-500 mt-2">
+                  Updated: {new Date(gist.updated_at).toLocaleDateString()}
                 </div>
               </Link>
+              <button
+                onClick={() => handleDeleteClick(gist)}
+                className="ml-4 text-red-600 hover:text-red-800"
+              >
+                Delete
+              </button>
             </li>
           ))}
         </ul>
       </div>
-      <div className="mt-4">
+      <div className="mt-4 flex justify-center space-x-1">
         {Array.from({ length: Math.ceil(sortedGists.length / gistsPerPage) }, (_, i) => (
           <button
             key={i}
             onClick={() => paginate(i + 1)}
-            className={`mx-1 px-3 py-1 border rounded ${currentPage === i + 1 ? 'bg-blue-500 text-white' : ''}`}
+            className={`px-3 py-1 rounded border ${
+              currentPage === i + 1 ? 'bg-blue-500 text-white' : ''
+            }`}
           >
             {i + 1}
           </button>

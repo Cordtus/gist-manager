@@ -1,5 +1,3 @@
-// Dashboard.js
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { getGists } from '../services/api/gists';
@@ -35,9 +33,9 @@ const Dashboard = () => {
 
   if (!user) {
     return (
-      <div className="text-center">
-        <h2 className="text-2xl font-bold mb-4">Welcome to Gist Manager</h2>
-        <p>Please log in to view your dashboard.</p>
+      <div className="text-center bg-white p-6 rounded shadow-md">
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">Welcome to Gist Manager</h2>
+        <p className="text-gray-600">Please log in to view your dashboard.</p>
       </div>
     );
   }
@@ -47,21 +45,21 @@ const Dashboard = () => {
   }
 
   if (error) {
-    return <div className="text-red-500">{error}</div>;
+    return <div className="text-red-500 bg-white p-4 rounded shadow-md">{error}</div>;
   }
 
   return (
-    <div>
+    <div className="max-w-4xl mx-auto p-6 bg-gray-50 rounded shadow-md">
       {/* Display full user profile details */}
-      <UserProfile /> {/* Reuse UserProfile component */}
+      <UserProfile />
 
       {/* Gist list */}
-      <h2 className="text-xl font-bold mb-4">Recent Gists</h2>
-      <ul className="bg-white shadow overflow-hidden sm:rounded-md">
+      <h2 className="text-xl font-bold mb-4 text-gray-800">Recent Gists</h2>
+      <ul className="divide-y divide-gray-200 bg-white rounded shadow">
         {Array.isArray(gists) && gists.length > 0 ? (
           gists.map(gist => (
-            <li key={gist.id}>
-              <Link to={`/gist/${gist.id}`} className="block hover:bg-gray-50">
+            <li key={gist.id} className="hover:bg-gray-100">
+              <Link to={`/gist/${gist.id}`} className="block">
                 <div className="px-4 py-4 sm:px-6">
                   <p className="text-sm font-medium text-indigo-600 truncate">
                     {gist.description || 'Untitled Gist'}
@@ -74,15 +72,17 @@ const Dashboard = () => {
             </li>
           ))
         ) : (
-          <p>No gists available</p>
+          <li className="px-4 py-4 text-gray-500">No gists available</li>
         )}
       </ul>
 
       {/* Link to view all gists */}
-      <Link to="/gists" className="mt-4 inline-block text-indigo-600 hover:text-indigo-800">
+      <Link
+        to="/gists"
+        className="mt-4 inline-block text-indigo-600 hover:text-indigo-800 font-medium"
+      >
         View all gists
       </Link>
-
     </div>
   );
 };

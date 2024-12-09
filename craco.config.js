@@ -1,11 +1,8 @@
-// craco.config.js
-
 const path = require('path');
-const { whenDev } = require('@craco/craco');
 
 module.exports = {
   webpack: {
-    configure: (webpackConfig, { env, paths }) => {
+    configure: (webpackConfig) => {
       // Modify the entry point if needed
       webpackConfig.entry = './src/index.js';
 
@@ -18,15 +15,13 @@ module.exports = {
       };
 
       // Add or modify module rules
-      webpackConfig.module.rules.push(
-        {
-          test: /\.(png|jpg|gif|svg|woff|woff2|eot|ttf|otf)$/,
-          use: ['file-loader'],
-        }
-      );
+      webpackConfig.module.rules.push({
+        test: /\.(png|jpg|gif|svg|woff|woff2|eot|ttf|otf)$/,
+        type: 'asset/resource', // Replacing deprecated `file-loader`
+      });
 
       // Modify resolve extensions
-      webpackConfig.resolve.extensions = ['*', '.js', '.jsx', ...webpackConfig.resolve.extensions];
+      webpackConfig.resolve.extensions = ['.js', '.jsx', ...webpackConfig.resolve.extensions];
 
       return webpackConfig;
     },
@@ -36,24 +31,20 @@ module.exports = {
       if (!devServer) {
         throw new Error('webpack-dev-server is not defined');
       }
+
+      devServer.historyApiFallback = true;
+      devServer.compress = true;
+      devServer.port = 3000;
+      devServer.static = {
+        directory: path.join(__dirname, 'build'),
+      };
+
       return middlewares;
     },
   },
-  plugins: [
-    {
-      plugin: {
-        overrideDevServerConfig: ({ devServerConfig }) => {
-          return {
-            ...devServerConfig,
-            historyApiFallback: true,
-            compress: true,
-            port: 3000,
-            static: {
-              directory: path.join(__dirname, 'build'),
-            },
-          };
-        },
-      },
+  style: {
+    postcss: {
+      plugins: [require('tailwindcss'), require('autoprefixer')],
     },
-  ],
+  },
 };

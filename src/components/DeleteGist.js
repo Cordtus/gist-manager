@@ -1,4 +1,5 @@
-// components/DeleteGist.js
+// DeleteGist.js
+// Handles deleting a single gist with confirmation modal.
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -49,26 +50,26 @@ const DeleteGist = () => {
   };
 
   if (!user) {
-    return <div>Please log in to delete gists.</div>;
+    return <div className="text-center text-gray-700">Please log in to delete gists.</div>;
   }
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="text-center">Loading...</div>;
   }
 
   if (!gist) {
-    return <div>Gist not found.</div>;
+    return <div className="text-center text-gray-700">Gist not found.</div>;
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Delete Gist</h2>
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-4">
-        <div className="px-4 py-5 sm:px-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
+    <div className="max-w-2xl mx-auto p-6 bg-white rounded shadow">
+      <h2 className="text-2xl font-bold mb-4 text-gray-900">Delete Gist</h2>
+      <div className="mb-4">
+        <div className="bg-gray-100 p-4 rounded shadow-sm">
+          <h3 className="text-lg font-medium text-gray-900">
             {gist.description || 'Untitled Gist'}
           </h3>
-          <p className="mt-1 max-w-2xl text-sm text-gray-500">
+          <p className="text-sm text-gray-500">
             Created: {new Date(gist.created_at).toLocaleDateString()}
           </p>
         </div>
@@ -76,14 +77,14 @@ const DeleteGist = () => {
       <div className="flex justify-end space-x-4">
         <button
           onClick={() => navigate('/gists')}
-          className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-100 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
           Cancel
         </button>
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          className="px-4 py-2 bg-red-600 text-white rounded shadow-sm hover:bg-red-700 focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
         >
           {deleting ? 'Deleting...' : 'Delete'}
         </button>
