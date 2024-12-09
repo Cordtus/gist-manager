@@ -1,5 +1,9 @@
+// App.js
+
 import React from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { createBrowserHistory } from 'history';
+import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
@@ -11,6 +15,9 @@ import DeleteGist from './components/DeleteGist';
 import Onboard from './components/Onboard'; // Import the Onboard component
 import './styles/index.css';
 
+// Create a browser history
+const customHistory = createBrowserHistory();
+
 // DebugRouter component to log the current route
 const DebugRouter = () => {
   const location = useLocation();
@@ -19,8 +26,14 @@ const DebugRouter = () => {
 };
 
 const App = () => (
-  <AuthProvider>
-    <BrowserRouter>
+  <HistoryRouter
+    history={customHistory}
+    future={{
+      v7_startTransition: true,
+      v7_relativeSplatPath: true,
+    }}
+  >
+    <AuthProvider>
       <Layout>
         <DebugRouter /> {/* Debug route changes */}
         <Routes>
@@ -34,8 +47,8 @@ const App = () => (
           <Route path="*" element={<div>Page Not Found</div>} /> {/* Catch-all route */}
         </Routes>
       </Layout>
-    </BrowserRouter>
-  </AuthProvider>
+    </AuthProvider>
+  </HistoryRouter>
 );
 
 export default App;

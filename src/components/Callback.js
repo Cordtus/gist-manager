@@ -11,39 +11,48 @@ const Callback = () => {
 
   useEffect(() => {
     const handleCallback = async () => {
-      const searchParams = new URLSearchParams(location.search);
-      const code = searchParams.get('code');
-      const returnedState = searchParams.get('state'); // State parameter from the URL
-      const savedState = localStorage.getItem('oauth_state'); // Saved state from localStorage
-
-      // Validate state and code
-      if (!code) {
-        console.error('Authorization code missing in callback');
-        navigate('/'); // Redirect to home or error page
-        return;
-      }
-
-      if (!returnedState || returnedState !== savedState) {
-        console.error('State mismatch or missing');
-        navigate('/'); // Redirect to home or error page
-        return;
-      }
-
-      // Clear the saved OAuth state as it's no longer needed
-      localStorage.removeItem('oauth_state');
-
       try {
-        // Attempt login with the code and state
+        // Extract query parameters
+        const searchParams = new URLSearchParams(location.search);
+        const code = searchParams.get('code');
+        const returnedState = searchParams.get('state'); // State parameter from the URL
+        const savedState = localStorage.getItem('oauth_state'); // Saved state from localStorage
+
+        // Debugging logs
+        console.debug('Location search:', location.search);
+        console.debug('Authorization code:', code);
+        console.debug('Returned state:', returnedState);
+        console.debug('Saved state:', savedState);
+
+        // Validate the presence of code
+        if (!code) {
+          console.error('Authorization code is missing in callback');
+          navigate('/'); // Redirect to home or error page
+          return;
+        }
+
+        // Validate the state parameter
+        if (!returnedState || returnedState !== savedState) {
+          console.error('State mismatch or missing. Potential CSRF attempt.');
+          navigate('/'); // Redirect to home or error page
+          return;
+        }
+
+        // Clear the saved OAuth state as it's no longer needed
+        localStorage.removeItem('oauth_state');
+
+        // Attempt to log in using the authorization code and state
         const success = await login(code, returnedState);
         if (success) {
-          console.log('Authentication successful');
-          navigate('/dashboard'); // Navigate to dashboard upon success
+          console.info('Authentication successful');
+          navigate('/dashboard'); // Navigate to the dashboard upon success
         } else {
-          console.error('Login failed');
+          console.warn('Login failed. Check server response or token validity.');
           navigate('/'); // Redirect to home on failure
         }
       } catch (error) {
-        console.error('Error during authentication:', error);
+        // Log unexpected errors
+        console.error('Unexpected error during authentication:', error);
         navigate('/'); // Redirect to home on error
       }
     };
@@ -52,7 +61,10 @@ const Callback = () => {
   }, [login, location.search, navigate]);
 
   return (
-    <div>Processing authentication...</div>
+    <div style={{ textAlign: 'center', marginTop: '20px' }}>
+      <h2>Processing Authentication...</h2>
+      <p>Please wait while we complete your login.</p>
+    </div>
   );
 };
 
