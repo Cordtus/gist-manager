@@ -1,9 +1,8 @@
 // craco.config.js
 
-const path = require('path');
-const { whenDev } = require('@craco/craco');
+import path from 'path';
 
-module.exports = {
+const cracoConfig = {
   webpack: {
     configure: (webpackConfig, { env, paths }) => {
       // Modify the entry point if needed
@@ -12,18 +11,16 @@ module.exports = {
       // Modify the output configuration
       webpackConfig.output = {
         ...webpackConfig.output,
-        path: path.resolve(__dirname, 'build'),
+        path: path.resolve(process.cwd(), 'build'),
         filename: 'bundle.js',
-        publicPath: '/',
+        publicPath: '/', // Ensure correct root path for static assets
       };
 
       // Add or modify module rules
-      webpackConfig.module.rules.push(
-        {
-          test: /\.(png|jpg|gif|svg|woff|woff2|eot|ttf|otf)$/,
-          use: ['file-loader'],
-        }
-      );
+      webpackConfig.module.rules.push({
+        test: /\.(png|jpg|gif|svg|woff|woff2|eot|ttf|otf)$/,
+        use: ['file-loader'],
+      });
 
       // Modify resolve extensions
       webpackConfig.resolve.extensions = ['*', '.js', '.jsx', ...webpackConfig.resolve.extensions];
@@ -32,28 +29,28 @@ module.exports = {
     },
   },
   devServer: {
-    setupMiddlewares: (middlewares, devServer) => {
-      if (!devServer) {
-        throw new Error('webpack-dev-server is not defined');
-      }
-      return middlewares;
+    static: {
+      directory: path.join(process.cwd(), 'public'), // Serve files from /public during development
     },
+    historyApiFallback: true, // Handle SPA routing
+    compress: true,
+    port: 3000,
   },
   plugins: [
     {
       plugin: {
-        overrideDevServerConfig: ({ devServerConfig }) => {
-          return {
-            ...devServerConfig,
-            historyApiFallback: true,
-            compress: true,
-            port: 3000,
-            static: {
-              directory: path.join(__dirname, 'build'),
-            },
-          };
-        },
+        overrideDevServerConfig: ({ devServerConfig }) => ({
+          ...devServerConfig,
+          historyApiFallback: true,
+          compress: true,
+          port: 3000,
+          static: {
+            directory: path.join(process.cwd(), 'build'),
+          },
+        }),
       },
     },
   ],
 };
+
+export default cracoConfig;

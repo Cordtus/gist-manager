@@ -3,6 +3,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   // Entry point for your application
@@ -62,11 +63,14 @@ module.exports = {
   // Plugins for additional functionality
   plugins: [
     new HtmlWebpackPlugin({
-      template: './public/index.html', // Use your public/index.html as a template
+      template: './public/index.html',
     }),
     new MiniCssExtractPlugin({
       filename: '[name].css',
       chunkFilename: '[id].css',
+    }),
+    new CopyPlugin({
+      patterns: [{ from: 'public', to: '.' }],
     }),
   ],
 };

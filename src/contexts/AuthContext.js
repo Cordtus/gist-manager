@@ -54,20 +54,20 @@ export const AuthProvider = ({ children }) => {
     }
   }, [fetchUser]);
 
-  // Function to initiate GitHub login by redirecting to GitHub's OAuth page
-  const initiateGithubLogin = () => {
-    const state = generateRandomString(32);            // Generate random state string for security (CSRF protection)
-    localStorage.setItem('oauth_state', state);        // Save state to validate later
+// Function to initiate GitHub login by redirecting to GitHub's OAuth page
+const initiateGithubLogin = () => {
+  const state = generateRandomString(32); // Generate random state string for security (CSRF protection)
+  localStorage.setItem('oauth_state', state); // Save state to validate later
 
-    const params = new URLSearchParams({
-      client_id: process.env.REACT_APP_GITHUB_CLIENT_ID,
-      redirect_uri: process.env.REACT_APP_REDIRECT_URI,
-      scope: 'gist user',                              // Request necessary scopes (e.g., access to gists)
-      state,
-    });
+  const params = new URLSearchParams({
+    client_id: process.env.REACT_APP_GITHUB_CLIENT_ID, // Use the correct client ID
+    redirect_uri: 'http://localhost:3000/callback', // Directly set this value to match GitHub OAuth settings
+    scope: 'gist user', // Request necessary scopes
+    state,
+  });
 
-    window.location.href = `https://github.com/login/oauth/authorize?${params}`;
-  };
+  window.location.href = `https://github.com/login/oauth/authorize?${params}`;
+};
 
   // Function to handle login after receiving authorization code and state from GitHub
   const login = async (code, state) => {

@@ -15,14 +15,20 @@ export const githubApi = axios.create({
 
 // Interceptor to automatically add Authorization header with token from localStorage
 githubApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('github_token');
-  
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  
+  console.log('Making API request', { url: config.url, method: config.method });
   return config;
 });
+
+githubApi.interceptors.response.use(
+  (response) => {
+    console.log('API response success', { data: response.data });
+    return response;
+  },
+  (error) => {
+    console.error('API response error', { status: error.response?.status, data: error.response?.data });
+    return Promise.reject(error);
+  }
+);
 
 // Helper function to set Authorization header globally for both APIs
 export const setAuthToken = (token) => {

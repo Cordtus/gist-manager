@@ -1,5 +1,6 @@
 // components/DeleteGist.js
 
+import '../styles/styles.css';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getGist, deleteGist } from '../services/api/gists';

@@ -5,7 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { createGist, updateGist, getGist } from '../services/api/gists';
 import { useAuth } from '../contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
-import '../styles/gisteditor.css';
+import '../styles/styles.css';
 
 const GistEditor = () => {
   const [gist, setGist] = useState({ description: '', files: {} });
@@ -101,13 +101,13 @@ const GistEditor = () => {
         <button
           type="button"
           onClick={() => setPreviewMode(!previewMode)}
-          className="button secondary"
+          className="button-secondary"
         >
           {previewMode ? 'Editor Mode' : 'Preview Mode'}
         </button>
         <button
           type="submit"
-          className="button primary"
+          className="button-primary"
           disabled={loading}
         >
           {loading ? 'Saving...' : 'Save Gist'}
@@ -159,7 +159,7 @@ const GistEditor = () => {
               value={file.content}
               onChange={(e) => handleFileChange(fileName, e.target.value)}
               onScroll={syncScroll}
-              className={`editor ${wrapText ? 'wrap' : 'no-wrap'}`}
+              className={`textarea ${wrapText ? 'wrap' : 'no-wrap'}`}
             />
             {previewMode && (
               <div

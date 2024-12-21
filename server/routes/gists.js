@@ -1,11 +1,13 @@
 // server/routes/gists.js
 
-const express = require('express');
+import express from 'express';
+import { getGists, createGist, updateGist, deleteGist } from '../controllers/gistController.js';
+
 const router = express.Router();
-const gistController = require('../controllers/gistController');
 
-router.get('/', gistController.getGists);
+router.get('/', getGists);
+router.post('/', createGist);
+router.patch('/:id', updateGist);
+router.delete('/:id', deleteGist);
 
-router.post('/', gistController.createGist);
-
-module.exports = router;
+export const gistRoutes = router;

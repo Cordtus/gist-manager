@@ -1,23 +1,23 @@
-const axios = require('axios');
-const NodeCache = require('node-cache');
-const winston = require('winston');
-const crypto = require('crypto');
+// server/controllers/gistController.js
+
+import axios from 'axios';
+import NodeCache from 'node-cache';
+import { createLogger, format, transports } from 'winston';
+import crypto from 'crypto';
 
 // Setup logger
-const logger = winston.createLogger({
+const logger = createLogger({
   level: 'info',
-  format: winston.format.json(),
+  format: format.combine(format.timestamp(), format.json()),
   defaultMeta: { service: 'gist-controller' },
   transports: [
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' }),
+    new transports.File({ filename: 'error.log', level: 'error' }),
+    new transports.File({ filename: 'combined.log' }),
   ],
 });
 
 if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.simple(),
-  }));
+  logger.add(new transports.Console({ format: format.simple() }));
 }
 
 // Setup cache
@@ -42,19 +42,19 @@ const addAuthHeader = (token) => ({
 });
 
 // Get Gists
-exports.getGists = async (req, res) => {
+export const getGists = async (req, res) => {
   try {
     const tokenHash = hashToken(req.headers.authorization);
     const cacheKey = `gists-${tokenHash}`;
-    
+
     const cachedGists = cache.get(cacheKey);
-    
+
     if (cachedGists) {
       return res.json(cachedGists);
     }
 
     const response = await githubApi.get('/gists', addAuthHeader(req.headers.authorization));
-    
+
     cache.set(cacheKey, response.data);
     res.json(response.data);
   } catch (error) {
@@ -63,20 +63,20 @@ exports.getGists = async (req, res) => {
     if (error.response?.status === 401) {
       return res.status(401).json({ error: 'Unauthorized access to GitHub API' });
     }
-    
+
     res.status(500).json({ error: 'Error fetching gists', details: error.message });
   }
 };
 
 // Create Gist
-exports.createGist = async (req, res) => {
+export const createGist = async (req, res) => {
   try {
     const response = await githubApi.post('/gists', req.body, addAuthHeader(req.headers.authorization));
 
     // Invalidate cache using hashed token
     const tokenHash = hashToken(req.headers.authorization);
     cache.del(`gists-${tokenHash}`);
-    
+
     res.json(response.data);
   } catch (error) {
     logger.error('Error creating gist:', error);
@@ -90,7 +90,7 @@ exports.createGist = async (req, res) => {
 };
 
 // Update Gist
-exports.updateGist = async (req, res) => {
+export const updateGist = async (req, res) => {
   try {
     const { id } = req.params;
     const response = await githubApi.patch(`/gists/${id}`, req.body, addAuthHeader(req.headers.authorization));
@@ -98,7 +98,7 @@ exports.updateGist = async (req, res) => {
     // Invalidate cache using hashed token
     const tokenHash = hashToken(req.headers.authorization);
     cache.del(`gists-${tokenHash}`);
-    
+
     res.json(response.data);
   } catch (error) {
     logger.error('Error updating gist:', error);
@@ -112,10 +112,10 @@ exports.updateGist = async (req, res) => {
 };
 
 // Delete Gist
-exports.deleteGist = async (req, res) => {
+export const deleteGist = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     await githubApi.delete(`/gists/${id}`, addAuthHeader(req.headers.authorization));
 
     // Invalidate cache using hashed token

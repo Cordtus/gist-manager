@@ -6,6 +6,7 @@ import { getGists, deleteGist } from '../services/api/gists';
 import { useAuth } from '../contexts/AuthContext';
 import ConfirmationDialog from './ConfirmationDialog';
 import Spinner from './common/Spinner';
+import '../styles/styles.css';
 
 const GistList = () => {
   const [gists, setGists] = useState([]);

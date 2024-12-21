@@ -1,44 +1,49 @@
 // App.js
 
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import Layout from './components/Layout';
-import Dashboard from './components/Dashboard';
-import Callback from './components/Callback';
-import GistList from './components/GistList';
-import GistEditor from './components/GistEditor';
-import FileConverter from './components/FileConverter';
-import DeleteGist from './components/DeleteGist';
-import './styles/index.css';
+import { BrowserRouter } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext.js';
+import Layout from './components/Layout.js';
+import Dashboard from './components/Dashboard.js';
+import Callback from './components/Callback.js';
+import GistList from './components/GistList.js';
+import GistEditor from './components/GistEditor.js';
+import FileConverter from './components/FileConverter.js';
+import DeleteGist from './components/DeleteGist.js';
+import './styles/styles.css';
 
+// AppContent Component for Routes
 const AppContent = () => {
-  const { loading } = useAuth();
+  const { loading } = useAuth(); // Use AuthContext to check loading state
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div style={{ textAlign: 'center', marginTop: '20%' }}>Loading...</div>
+    );
   }
 
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/callback" element={<Callback />} />
-        <Route path="/gists" element={<GistList />} />
-        <Route path="/gist/:id?" element={<GistEditor />} />
-        <Route path="/convert" element={<FileConverter />} />
-        <Route path="/delete/:id" element={<DeleteGist />} />
-      </Routes>
-    </Layout>
+    <Routes>
+      <Route path="/" element={<Dashboard />} />
+      <Route path="/callback" element={<Callback />} />
+      <Route path="/gists" element={<GistList />} />
+      <Route path="/gist/:id?" element={<GistEditor />} />
+      <Route path="/convert" element={<FileConverter />} />
+      <Route path="/delete/:id" element={<DeleteGist />} />
+    </Routes>
   );
 };
 
+// Main App Component
 const App = () => (
-  <AuthProvider>
-    <Router>
-      <AppContent />
-    </Router>
-  </AuthProvider>
+  <BrowserRouter>
+    <AuthProvider>
+      <Layout>
+        <AppContent />
+      </Layout>
+    </AuthProvider>
+  </BrowserRouter>
 );
 
 export default App;

@@ -1,7 +1,8 @@
 // server/routes/auth.js
 
-const express = require('express');
-const axios = require('axios');
+import express from 'express';
+import axios from 'axios';
+
 const router = express.Router();
 
 // POST /auth/github route to exchange authorization code for access token
@@ -43,4 +44,4 @@ router.post('/auth/github', async (req, res) => {
   }
 });
 
-module.exports = router;
+export const authRoutes = router;

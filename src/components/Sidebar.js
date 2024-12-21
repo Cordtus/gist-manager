@@ -1,50 +1,40 @@
-// components/Sidebar.js
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaHome, FaListAlt, FaPlus, FaExchangeAlt } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
+import '../styles/styles.css';
 
 const Sidebar = () => {
   const { user, logout, initiateGithubLogin } = useAuth();
 
   return (
-    <div className="bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out">
+    <div className="sidebar-container">
       <nav>
-        <Link to="/" className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white">
+        <Link to="/" className="sidebar-link">
           <FaHome className="inline-block mr-2" /> Dashboard
         </Link>
-        <Link to="/gists" className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white">
+        <Link to="/gists" className="sidebar-link">
           <FaListAlt className="inline-block mr-2" /> My Gists
         </Link>
-        <Link to="/gist" className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white">
+        <Link to="/gist" className="sidebar-link">
           <FaPlus className="inline-block mr-2" /> New Gist
         </Link>
-        <Link to="/convert" className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white">
+        <Link to="/convert" className="sidebar-link">
           <FaExchangeAlt className="inline-block mr-2" /> File Converter
         </Link>
       </nav>
-
-      {/* Display login/logout section at the bottom */}
-      <div className="absolute bottom-0 left-0 w-full p-4 bg-gray-900 text-center">
+      <div className="sidebar-footer">
         {user ? (
           <>
-            {/* Show user's GitHub username */}
-            <p className="text-sm font-medium text-white mb-2">Logged in as {user.login}</p>
-
-            {/* Logout button */}
-            <button 
-              onClick={logout} 
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-            >
+            <p>Logged in as {user.login}</p>
+            <button onClick={logout} className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded">
               Logout
             </button>
           </>
         ) : (
-          /* Login with GitHub button */
-          <button 
-            onClick={initiateGithubLogin} 
-            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+          <button
+            onClick={initiateGithubLogin}
+            className="bg-green-500 hover:bg-green-600 px-4 py-2 rounded"
           >
             Login with GitHub
           </button>
