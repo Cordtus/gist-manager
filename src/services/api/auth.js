@@ -1,7 +1,7 @@
 // services/api/auth.js
 
 import axios from 'axios';
-import { setAuthToken } from './github';
+import { setAuthToken } from './github.js';
 
 const API_BASE_URL = 'http://localhost:5000';
 

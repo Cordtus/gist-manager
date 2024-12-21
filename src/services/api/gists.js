@@ -1,7 +1,7 @@
 // services/api/gists.js
 
 import { handleApiError } from '../../utils/errorHandler.js'
-import { githubApi } from './github';
+import { githubApi } from './github.js';
 
 // Fetch Gists from Backend or Directly from GitHub API
 export const getGists = async () => {

@@ -3,9 +3,9 @@
 import '../styles/styles.css';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getGist, deleteGist } from '../services/api/gists';
-import { useAuth } from '../contexts/AuthContext';
-import ConfirmationDialog from './ConfirmationDialog';
+import { getGist, deleteGist } from '../services/api/gists.js';
+import { useAuth } from '../contexts/AuthContext.js';
+import ConfirmationDialog from './ConfirmationDialog.js';
 
 const DeleteGist = () => {
   const [gist, setGist] = useState(null);

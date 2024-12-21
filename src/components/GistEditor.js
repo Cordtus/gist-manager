@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { createGist, updateGist, getGist } from '../services/api/gists';
-import { useAuth } from '../contexts/AuthContext';
+import { createGist, updateGist, getGist } from '../services/api/gists.js';
+import { useAuth } from '../contexts/AuthContext.js';
 import ReactMarkdown from 'react-markdown';
 import '../styles/styles.css';
 

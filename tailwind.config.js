@@ -8,6 +8,6 @@ module.exports = {
       },
     },
   },
-  content: ['./src/**/*.{js,jsx,ts,tsx}', './public/index.html'], // Adjust content paths
+  content: ['./src/**/*.{js.jsx,ts,tsx}', './public/index.html'], // Adjust content paths
   plugins: [],
 };

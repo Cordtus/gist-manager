@@ -57,7 +57,7 @@ module.exports = {
 
   // Resolve extensions so you can import files without specifying extensions
   resolve: {
-    extensions: ['*', '.js', '.jsx'],
+    extensions: ['.js', '.jsx', '.json'],
   },
 
   // Plugins for additional functionality

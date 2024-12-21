@@ -1,7 +1,7 @@
 // /contexts/AuthContext.js
 
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import { api, githubApi, setAuthToken } from '../services/api/github';
+import { api, githubApi, setAuthToken } from '../services/api/github.js';
 
 // Create AuthContext
 const AuthContext = createContext();

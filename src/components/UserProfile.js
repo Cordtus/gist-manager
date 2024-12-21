@@ -1,7 +1,7 @@
 // components/UserProfile.js
 
 import React from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext.js';
 
 export const UserProfile = () => {
   const { user, loading, error } = useAuth();

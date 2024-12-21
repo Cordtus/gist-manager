@@ -3,10 +3,10 @@
 import '../styles/styles.css';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getGists } from '../services/api/gists';
-import { useAuth } from '../contexts/AuthContext';
-import Spinner from './common/Spinner';
-import { UserProfile } from './UserProfile';
+import { getGists } from '../services/api/gists.js';
+import { useAuth } from '../contexts/AuthContext.js';
+import Spinner from './common/Spinner.js';
+import { UserProfile } from './UserProfile.js';
 
 const Dashboard = () => {
   const [gists, setGists] = useState([]);

@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getGists, deleteGist } from '../services/api/gists';
-import { useAuth } from '../contexts/AuthContext';
-import ConfirmationDialog from './ConfirmationDialog';
-import Spinner from './common/Spinner';
+import { getGists, deleteGist } from '../services/api/gists.js';
+import { useAuth } from '../contexts/AuthContext.js';
+import ConfirmationDialog from './ConfirmationDialog.js';
+import Spinner from './common/Spinner.js';
 import '../styles/styles.css';
 
 const GistList = () => {
