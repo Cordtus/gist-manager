@@ -1,14 +1,10 @@
-// components/Callback.js
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext.js';
 
 const Callback = () => {
-  const { login } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [error, setError] = useState(null); // Add state for error handling
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -16,13 +12,17 @@ const Callback = () => {
       const code = searchParams.get('code');
       const state = searchParams.get('state');
       const savedState = localStorage.getItem('oauth_state');
+      console.log('Saved State:', savedState); // Debug log
+      console.log('Received State:', state);   // Debug log
     
       if (!code || !state) {
+        console.error('OAuth callback error: Missing code or state.');
         setError('Missing code or state in OAuth callback.');
         return;
       }
     
       if (state !== savedState) {
+        console.error('OAuth callback error: Invalid state parameter.');
         setError('Invalid state parameter.');
         return;
       }
@@ -30,34 +30,38 @@ const Callback = () => {
       try {
         const response = await fetch('/api/auth/github', {
           method: 'POST',
+          credentials: 'include', // Include cookies with the request
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code }),
+          body: JSON.stringify({ code, state }),
         });
     
         if (!response.ok) {
-          const { error } = await response.json();
-          setError(error || 'Failed to authenticate with GitHub.');
+          const errorData = await response.json();
+          console.error('Server error:', errorData);
+          setError(errorData.error || 'Authentication failed.');
           return;
         }
     
         const data = await response.json();
-        console.log('GitHub login success:', data); // Log success for debugging
+        console.log('GitHub login successful:', data);
         navigate('/dashboard');
       } catch (err) {
         console.error('Error during GitHub login:', err);
         setError('Failed to authenticate. Please try again.');
       }
     };
-
+    
     handleCallback();
-  }, [login, location, navigate]);
-
+  }, [location, navigate]);
+  
   return (
-    <div>
+    <div className="container flex-center">
       {error ? (
-        <div className="error-message text-red-500">{error}</div>
+        <div className="error-message shadow rounded p-2 text-center">{error}</div>
       ) : (
-        <div>Processing authentication...</div>
+        <div className="shadow rounded p-2 text-center">
+          <p>Processing authentication... Please wait.</p>
+        </div>
       )}
     </div>
   );

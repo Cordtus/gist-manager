@@ -9,5 +9,5 @@ module.exports = {
     },
   },
   content: ['./src/**/*.{js.jsx,ts,tsx}', './public/index.html'], // Adjust content paths
-  plugins: [],
+  plugins: ["@tailwindcss/forms","@tailwindcss/typography"],
 };

@@ -5,6 +5,13 @@ import { getGists, createGist, updateGist, deleteGist } from '../controllers/gis
 
 const router = express.Router();
 
+router.use((req, res, next) => {
+  if (!req.session.github_token) {
+    return res.status(401).json({ error: 'Unauthorized: Missing access token.' });
+  }
+  next();
+});
+
 router.get('/', getGists);
 router.post('/', createGist);
 router.patch('/:id', updateGist);

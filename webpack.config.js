@@ -50,7 +50,7 @@ module.exports = {
       // File loader for images and fonts
       {
         test: /\.(png|jpg|gif|svg|woff|woff2|eot|ttf|otf)$/,
-        use: ['file-loader'],
+        type: 'asset/resource',
       },
     ],
   },

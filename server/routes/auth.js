@@ -1,26 +1,48 @@
 // server/routes/auth.js
 
 import express from 'express';
+import session from 'express-session';
 import axios from 'axios';
 
 const router = express.Router();
 
+// Configure session middleware
+router.use(
+  session({
+    secret: process.env.SESSION_SECRET || 'fallback-secret', // Use SESSION_SECRET instead of GITHUB_CLIENT_SECRET
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+      httpOnly: true, // Protect cookies from being accessed by JavaScript
+      maxAge: 24 * 60 * 60 * 1000, // 1-day expiration
+    },
+  })
+);
+
 // POST /auth/github route to exchange authorization code for access token
-router.post('/auth/github', async (req, res) => {
+router.post('/github', async (req, res) => {
   const { code, state } = req.body;
 
+  console.log('Received state from frontend:', state);
+  console.log('Session state:', req.session?.oauth_state);
+
   if (!code || !state) {
-    return res.status(400).json({ error: 'Authorization code and state are required' });
+    console.error('OAuth callback error: Missing code or state.');
+    return res.status(400).json({ error: 'Missing code or state in OAuth callback.' });
   }
 
-  // Validate state parameter to prevent CSRF attacks
   if (state !== req.session.oauth_state) {
-    return res.status(400).json({ error: 'Invalid state parameter' });
+    console.error('OAuth callback error: State mismatch.', {
+      expected: req.session?.oauth_state,
+      received: state,
+    });
+    return res.status(400).json({ error: 'Invalid or missing state parameter.' });
   }
 
   try {
-    // Exchange authorization code for access token
-    const response = await axios.post(
+    // Exchange authorization code for an access token
+    const { data } = await axios.post(
       'https://github.com/login/oauth/access_token',
       {
         client_id: process.env.GITHUB_CLIENT_ID,
@@ -31,17 +53,33 @@ router.post('/auth/github', async (req, res) => {
       { headers: { Accept: 'application/json' } }
     );
 
-    const accessToken = response.data.access_token;
+    const { access_token, error, error_description } = data;
 
-    if (!accessToken) {
-      return res.status(400).json({ error: 'Failed to obtain access token' });
+    if (error || !access_token) {
+      console.error('GitHub OAuth error:', { error, error_description });
+      return res
+        .status(400)
+        .json({ error: error_description || 'Failed to exchange code for access token.' });
     }
 
-    res.json({ access_token: accessToken });
+    // Store the access token in the session
+    req.session.github_token = access_token;
+    req.session.save((err) => {
+      if (err) {
+        console.error('Error saving session:', err);
+        return res.status(500).json({ error: 'Failed to save session.' });
+      }
+      console.log('Access token successfully saved to session.');
+      res.json({ access_token });
+    });
   } catch (error) {
-    console.error('Error exchanging code for token:', error.message); // Log only the message
-    res.status(500).json({ error: 'Failed to exchange code for token' });
+    const status = error.response?.status || 500;
+    const errorMessage =
+      error.response?.data?.error_description || 'An error occurred while processing the request.';
+    console.error('GitHub OAuth error:', errorMessage, error);
+    res.status(status).json({ error: errorMessage });
   }
 });
 
-export const authRoutes = router;
+// Export the router
+export { router as authRoutes };

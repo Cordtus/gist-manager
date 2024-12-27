@@ -19,17 +19,11 @@ const cracoConfig = {
       // Add or modify module rules
       webpackConfig.module.rules.push({
         test: /\.(png|jpg|gif|svg|woff|woff2|eot|ttf|otf)$/,
-        type: 'asset/resource',
-      }
-      );
+        use: ['file-loader'],
+      });
 
-      // Ensure resolve extensions are configured correctly
-      webpackConfig.resolve.extensions = [
-        '*', 
-        '.js', 
-        '.jsx', 
-        ...(webpackConfig.resolve.extensions || [])
-      ];
+      // Modify resolve extensions
+      webpackConfig.resolve.extensions = ['*', '.js', '.jsx', ...webpackConfig.resolve.extensions];
 
       return webpackConfig;
     },
@@ -41,20 +35,6 @@ const cracoConfig = {
     historyApiFallback: true, // Handle SPA routing
     compress: true,
     port: 3000,
-    client: {
-      logging: 'info', // Show informative logs in the browser console
-      overlay: true, // Show error overlays in the browser for build issues
-    },
-    setupMiddlewares: (middlewares, devServer) => {
-      if (!devServer) {
-        throw new Error('Webpack Dev Server is not defined');
-      }
-
-      // You can add custom middleware here if needed
-      console.log('Custom middlewares can be set up here.');
-
-      return middlewares;
-    },
   },
   plugins: [
     {
