@@ -15,11 +15,19 @@ import './styles/styles.css';
 
 // AppContent Component for Routes
 const AppContent = () => {
-  const { loading } = useAuth(); // Use AuthContext to check loading state
+  const { loading, user } = useAuth(); // Use AuthContext to check loading and user state
 
   if (loading) {
     return (
       <div style={{ textAlign: 'center', marginTop: '20%' }}>Loading...</div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div style={{ textAlign: 'center', marginTop: '20%' }}>
+        <h1>Please log in to continue</h1>
+      </div>
     );
   }
 

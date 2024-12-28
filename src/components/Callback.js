@@ -14,30 +14,19 @@ const Callback = () => {
       try {
         const searchParams = new URLSearchParams(location.search);
         const code = searchParams.get('code');
-        const state = searchParams.get('state');
-        const savedState = localStorage.getItem('oauth_state'); // Retrieve state from localStorage
 
-        console.log('Saved State (localStorage):', savedState); // Debugging
-        console.log('Received State (callback):', state);       // Debugging
+        console.log('Received Code (callback):', code); // Debugging
 
-        if (!code || !state) {
-          throw new Error('Missing code or state in OAuth callback.');
+        if (!code) {
+          throw new Error('Missing code in OAuth callback.');
         }
 
-        if (state !== savedState) {
-          console.warn(`State mismatch: Expected ${savedState}, received ${state}`); // Debugging
-          throw new Error('Invalid or missing state parameter. Possible CSRF detected.');
-        }
-
-        // Clear the saved state from localStorage immediately
-        localStorage.removeItem('oauth_state');
-
-        // Send the code and state to the server
+        // Send the code to the server (state is validated on the backend via cookie)
         const response = await fetch('/api/auth/github', {
           method: 'POST',
           credentials: 'include', // Include cookies with the request
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code, state }),
+          body: JSON.stringify({ code }),
         });
 
         if (!response.ok) {
@@ -49,6 +38,7 @@ const Callback = () => {
         const data = await response.json();
         console.log('GitHub login successful:', data); // Debugging
 
+        // Navigate to the dashboard on successful login
         navigate('/dashboard');
       } catch (err) {
         console.error('OAuth callback error:', err); // Debugging

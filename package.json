@@ -11,6 +11,7 @@
     "@types/node": "^22.9.0",
     "autoprefixer": "^10.4.20",
     "axios": "^1.7.7",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -39,7 +40,6 @@
     "dev": "concurrently \"yarn server\" \"yarn start\"",
     "lint": "eslint --ext .js,.jsx,.ts,.tsx src/"
   },
-  
   "eslintConfig": {
     "extends": [
       "react-app",

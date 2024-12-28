@@ -2,22 +2,11 @@
 
 import { handleApiError } from '../../utils/errorHandler.js';
 import { githubApi } from './auth.js';
-import { setAuthToken } from './auth.js';
-
-// Initialize Gists API (ensures token is set before making requests)
-export const initializeGists = () => {
-  const token = localStorage.getItem('github_token');
-  if (token) {
-    setAuthToken(token);
-  } else {
-    console.warn('No GitHub token found. Please authenticate first.');
-  }
-};
 
 // Fetch Gists from GitHub API
 export const getGists = async () => {
   try {
-    const response = await githubApi.get('/gists');
+    const response = await githubApi.get('/gists', { withCredentials: true });
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -27,7 +16,7 @@ export const getGists = async () => {
 // Fetch Single Gist by ID
 export const getGist = async (id) => {
   try {
-    const response = await githubApi.get(`/gists/${id}`);
+    const response = await githubApi.get(`/gists/${id}`, { withCredentials: true });
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -37,7 +26,7 @@ export const getGist = async (id) => {
 // Create a New Gist
 export const createGist = async (gistData) => {
   try {
-    const response = await githubApi.post('/gists', gistData);
+    const response = await githubApi.post('/gists', gistData, { withCredentials: true });
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -47,7 +36,7 @@ export const createGist = async (gistData) => {
 // Update an Existing Gist by ID
 export const updateGist = async (gistId, gistData) => {
   try {
-    const response = await githubApi.patch(`/gists/${gistId}`, gistData);
+    const response = await githubApi.patch(`/gists/${gistId}`, gistData, { withCredentials: true });
     return response.data;
   } catch (error) {
     handleApiError(error);
@@ -57,7 +46,7 @@ export const updateGist = async (gistId, gistData) => {
 // Delete a Gist by ID
 export const deleteGist = async (gistId) => {
   try {
-    await githubApi.delete(`/gists/${gistId}`);
+    await githubApi.delete(`/gists/${gistId}`, { withCredentials: true });
   } catch (error) {
     handleApiError(error);
   }

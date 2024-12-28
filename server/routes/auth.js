@@ -3,26 +3,20 @@
 import express from 'express';
 import axios from 'axios';
 
-export const authRoutes = (stateStore) => {
+export const authRoutes = () => {
   const router = express.Router();
 
+  // GitHub OAuth Callback
   router.post('/github', async (req, res) => {
-    const { code, state } = req.body;
-  
-    console.log('Received state from frontend:', state); // Debugging
-    console.log('State store contents:', Array.from(stateStore.entries())); // Debugging
-  
+    const { code } = req.body;
+    const state = req.cookies.oauth_state; // Retrieve stored state from cookies
+
+    console.log('State from cookie:', state);
+    console.log('Code from request body:', code);
+
     if (!code || !state) {
       return res.status(400).json({ error: 'Missing code or state in OAuth callback.' });
     }
-  
-    if (!stateStore.has(state)) {
-      console.error('State validation failed.');
-      return res.status(400).json({ error: 'Invalid or missing state parameter.' });
-    } 
-  
-    stateStore.delete(state);
-    console.log('State validated and deleted.');
 
     try {
       // Exchange authorization code for access token
@@ -33,6 +27,7 @@ export const authRoutes = (stateStore) => {
           client_secret: process.env.GITHUB_CLIENT_SECRET,
           code,
           redirect_uri: process.env.REDIRECT_URI,
+          state, // Ensure state validation
         },
         { headers: { Accept: 'application/json' } }
       );
@@ -46,6 +41,9 @@ export const authRoutes = (stateStore) => {
 
       console.log('Access token retrieved:', access_token);
 
+      // Clear cookie after successful auth
+      res.clearCookie('oauth_state');
+
       // Respond with the access token
       res.json({ access_token });
     } catch (error) {
@@ -54,6 +52,13 @@ export const authRoutes = (stateStore) => {
         error: error.response?.data?.error || 'Internal server error during token exchange.',
       });
     }
+  });
+
+  // Logout Route
+  router.post('/logout', (req, res) => {
+    console.log('Logout initiated.');
+    res.clearCookie('oauth_state'); // Clear any OAuth-related cookies
+    res.status(200).json({ message: 'Logout successful' });
   });
 
   return router;

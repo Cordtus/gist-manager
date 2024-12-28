@@ -9,6 +9,7 @@ import morgan from 'morgan';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import { createLogger, format, transports } from 'winston';
+import cookieParser from 'cookie-parser'; // Added for cookie handling
 import { authRoutes } from './server/routes/auth.js';
 import { gistRoutes } from './server/routes/gists.js';
 
@@ -42,14 +43,17 @@ if (process.env.NODE_ENV !== 'production') {
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true,
+    origin: process.env.REACT_APP_FRONTEND_URI || 'http://localhost:3000',
+    credentials: true, // Allow credentials
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
 );
+
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -78,6 +82,13 @@ app.get('/api/auth/github/login', (req, res) => {
     const state = crypto.randomBytes(16).toString('hex'); // Generate secure random state
     stateStore.set(state, { createdAt: Date.now() }); // Save to stateStore with timestamp
 
+    // Set state in a secure, HTTP-only cookie
+    res.cookie('oauth_state', state, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Secure cookies in production
+      maxAge: 5 * 60 * 1000, // 5 minutes
+    });
+
     const params = new URLSearchParams({
       client_id: process.env.GITHUB_CLIENT_ID,
       redirect_uri: process.env.REDIRECT_URI,
@@ -103,7 +114,6 @@ app.use((req, res, next) => {
   next();
 });
 
-
 // Routes
 app.use('/api/auth', authRoutes(stateStore)); // Pass stateStore here
 app.use('/api/gists', gistRoutes);
@@ -115,6 +125,7 @@ app.get('*', (req, res) => {
 });
 
 // Error handler middleware
+// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   logger.error({
     message: err.message,
@@ -129,6 +140,7 @@ app.use((err, req, res, next) => {
     message: process.env.NODE_ENV === 'development' ? err.message : undefined,
   });
 });
+
 
 // Start the server
 app.listen(port, '0.0.0.0', () => {

@@ -1,7 +1,7 @@
 // src/contexts/AuthContext.js
 
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import { githubApi, setAuthToken } from '../services/api/auth.js';
+import { githubApi, setAuthToken, authenticateWithGitHub } from '../services/api/auth.js';
 
 const AuthContext = createContext();
 
@@ -9,48 +9,82 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Logout function
   const logout = useCallback(() => {
-    localStorage.removeItem('github_token');
-    setUser(null);
-    setToken(null);
-    setAuthToken(null);
+    fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }) // Inform backend of logout
+      .finally(() => {
+        setUser(null);
+        setAuthToken(null); // Clear tokens from the API service
+      });
   }, []);
 
+  // Fetch authenticated user info
   const fetchUser = useCallback(async () => {
-    if (!token) return;
+    const token = localStorage.getItem('github_token');
+    if (!token) {
+      console.log('[AuthContext] No token found. Skipping user fetch.');
+      return;
+    }
 
     try {
-      const response = await githubApi.get('/user', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await githubApi.get('/user');
       setUser(response.data);
     } catch (error) {
-      console.error('Error fetching user:', error);
-      logout();
+      if (error.response?.status === 401) {
+        console.warn('[AuthContext] Unauthorized access. Clearing token.');
+        localStorage.removeItem('github_token'); // Clear invalid token
+      } else {
+        console.error('[AuthContext] Error fetching user:', error);
+      }
     }
-  }, [token, logout]);
+  }, []);
 
+  // Initialize authentication state
   useEffect(() => {
-    const storedToken = localStorage.getItem('github_token');
-    if (storedToken) {
-      setToken(storedToken);
-      setAuthToken(storedToken); // Set token for API requests
-      fetchUser();
-    }
-    setLoading(false);
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('github_token');
+      if (token) {
+        setAuthToken(token); // Set token for API calls
+        await fetchUser();
+      }
+      setLoading(false); // Ensure loading state is cleared
+    };
+
+    initializeAuth();
   }, [fetchUser]);
 
-  const initiateGithubLogin = () => {
-    const params = new URLSearchParams({
-      client_id: process.env.REACT_APP_GITHUB_CLIENT_ID,
-      redirect_uri: process.env.REACT_APP_REDIRECT_URI,
-      scope: 'gist user',
-    });
+  // Redirect to GitHub login (URL provided by backend)
+  const initiateGithubLogin = async () => {
+    try {
+      const response = await fetch('/api/auth/github/login', { credentials: 'include' });
+      const data = await response.json();
 
-    window.location.href = `https://github.com/login/oauth/authorize?${params.toString()}`;
+      if (data.url) {
+        window.location.href = data.url; // Redirect to GitHub OAuth
+      } else {
+        console.error('[AuthContext] GitHub login URL not provided by the server');
+      }
+    } catch (error) {
+      console.error('[AuthContext] Error initiating GitHub login:', error);
+    }
+  };
+
+  // Login using GitHub authorization code
+  const login = async (code) => {
+    try {
+      const accessToken = await authenticateWithGitHub(code);
+      if (accessToken) {
+        localStorage.removeItem('oauth_state'); // Clear saved state
+        setAuthToken(accessToken); // Set token for API requests
+        await fetchUser(); // Fetch authenticated user
+      }
+    } catch (error) {
+      console.error('[AuthContext] Login failed:', error.message);
+    } finally {
+      setLoading(false); // Ensure loading state is cleared
+    }
   };
 
   return (
@@ -58,10 +92,10 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         loading,
-        login: fetchUser, // Use fetchUser to update user state after login
+        login,
         logout,
         initiateGithubLogin,
-        isAuthenticated: () => !!user && !!token,
+        isAuthenticated: () => !!user,
       }}
     >
       {children}

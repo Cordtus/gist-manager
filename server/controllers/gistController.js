@@ -35,16 +35,23 @@ const githubApi = axios.create({
 });
 
 // Middleware to add authorization headers dynamically
-const addAuthHeader = (token) => ({
-  headers: {
-    Authorization: `token ${token}`,
-  },
-});
+const addAuthHeader = (authHeader) => {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw new Error('Invalid Authorization header format');
+  }
+  const token = authHeader.split(' ')[1]; // Extract token from Bearer
+  return {
+    headers: {
+      Authorization: `token ${token}`,
+    },
+  };
+};
 
 // Get Gists
 export const getGists = async (req, res) => {
   try {
-    const tokenHash = hashToken(req.headers.authorization);
+    const authHeader = req.headers.authorization;
+    const tokenHash = hashToken(authHeader.split(' ')[1]); // Hash raw token
     const cacheKey = `gists-${tokenHash}`;
 
     const cachedGists = cache.get(cacheKey);
@@ -53,7 +60,7 @@ export const getGists = async (req, res) => {
       return res.json(cachedGists);
     }
 
-    const response = await githubApi.get('/gists', addAuthHeader(req.headers.authorization));
+    const response = await githubApi.get('/gists', addAuthHeader(authHeader));
 
     cache.set(cacheKey, response.data);
     res.json(response.data);
@@ -71,10 +78,11 @@ export const getGists = async (req, res) => {
 // Create Gist
 export const createGist = async (req, res) => {
   try {
-    const response = await githubApi.post('/gists', req.body, addAuthHeader(req.headers.authorization));
+    const authHeader = req.headers.authorization;
+    const response = await githubApi.post('/gists', req.body, addAuthHeader(authHeader));
 
     // Invalidate cache using hashed token
-    const tokenHash = hashToken(req.headers.authorization);
+    const tokenHash = hashToken(authHeader.split(' ')[1]);
     cache.del(`gists-${tokenHash}`);
 
     res.json(response.data);
@@ -93,10 +101,11 @@ export const createGist = async (req, res) => {
 export const updateGist = async (req, res) => {
   try {
     const { id } = req.params;
-    const response = await githubApi.patch(`/gists/${id}`, req.body, addAuthHeader(req.headers.authorization));
+    const authHeader = req.headers.authorization;
+    const response = await githubApi.patch(`/gists/${id}`, req.body, addAuthHeader(authHeader));
 
     // Invalidate cache using hashed token
-    const tokenHash = hashToken(req.headers.authorization);
+    const tokenHash = hashToken(authHeader.split(' ')[1]);
     cache.del(`gists-${tokenHash}`);
 
     res.json(response.data);
@@ -115,11 +124,12 @@ export const updateGist = async (req, res) => {
 export const deleteGist = async (req, res) => {
   try {
     const { id } = req.params;
+    const authHeader = req.headers.authorization;
 
-    await githubApi.delete(`/gists/${id}`, addAuthHeader(req.headers.authorization));
+    await githubApi.delete(`/gists/${id}`, addAuthHeader(authHeader));
 
     // Invalidate cache using hashed token
-    const tokenHash = hashToken(req.headers.authorization);
+    const tokenHash = hashToken(authHeader.split(' ')[1]);
     cache.del(`gists-${tokenHash}`);
 
     res.status(204).send();
