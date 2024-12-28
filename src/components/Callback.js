@@ -19,19 +19,18 @@ const Callback = () => {
 
         console.log('Saved State (localStorage):', savedState); // Debug log
         console.log('Received State (callback):', state);       // Debug log
+        console.log('Received Code:', code);                   // Debug log
 
-        // Validate the presence of code and state
         if (!code || !state) {
           throw new Error('Missing code or state in OAuth callback.');
         }
 
-        // Validate state to ensure security
         if (state !== savedState) {
           console.warn(`State mismatch: Expected ${savedState}, received ${state}`); // Debug warning
           throw new Error('Invalid or missing state parameter. Possible CSRF detected.');
         }
 
-        // Clear the saved state from localStorage immediately after validation
+        // Clear the saved state from localStorage immediately
         localStorage.removeItem('oauth_state');
 
         // Send the code and state to the server
@@ -51,13 +50,12 @@ const Callback = () => {
         const data = await response.json();
         console.log('GitHub login successful:', data); // Debug log
 
-        // Redirect to the dashboard on success
         navigate('/dashboard');
       } catch (err) {
-        console.error('OAuth callback error:', err); // Debug log
+        console.error('OAuth callback error:', err); // Debug log for errors
         setError(err.message || 'An unexpected error occurred.');
       } finally {
-        setIsProcessing(false); // Stop loading state
+        setIsProcessing(false); // Stop loading
       }
     };
 

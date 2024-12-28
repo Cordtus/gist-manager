@@ -18,8 +18,12 @@ const app = express();
 const port = process.env.PORT || 5000;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// In-memory OAuth state store
-const stateStore = new Map(); // Use Map to store states with timestamps
+// In-memory state store
+const stateStore = new Map();
+app.use((req, res, next) => {
+  req.stateStore = stateStore; // Attach to request for validation in routes
+  next();
+});
 
 // Logger configuration
 const logger = createLogger({
@@ -71,10 +75,8 @@ app.use(
 // GitHub OAuth login route
 app.get('/api/auth/github/login', (req, res) => {
   try {
-    const state = crypto.randomBytes(16).toString('hex'); // Generate a secure state
-    stateStore.set(state, { createdAt: Date.now() }); // Save the state with a timestamp
-
-    console.log('Generated state:', state); // Debugging
+    const state = crypto.randomBytes(16).toString('hex'); // Generate secure random state
+    stateStore.set(state, { createdAt: Date.now() }); // Save to stateStore with timestamp
 
     const params = new URLSearchParams({
       client_id: process.env.GITHUB_CLIENT_ID,
@@ -90,29 +92,26 @@ app.get('/api/auth/github/login', (req, res) => {
   }
 });
 
-// Middleware to clean up expired states
+// Middleware to cleanup expired states
 app.use((req, res, next) => {
-  const cleanupThreshold = 5 * 60 * 1000; // 5 minutes
   const now = Date.now();
-
-  // Remove expired states
-  for (const [key, { createdAt }] of stateStore.entries()) {
-    if (now - createdAt > cleanupThreshold) {
+  stateStore.forEach((value, key) => {
+    if (now - value.createdAt > 5 * 60 * 1000) { // 5-minute expiration
       stateStore.delete(key);
     }
-  }
-
+  });
   next();
 });
 
+
 // Routes
-app.use('/api/auth', authRoutes(stateStore)); // Pass stateStore to auth routes
+app.use('/api/auth', authRoutes(stateStore)); // Pass stateStore here
 app.use('/api/gists', gistRoutes);
 
 // Serve React static files
-app.use(express.static(path.join(__dirname, 'build')));
+app.use(express.static(path.join(__dirname, 'public')));
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Error handler middleware
@@ -132,6 +131,6 @@ app.use((err, req, res, next) => {
 });
 
 // Start the server
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   logger.info(`Server running on port ${port}`);
 });

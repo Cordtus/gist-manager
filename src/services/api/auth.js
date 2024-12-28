@@ -34,16 +34,14 @@ githubApi.interceptors.response.use(
 
 // Generate the GitHub OAuth URL
 export const generateGitHubOAuthUrl = () => {
-  const state = generateRandomString(32);
-  localStorage.setItem('oauth_state', state);
-
+  const state = generateRandomString(32); // Generate secure random state
+  localStorage.setItem('oauth_state', state); // Save it in localStorage
   const params = new URLSearchParams({
     client_id: process.env.REACT_APP_GITHUB_CLIENT_ID,
     redirect_uri: process.env.REACT_APP_REDIRECT_URI,
     scope: 'gist user',
     state,
   });
-
   return `https://github.com/login/oauth/authorize?${params.toString()}`;
 };
 

@@ -1,8 +1,7 @@
 // src/contexts/AuthContext.js
 
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import { githubApi } from '../services/api/github.js';
-import { api, initiateGithubLogin, setAuthToken } from '../services/api/auth.js';
+import { githubApi, setAuthToken } from '../services/api/auth.js';
 
 const AuthContext = createContext();
 
@@ -14,7 +13,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('oauth_state');
     localStorage.removeItem('github_token');
     setUser(null);
     setToken(null);
@@ -36,57 +34,33 @@ export const AuthProvider = ({ children }) => {
   }, [token, logout]);
 
   useEffect(() => {
-    const validateTokenAndFetchUser = async () => {
-      const storedToken = localStorage.getItem('github_token');
-      if (storedToken) {
-        try {
-          setToken(storedToken);
-          setAuthToken(storedToken);
-          await fetchUser();
-        } catch (error) {
-          console.error('Invalid or expired token:', error);
-          logout();
-        }
-      }
-      setLoading(false);
-    };
+    const storedToken = localStorage.getItem('github_token');
+    if (storedToken) {
+      setToken(storedToken);
+      setAuthToken(storedToken); // Set token for API requests
+      fetchUser();
+    }
+    setLoading(false);
+  }, [fetchUser]);
 
-    validateTokenAndFetchUser();
-  }, [fetchUser, logout]);
+  const initiateGithubLogin = () => {
+    const params = new URLSearchParams({
+      client_id: process.env.REACT_APP_GITHUB_CLIENT_ID,
+      redirect_uri: process.env.REACT_APP_REDIRECT_URI,
+      scope: 'gist user',
+    });
+
+    window.location.href = `https://github.com/login/oauth/authorize?${params.toString()}`;
+  };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        login: async (code, state) => {
-          try {
-            const savedState = localStorage.getItem('oauth_state');
-            if (!state || state !== savedState) {
-              console.error('Invalid state parameter:', { received: state, expected: savedState });
-              throw new Error('Invalid state parameter');
-            }
-
-            localStorage.removeItem('oauth_state');
-
-            const response = await api.post('/api/auth/github', { code });
-            const { access_token } = response.data;
-
-            if (!access_token) throw new Error('No access token received');
-
-            setToken(access_token);
-            setAuthToken(access_token);
-
-            await fetchUser();
-            return true;
-          } catch (error) {
-            console.error('Login error:', error);
-            logout();
-            return false;
-          }
-        },
-        logout,
         loading,
-        initiateGithubLogin, // Pass it from the utility
+        login: fetchUser, // Use fetchUser to update user state after login
+        logout,
+        initiateGithubLogin,
         isAuthenticated: () => !!user && !!token,
       }}
     >
