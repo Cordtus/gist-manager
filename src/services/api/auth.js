@@ -34,27 +34,35 @@ githubApi.interceptors.response.use(
 
 // Generate the GitHub OAuth URL
 export const generateGitHubOAuthUrl = () => {
-  const state = generateRandomString(32); // Generate secure random state
-  localStorage.setItem('oauth_state', state); // Save it in localStorage
+  const state = generateRandomString(32); // Generate a secure random state
+  localStorage.setItem('oauth_state', state); // Save the state in localStorage for validation
+  console.log('Generated state:', state); // Debugging
+  
   const params = new URLSearchParams({
     client_id: process.env.REACT_APP_GITHUB_CLIENT_ID,
     redirect_uri: process.env.REACT_APP_REDIRECT_URI,
     scope: 'gist user',
-    state,
+    state, // Include the generated state
   });
+  
   return `https://github.com/login/oauth/authorize?${params.toString()}`;
 };
 
 // Authenticate with GitHub using the provided code
 export const authenticateWithGitHub = async (code) => {
   try {
-    console.log('Authenticating with GitHub', { code });
-    const response = await api.post('/api/auth/github', { code });
+    const state = localStorage.getItem('oauth_state'); // Retrieve the saved state
+    if (!state) throw new Error('No state found in localStorage for validation.');
+
+    console.log('Authenticating with GitHub', { code, state });
+
+    const response = await api.post('/api/auth/github', { code, state });
     console.log('GitHub authentication success:', response.data);
 
     const { access_token } = response.data;
     if (!access_token) throw new Error('No access token received');
 
+    localStorage.removeItem('oauth_state'); // Clear the state after successful authentication
     localStorage.setItem('github_token', access_token);
     setAuthToken(access_token); // Set the token for API instances
     return access_token;
@@ -95,17 +103,19 @@ export const setAuthToken = (token) => {
 
 // Initiate GitHub Login by redirecting the user
 export const initiateGithubLogin = () => {
-  const state = generateRandomString(32);
-  localStorage.setItem('oauth_state', state);
+  const state = generateRandomString(32); // Generate a secure random state
+  localStorage.setItem('oauth_state', state); // Save the state for validation
 
   const params = new URLSearchParams({
     client_id: process.env.REACT_APP_GITHUB_CLIENT_ID,
     redirect_uri: process.env.REACT_APP_REDIRECT_URI,
     scope: 'gist user',
-    state,
+    state, // Include the generated state
   });
 
-  window.location.href = `https://github.com/login/oauth/authorize?${params.toString()}`;
+  const loginUrl = `https://github.com/login/oauth/authorize?${params.toString()}`;
+  console.log('Redirecting to GitHub login:', loginUrl); // Debugging
+  window.location.href = loginUrl; // Redirect the user
 };
 
 // Generate a random string for state parameter

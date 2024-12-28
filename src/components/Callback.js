@@ -7,7 +7,7 @@ const Callback = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [error, setError] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(true); // Loading state
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -15,18 +15,17 @@ const Callback = () => {
         const searchParams = new URLSearchParams(location.search);
         const code = searchParams.get('code');
         const state = searchParams.get('state');
-        const savedState = localStorage.getItem('oauth_state');
+        const savedState = localStorage.getItem('oauth_state'); // Retrieve state from localStorage
 
-        console.log('Saved State (localStorage):', savedState); // Debug log
-        console.log('Received State (callback):', state);       // Debug log
-        console.log('Received Code:', code);                   // Debug log
+        console.log('Saved State (localStorage):', savedState); // Debugging
+        console.log('Received State (callback):', state);       // Debugging
 
         if (!code || !state) {
           throw new Error('Missing code or state in OAuth callback.');
         }
 
         if (state !== savedState) {
-          console.warn(`State mismatch: Expected ${savedState}, received ${state}`); // Debug warning
+          console.warn(`State mismatch: Expected ${savedState}, received ${state}`); // Debugging
           throw new Error('Invalid or missing state parameter. Possible CSRF detected.');
         }
 
@@ -43,16 +42,16 @@ const Callback = () => {
 
         if (!response.ok) {
           const errorData = await response.json();
-          console.error('Server responded with error:', errorData); // Debug log
+          console.error('Server responded with error:', errorData); // Debugging
           throw new Error(errorData.error || 'Authentication failed.');
         }
 
         const data = await response.json();
-        console.log('GitHub login successful:', data); // Debug log
+        console.log('GitHub login successful:', data); // Debugging
 
         navigate('/dashboard');
       } catch (err) {
-        console.error('OAuth callback error:', err); // Debug log for errors
+        console.error('OAuth callback error:', err); // Debugging
         setError(err.message || 'An unexpected error occurred.');
       } finally {
         setIsProcessing(false); // Stop loading

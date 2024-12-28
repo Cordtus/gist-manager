@@ -8,17 +8,18 @@ export const authRoutes = (stateStore) => {
 
   router.post('/github', async (req, res) => {
     const { code, state } = req.body;
-    console.log('Received state:', state);
+  
+    console.log('Received state from frontend:', state); // Debugging
+    console.log('State store contents:', Array.from(stateStore.entries())); // Debugging
   
     if (!code || !state) {
-      return res.status(400).json({ error: 'Authorization code and state are required.' });
+      return res.status(400).json({ error: 'Missing code or state in OAuth callback.' });
     }
   
-    // Validate the state
     if (!stateStore.has(state)) {
-      console.error('Invalid or missing state parameter.');
+      console.error('State validation failed.');
       return res.status(400).json({ error: 'Invalid or missing state parameter.' });
-    }
+    } 
   
     stateStore.delete(state);
     console.log('State validated and deleted.');
