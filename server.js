@@ -2,7 +2,6 @@
 
 import dotenv from 'dotenv';
 import express from 'express';
-import session from 'express-session';
 import cors from 'cors';
 import path from 'path';
 import helmet from 'helmet';
@@ -19,15 +18,10 @@ const app = express();
 const port = process.env.PORT || 5000;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Ensure required environment variables are present
-if (!process.env.SESSION_SECRET || !process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET || !process.env.REDIRECT_URI) {
-  throw new Error('Missing required environment variables. Please check your .env file.');
-}
+// In-memory OAuth state store
+const stateStore = new Map(); // Use Map to store states with timestamps
 
-// Enable trust proxy for secure cookies behind a proxy (e.g., Heroku, Nginx)
-app.set('trust proxy', 1);
-
-// Winston logger configuration
+// Logger configuration
 const logger = createLogger({
   level: 'info',
   format: format.combine(format.timestamp(), format.json()),
@@ -37,32 +31,13 @@ const logger = createLogger({
     new transports.File({ filename: 'logs/combined.log' }),
   ],
 });
-
-// Add console logging in development
 if (process.env.NODE_ENV !== 'production') {
   logger.add(new transports.Console({ format: format.simple() }));
 }
 
-// Middleware for JSON parsing
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Session middleware configuration
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || 'default_secret', // Make sure SESSION_SECRET is set in .env
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === 'production', // Secure cookies only in production
-      httpOnly: true, // Prevent access to cookies via JavaScript
-      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax', // Adjust for development
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
-    },
-  })
-);
-
-// CORS configuration
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -71,8 +46,6 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
 );
-
-// Helmet for enhanced security headers
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -85,12 +58,8 @@ app.use(
         frameSrc: ["'none'"],
       },
     },
-    crossOriginEmbedderPolicy: true,
-    crossOriginResourcePolicy: { policy: 'cross-origin' },
   })
 );
-
-// logging middleware
 app.use(
   morgan('combined', {
     stream: {
@@ -102,51 +71,48 @@ app.use(
 // GitHub OAuth login route
 app.get('/api/auth/github/login', (req, res) => {
   try {
-    const state = crypto.randomBytes(16).toString('hex');
-    req.session.oauth_state = state;
+    const state = crypto.randomBytes(16).toString('hex'); // Generate a secure state
+    stateStore.set(state, { createdAt: Date.now() }); // Save the state with a timestamp
 
-    console.log('Generated state:', state); // For debugging
+    console.log('Generated state:', state); // Debugging
 
-    req.session.save((err) => {
-      if (err) {
-        console.error('Error saving session:', err);
-        return res.status(500).json({ error: 'Failed to save session state.' });
-      }
-
-      const params = new URLSearchParams({
-        client_id: process.env.GITHUB_CLIENT_ID,
-        redirect_uri: process.env.REDIRECT_URI,
-        scope: 'gist user',
-        state,
-      });
-
-      res.json({ url: `https://github.com/login/oauth/authorize?${params.toString()}` });
+    const params = new URLSearchParams({
+      client_id: process.env.GITHUB_CLIENT_ID,
+      redirect_uri: process.env.REDIRECT_URI,
+      scope: 'gist user',
+      state,
     });
+
+    res.json({ url: `https://github.com/login/oauth/authorize?${params.toString()}` });
   } catch (error) {
-    console.error('Error generating state or saving session:', error);
+    console.error('Error generating state:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/gists', gistRoutes);
-
-// serve static from build dir
-app.use(express.static(path.join(__dirname, 'build')));
-
+// Middleware to clean up expired states
 app.use((req, res, next) => {
-  console.log('Current session data:', req.session);
+  const cleanupThreshold = 5 * 60 * 1000; // 5 minutes
+  const now = Date.now();
+
+  // Remove expired states
+  for (const [key, { createdAt }] of stateStore.entries()) {
+    if (now - createdAt > cleanupThreshold) {
+      stateStore.delete(key);
+    }
+  }
+
   next();
 });
 
-// fallback for React SPA
+// Routes
+app.use('/api/auth', authRoutes(stateStore)); // Pass stateStore to auth routes
+app.use('/api/gists', gistRoutes);
+
+// Serve React static files
+app.use(express.static(path.join(__dirname, 'build')));
 app.get('*', (req, res) => {
-  if (req.accepts('html')) {
-    res.sendFile(path.join(__dirname, 'build', 'index.html'));
-  } else {
-    res.status(404).json({ error: 'Not found' });
-  }
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 // Error handler middleware
@@ -165,6 +131,7 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Start the server
 app.listen(port, () => {
   logger.info(`Server running on port ${port}`);
 });

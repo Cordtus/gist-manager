@@ -1,5 +1,8 @@
+// src/contexts/AuthContext.js
+
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import { api, githubApi, setAuthToken } from '../services/api/github.js';
+import { githubApi } from '../services/api/github.js';
+import { api, initiateGithubLogin, setAuthToken } from '../services/api/auth.js';
 
 const AuthContext = createContext();
 
@@ -51,56 +54,39 @@ export const AuthProvider = ({ children }) => {
     validateTokenAndFetchUser();
   }, [fetchUser, logout]);
 
-  const initiateGithubLogin = () => {
-    const state = generateRandomString(32); // Generate a secure random state
-    localStorage.setItem('oauth_state', state); // Save the state in localStorage for later validation
-  
-    const params = new URLSearchParams({
-      client_id: process.env.REACT_APP_GITHUB_CLIENT_ID,
-      redirect_uri: process.env.REACT_APP_REDIRECT_URI, // Match your GitHub app settings
-      scope: 'gist user',
-      state,
-    });
-  
-    // Redirect to GitHub's OAuth URL
-    window.location.href = `https://github.com/login/oauth/authorize?${params.toString()}`;
-  };
-
-  const login = async (code, state) => {
-    try {
-      const savedState = localStorage.getItem('oauth_state');
-      if (!state || state !== savedState) {
-        console.error('Invalid state parameter:', { received: state, expected: savedState });
-        throw new Error('Invalid state parameter');
-      }
-
-      localStorage.removeItem('oauth_state');
-
-      const response = await api.post('/api/auth/github', { code });
-      const { access_token } = response.data;
-
-      if (!access_token) throw new Error('No access token received');
-
-      setToken(access_token);
-      setAuthToken(access_token);
-
-      await fetchUser();
-      return true;
-    } catch (error) {
-      console.error('Login error:', error);
-      logout();
-      return false;
-    }
-  };
-
   return (
     <AuthContext.Provider
       value={{
         user,
-        login,
+        login: async (code, state) => {
+          try {
+            const savedState = localStorage.getItem('oauth_state');
+            if (!state || state !== savedState) {
+              console.error('Invalid state parameter:', { received: state, expected: savedState });
+              throw new Error('Invalid state parameter');
+            }
+
+            localStorage.removeItem('oauth_state');
+
+            const response = await api.post('/api/auth/github', { code });
+            const { access_token } = response.data;
+
+            if (!access_token) throw new Error('No access token received');
+
+            setToken(access_token);
+            setAuthToken(access_token);
+
+            await fetchUser();
+            return true;
+          } catch (error) {
+            console.error('Login error:', error);
+            logout();
+            return false;
+          }
+        },
         logout,
         loading,
-        initiateGithubLogin,
+        initiateGithubLogin, // Pass it from the utility
         isAuthenticated: () => !!user && !!token,
       }}
     >
@@ -110,8 +96,3 @@ export const AuthProvider = ({ children }) => {
 };
 
 export default AuthContext;
-
-const generateRandomString = (length) => {
-  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  return Array.from({ length }, () => possible.charAt(Math.floor(Math.random() * possible.length))).join('');
-};

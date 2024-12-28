@@ -1,3 +1,5 @@
+// src/components/Sidebar.js
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaHome, FaListAlt, FaPlus, FaExchangeAlt } from 'react-icons/fa';

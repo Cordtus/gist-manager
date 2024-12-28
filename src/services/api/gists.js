@@ -1,9 +1,20 @@
 // services/api/gists.js
 
-import { handleApiError } from '../../utils/errorHandler.js'
-import { githubApi } from './github.js';
+import { handleApiError } from '../../utils/errorHandler.js';
+import { githubApi } from './auth.js';
+import { setAuthToken } from './auth.js';
 
-// Fetch Gists from Backend or Directly from GitHub API
+// Initialize Gists API (ensures token is set before making requests)
+export const initializeGists = () => {
+  const token = localStorage.getItem('github_token');
+  if (token) {
+    setAuthToken(token);
+  } else {
+    console.warn('No GitHub token found. Please authenticate first.');
+  }
+};
+
+// Fetch Gists from GitHub API
 export const getGists = async () => {
   try {
     const response = await githubApi.get('/gists');
@@ -39,15 +50,15 @@ export const updateGist = async (gistId, gistData) => {
     const response = await githubApi.patch(`/gists/${gistId}`, gistData);
     return response.data;
   } catch (error) {
-   handleApiError(error);
- }
+    handleApiError(error);
+  }
 };
 
 // Delete a Gist by ID
 export const deleteGist = async (gistId) => {
-   try { 
-     await githubApi.delete(`/gists/${gistId}`);
-   } catch (error) { 
-     handleApiError(error); 
-   }
+  try {
+    await githubApi.delete(`/gists/${gistId}`);
+  } catch (error) {
+    handleApiError(error);
+  }
 };
