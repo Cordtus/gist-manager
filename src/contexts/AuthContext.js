@@ -1,116 +1,107 @@
-// /contexts/AuthContext.js
-
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { api, githubApi, setAuthToken } from '../services/api/github.js';
 
-// Create AuthContext
 const AuthContext = createContext();
 
-// Custom hook to use AuthContext
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);  // Store user details
-  const [token, setToken] = useState(null);  // Store token in memory (not localStorage)
-  const [loading, setLoading] = useState(true);  // Loading state for authentication
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Logout function to clear tokens and reset user state
   const logout = useCallback(() => {
-    localStorage.removeItem('oauth_state');   // Remove OAuth state from localStorage
-    setUser(null);                            // Reset user state
-    setToken(null);                           // Clear token from memory
-    setAuthToken(null);                       // Clear token from API service
+    localStorage.removeItem('oauth_state');
+    localStorage.removeItem('github_token');
+    setUser(null);
+    setToken(null);
+    setAuthToken(null);
   }, []);
 
-  // Fetch the current authenticated user directly from GitHub
   const fetchUser = useCallback(async () => {
-    if (!token) return;  // If no token, skip fetching user
+    if (!token) return;
 
     try {
       const response = await githubApi.get('/user', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-      
-      setUser(response.data);  // Set user data in state
+      setUser(response.data);
     } catch (error) {
       console.error('Error fetching user:', error);
-      logout();                                        // Logout on error
-    } finally {
-      setLoading(false);                               // Stop loading after fetching user data
+      logout();
     }
   }, [token, logout]);
 
-  // Check if a token exists in local storage and fetch user data if it does
   useEffect(() => {
-    const storedToken = localStorage.getItem('github_token');
-    if (storedToken) {
-      setToken(storedToken);     // Set token in memory
-      setAuthToken(storedToken); // Set the token in the API service for future requests
-      fetchUser();               // Fetch user details with the token
-    } else {
-      setLoading(false);         // No token means no need to fetch user data
-    }
-  }, [fetchUser]);
+    const validateTokenAndFetchUser = async () => {
+      const storedToken = localStorage.getItem('github_token');
+      if (storedToken) {
+        try {
+          setToken(storedToken);
+          setAuthToken(storedToken);
+          await fetchUser();
+        } catch (error) {
+          console.error('Invalid or expired token:', error);
+          logout();
+        }
+      }
+      setLoading(false);
+    };
 
-// Function to initiate GitHub login by redirecting to GitHub's OAuth page
-const initiateGithubLogin = () => {
-  const state = generateRandomString(32); // Generate random state string for security (CSRF protection)
-  localStorage.setItem('oauth_state', state); // Save state to validate later
+    validateTokenAndFetchUser();
+  }, [fetchUser, logout]);
 
-  const params = new URLSearchParams({
-    client_id: process.env.REACT_APP_GITHUB_CLIENT_ID, // Use the correct client ID
-    redirect_uri: 'http://localhost:3000/callback', // Directly set this value to match GitHub OAuth settings
-    scope: 'gist user', // Request necessary scopes
-    state,
-  });
+  const initiateGithubLogin = () => {
+    const state = generateRandomString(32); // Generate a secure random state
+    localStorage.setItem('oauth_state', state); // Save the state in localStorage for later validation
+  
+    const params = new URLSearchParams({
+      client_id: process.env.REACT_APP_GITHUB_CLIENT_ID,
+      redirect_uri: process.env.REACT_APP_REDIRECT_URI, // Match your GitHub app settings
+      scope: 'gist user',
+      state,
+    });
+  
+    // Redirect to GitHub's OAuth URL
+    window.location.href = `https://github.com/login/oauth/authorize?${params.toString()}`;
+  };
 
-  window.location.href = `https://github.com/login/oauth/authorize?${params}`;
-};
-
-  // Function to handle login after receiving authorization code and state from GitHub
   const login = async (code, state) => {
     try {
-      const savedState = localStorage.getItem('oauth_state');     // Retrieve saved OAuth state
-
-      if (!state || state !== savedState) {                       // Validate the state parameter to prevent CSRF attacks
+      const savedState = localStorage.getItem('oauth_state');
+      if (!state || state !== savedState) {
+        console.error('Invalid state parameter:', { received: state, expected: savedState });
         throw new Error('Invalid state parameter');
       }
 
-      localStorage.removeItem('oauth_state');                     // Remove used OAuth state
+      localStorage.removeItem('oauth_state');
 
-      // Exchange authorization code for access token via backend API call.
       const response = await api.post('/api/auth/github', { code });
-      
       const { access_token } = response.data;
-      
+
       if (!access_token) throw new Error('No access token received');
 
-      setToken(access_token);                                     // Store access token in memory (not localStorage)
-      setAuthToken(access_token);                                 // Set token for future API requests
-      
-      await fetchUser();                                          // Fetch user details with the new token
-      
-      return true;                                                // Return success
-      
+      setToken(access_token);
+      setAuthToken(access_token);
+
+      await fetchUser();
+      return true;
     } catch (error) {
       console.error('Login error:', error);
-      logout();                                                   // Logout on failure (e.g., invalid code or state)
-      
-      return false;                                               // Return failure status
+      logout();
+      return false;
     }
   };
 
   return (
-    <AuthContext.Provider 
-      value={{ 
+    <AuthContext.Provider
+      value={{
         user,
         login,
         logout,
         loading,
         initiateGithubLogin,
-        isAuthenticated: () => !!user && !!token 
+        isAuthenticated: () => !!user && !!token,
       }}
     >
       {children}
@@ -120,7 +111,6 @@ const initiateGithubLogin = () => {
 
 export default AuthContext;
 
-// Helper function to generate a random string (used for OAuth state)
 const generateRandomString = (length) => {
   const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   return Array.from({ length }, () => possible.charAt(Math.floor(Math.random() * possible.length))).join('');

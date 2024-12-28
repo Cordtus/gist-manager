@@ -50,13 +50,13 @@ app.use(express.urlencoded({ extended: true }));
 // Session middleware configuration
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'default_secret', // Ensure this is set in .env
+    secret: process.env.SESSION_SECRET || 'default_secret', // Make sure SESSION_SECRET is set in .env
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // Secure only in production
-      httpOnly: true,
-      sameSite: 'lax', // Allow cookies in cross-origin requests for OAuth
+      secure: process.env.NODE_ENV === 'production', // Secure cookies only in production
+      httpOnly: true, // Prevent access to cookies via JavaScript
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax', // Adjust for development
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     },
   })
@@ -103,15 +103,15 @@ app.use(
 app.get('/api/auth/github/login', (req, res) => {
   try {
     const state = crypto.randomBytes(16).toString('hex');
-    req.session.oauth_state = state; // Save state to session
+    req.session.oauth_state = state;
+
+    console.log('Generated state:', state); // For debugging
 
     req.session.save((err) => {
       if (err) {
         console.error('Error saving session:', err);
-        return res.status(500).json({ error: 'Failed to save session state' });
+        return res.status(500).json({ error: 'Failed to save session state.' });
       }
-      console.log('Session state saved:', req.session.oauth_state); // Add debug log
-    });
 
       const params = new URLSearchParams({
         client_id: process.env.GITHUB_CLIENT_ID,
@@ -119,12 +119,9 @@ app.get('/api/auth/github/login', (req, res) => {
         scope: 'gist user',
         state,
       });
-      
-      console.log('Generated State:', state); // Debug log
-      res.json({ 
-        url: `https://github.com/login/oauth/authorize?${params.toString()}`,
-        state // Add state explicitly in the response
-      });      
+
+      res.json({ url: `https://github.com/login/oauth/authorize?${params.toString()}` });
+    });
   } catch (error) {
     console.error('Error generating state or saving session:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -137,6 +134,11 @@ app.use('/api/gists', gistRoutes);
 
 // serve static from build dir
 app.use(express.static(path.join(__dirname, 'build')));
+
+app.use((req, res, next) => {
+  console.log('Current session data:', req.session);
+  next();
+});
 
 // fallback for React SPA
 app.get('*', (req, res) => {

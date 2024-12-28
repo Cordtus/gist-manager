@@ -4,33 +4,35 @@ import path from 'path';
 
 const cracoConfig = {
   webpack: {
-    configure: (webpackConfig, { env, paths }) => {
-      // Modify the entry point if needed
+    configure: (webpackConfig) => {
+      // Ensure the entry point is correctly set
       webpackConfig.entry = './src/index.js';
 
-      // Modify the output configuration
+      // Modify output configuration
       webpackConfig.output = {
         ...webpackConfig.output,
         path: path.resolve(process.cwd(), 'build'),
         filename: 'bundle.js',
-        publicPath: '/', // Ensure correct root path for static assets
+        publicPath: '/', // Correct path for static assets
       };
 
-      // Add or modify module rules
+      // Add custom module rules for assets
       webpackConfig.module.rules.push({
         test: /\.(png|jpg|gif|svg|woff|woff2|eot|ttf|otf)$/,
         type: 'asset/resource',
-      }
-      );
+      });
 
-      // Ensure resolve extensions are configured correctly
+      // Ensure resolve extensions are appropriately configured
       webpackConfig.resolve.extensions = [
-        '*', 
-        '.js', 
-        '.jsx', 
-        ...(webpackConfig.resolve.extensions || [])
+        ...new Set([
+          '.js',
+          '.jsx',
+          '.json',
+          ...(webpackConfig.resolve.extensions || []),
+        ]),
       ];
 
+      // Return the updated Webpack config
       return webpackConfig;
     },
   },
@@ -42,17 +44,14 @@ const cracoConfig = {
     compress: true,
     port: 3000,
     client: {
-      logging: 'info', // Show informative logs in the browser console
-      overlay: true, // Show error overlays in the browser for build issues
+      logging: 'info', // Informative logs in the browser console
+      overlay: { errors: true, warnings: false }, // Show error overlays in the browser
     },
     setupMiddlewares: (middlewares, devServer) => {
       if (!devServer) {
         throw new Error('Webpack Dev Server is not defined');
       }
-
-      // You can add custom middleware here if needed
-      console.log('Custom middlewares can be set up here.');
-
+      console.log('Setting up middlewares...');
       return middlewares;
     },
   },
