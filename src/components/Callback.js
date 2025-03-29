@@ -15,10 +15,11 @@ const Callback = () => {
       const code = searchParams.get('code');
       const returnedState = searchParams.get('state'); // Get state from URL
   
-      const savedState = localStorage.getItem('oauth_state'); // Get saved state
-  
+      const savedState = sessionStorage.getItem('oauth_state'); // Get saved state from sessionStorage
+      console.log(`Saved state: ${savedState}, Returned state: ${returnedState}`);
+
       if (!code || !returnedState || returnedState !== savedState) {
-        console.error('Invalid state parameter');
+        console.error(`Invalid state parameter: expected ${savedState}, got ${returnedState}`);
         navigate('/');
         return;
       }

@@ -39,7 +39,6 @@ if (process.env.NODE_ENV !== 'production') {
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use('/api/auth', authRoutes);
 
 // CORS configuration
 app.use(cors({
@@ -57,7 +56,7 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     maxAge: 3600000 // Set session expiration (1 hour)
   }
 }));
@@ -68,8 +67,8 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       connectSrc: ["'self'", "https://api.github.com", "https://github.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'"], // Consider removing unsafe-inline
-      styleSrc: ["'self'", "'unsafe-inline'"], // Consider removing unsafe-inline
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
       frameSrc: ["'none'"]
     }
@@ -90,6 +89,8 @@ app.get('/api/auth/github/login', (req, res) => {
   const state = crypto.randomBytes(16).toString('hex');
   req.session.oauth_state = state;
 
+  console.log(`Generated state: ${state}`); // Debugging log for state
+
   const params = new URLSearchParams({
     client_id: process.env.GITHUB_CLIENT_ID,
     redirect_uri: process.env.REDIRECT_URI,
@@ -108,7 +109,9 @@ app.post('/api/auth/github', async (req, res) => {
     return res.status(400).json({ error: 'Authorization code is required' });
   }
 
-  if (state !== req.session.oauth_state) {
+  console.log(`Received state: ${state}, Stored state: ${req.session.oauth_state}`); // Debugging log for state
+
+  if (!state || state !== req.session.oauth_state) {
     return res.status(400).json({ error: 'Invalid state parameter' });
   }
 
@@ -126,6 +129,10 @@ app.post('/api/auth/github', async (req, res) => {
 
     const { access_token } = tokenResponse.data;
 
+    if (!access_token) {
+      throw new Error('No access token received');
+    }
+
     // Store access_token securely in an HTTP-only cookie
     res.cookie('access_token', access_token, {
       httpOnly: true,
@@ -142,7 +149,7 @@ app.post('/api/auth/github', async (req, res) => {
     res.json({ user: userResponse.data });
     
   } catch (error) {
-    console.error('GitHub OAuth error:', error);
+    console.error('GitHub OAuth error:', error.response?.data || error.message);
     res.status(500).json({ error: 'Authentication failed' });
   }
 });
@@ -167,7 +174,7 @@ app.get('/api/auth/me', async (req, res) => {
       return res.status(401).json({ error: 'Invalid token' });
     }
 
-    logger.error('GitHub API error:', error);
+    logger.error('GitHub API error:', error.response?.data || error.message);
     res.status(500).json({ error: 'Failed to fetch user data' });
   }
 });

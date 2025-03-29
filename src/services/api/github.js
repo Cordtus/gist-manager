@@ -13,14 +13,14 @@ export const githubApi = axios.create({
   baseURL: 'https://api.github.com',
 });
 
-// Interceptor to automatically add Authorization header with token from localStorage
+// Interceptor to automatically add Authorization header with token from sessionStorage
 githubApi.interceptors.request.use((config) => {
-  const token = localStorage.getItem('github_token');
-  
+  const token = sessionStorage.getItem('github_token');
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  
+
   return config;
 });
 

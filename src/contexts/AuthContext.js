@@ -11,12 +11,12 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);  // Store user details
-  const [token, setToken] = useState(null);  // Store token in memory (not localStorage)
+  const [token, setToken] = useState(null);  // Store token in memory (not sessionStorage)
   const [loading, setLoading] = useState(true);  // Loading state for authentication
 
   // Logout function to clear tokens and reset user state
   const logout = useCallback(() => {
-    localStorage.removeItem('oauth_state');   // Remove OAuth state from localStorage
+    sessionStorage.removeItem('oauth_state');   // Remove OAuth state from sessionStorage
     setUser(null);                            // Reset user state
     setToken(null);                           // Clear token from memory
     setAuthToken(null);                       // Clear token from API service
@@ -42,9 +42,9 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token, logout]);
 
-  // Check if a token exists in local storage and fetch user data if it does
+  // Check if a token exists in sessionStorage and fetch user data if it does
   useEffect(() => {
-    const storedToken = localStorage.getItem('github_token');
+    const storedToken = sessionStorage.getItem('github_token');
     if (storedToken) {
       setToken(storedToken);     // Set token in memory
       setAuthToken(storedToken); // Set the token in the API service for future requests
@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
   // Function to initiate GitHub login by redirecting to GitHub's OAuth page
   const initiateGithubLogin = () => {
     const state = generateRandomString(32);            // Generate random state string for security (CSRF protection)
-    localStorage.setItem('oauth_state', state);        // Save state to validate later
+    sessionStorage.setItem('oauth_state', state);      // Save state to validate later
 
     const params = new URLSearchParams({
       client_id: process.env.REACT_APP_GITHUB_CLIENT_ID,
@@ -72,13 +72,13 @@ export const AuthProvider = ({ children }) => {
   // Function to handle login after receiving authorization code and state from GitHub
   const login = async (code, state) => {
     try {
-      const savedState = localStorage.getItem('oauth_state');     // Retrieve saved OAuth state
+      const savedState = sessionStorage.getItem('oauth_state');     // Retrieve saved OAuth state
 
       if (!state || state !== savedState) {                       // Validate the state parameter to prevent CSRF attacks
-        throw new Error('Invalid state parameter');
+        throw new Error(`Invalid state parameter: expected ${savedState}, got ${state}`);
       }
 
-      localStorage.removeItem('oauth_state');                     // Remove used OAuth state
+      sessionStorage.removeItem('oauth_state');                     // Remove used OAuth state
 
       // Exchange authorization code for access token via backend API call.
       const response = await api.post('/api/auth/github', { code });
@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }) => {
       
       if (!access_token) throw new Error('No access token received');
 
-      setToken(access_token);                                     // Store access token in memory (not localStorage)
+      setToken(access_token);                                     // Store access token in memory (not sessionStorage)
       setAuthToken(access_token);                                 // Set token for future API requests
       
       await fetchUser();                                          // Fetch user details with the new token
