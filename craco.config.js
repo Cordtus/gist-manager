@@ -1,15 +1,13 @@
 // craco.config.js
-
 const path = require('path');
-const { whenDev } = require('@craco/craco');
 
 module.exports = {
   webpack: {
     configure: (webpackConfig, { env, paths }) => {
-      // Modify the entry point if needed
+      // Entry point configuration
       webpackConfig.entry = './src/index.js';
 
-      // Modify the output configuration
+      // Output configuration
       webpackConfig.output = {
         ...webpackConfig.output,
         path: path.resolve(__dirname, 'build'),
@@ -17,7 +15,7 @@ module.exports = {
         publicPath: '/',
       };
 
-      // Add or modify module rules
+      // Add module rules
       webpackConfig.module.rules.push(
         {
           test: /\.(png|jpg|gif|svg|woff|woff2|eot|ttf|otf)$/,
@@ -25,12 +23,14 @@ module.exports = {
         }
       );
 
-      // Modify resolve extensions
-      webpackConfig.resolve.extensions = ['*', '.js', '.jsx', ...webpackConfig.resolve.extensions];
+      // Fix resolve extensions to include the leading dot
+      webpackConfig.resolve.extensions = ['.js', '.jsx', '.json', '.web.jsx', '.web.js', '.mjs', '.web.mjs', ...webpackConfig.resolve.extensions];
 
       return webpackConfig;
     },
   },
+  
+  // Dev server configuration
   devServer: {
     setupMiddlewares: (middlewares, devServer) => {
       if (!devServer) {
@@ -38,7 +38,12 @@ module.exports = {
       }
       return middlewares;
     },
+    // Add proxy configuration for API requests
+    proxy: {
+      '/api': 'http://localhost:5000'
+    }
   },
+  
   plugins: [
     {
       plugin: {
