@@ -5,15 +5,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from './common/Spinner';
 
-// Same constant as in AuthContext
-const OAUTH_STATE_KEY = 'gist_manager_oauth_state';
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 const Callback = () => {
   const { login } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [error, setError] = useState(null);
-  const [debugInfo, setDebugInfo] = useState({});
   const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
@@ -21,43 +19,10 @@ const Callback = () => {
       try {
         setIsProcessing(true);
         
-        // Parse the URL parameters
+        // Parse URL parameters
         const searchParams = new URLSearchParams(location.search);
         const code = searchParams.get('code');
         const returnedState = searchParams.get('state');
-        
-        // Get the stored state from various storage locations
-        const savedStateLocal = localStorage.getItem(OAUTH_STATE_KEY);
-        const savedStateSession = sessionStorage.getItem(OAUTH_STATE_KEY);
-        
-        // Try to get state from cookie as well
-        const savedStateCookie = document.cookie
-          .split('; ')
-          .find(row => row.startsWith(`${OAUTH_STATE_KEY}=`))
-          ?.split('=')[1];
-      
-        // Store debug info for display
-        setDebugInfo({
-          code: code ? `${code.substring(0, 5)}...` : 'none',
-          returnedState,
-          savedStates: {
-            localStorage: savedStateLocal,
-            sessionStorage: savedStateSession,
-            cookie: savedStateCookie
-          },
-          url: window.location.href,
-          time: new Date().toISOString()
-        });
-        
-        // Debug logging
-        console.log('==== GitHub OAuth Callback Debug ====');
-        console.log(`Code: ${code ? `${code.substring(0, 5)}...` : 'none'}`);
-        console.log(`Returned state: ${returnedState}`);
-        console.log('Saved states:', {
-          localStorage: savedStateLocal,
-          sessionStorage: savedStateSession,
-          cookie: savedStateCookie
-        });
         
         if (!code) {
           setError('No authorization code received from GitHub. Authentication failed.');
@@ -65,23 +30,22 @@ const Callback = () => {
           return;
         }
         
-        // Attempt login with the code and state
+        // Call login function with code and state
         const success = await login(code, returnedState);
         
         if (success) {
-          navigate('/dashboard');
+          navigate('/');
         } else {
           setError('Authentication failed. Please try again.');
           setIsProcessing(false);
         }
       } catch (error) {
         console.error('Authentication error:', error);
-        setError(`Authentication error: ${error.message}`);
+        setError(`Authentication failed: ${isDevelopment ? error.message : 'Please try again later.'}`);
         setIsProcessing(false);
       }
     };
     
-    // Execute the callback handler when component mounts
     handleCallback();
   }, [login, location, navigate]);
   
@@ -91,14 +55,6 @@ const Callback = () => {
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           <p className="font-bold">Authentication Error</p>
           <p>{error}</p>
-        </div>
-        
-        {/* Show debug info to help troubleshoot */}
-        <div className="bg-gray-100 border border-gray-300 text-gray-700 px-4 py-3 rounded mb-4">
-          <p className="font-bold">Debug Information:</p>
-          <pre className="text-xs mt-2 overflow-auto max-h-96">
-            {JSON.stringify(debugInfo, null, 2)}
-          </pre>
         </div>
         
         <div className="flex space-x-4">

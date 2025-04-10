@@ -46,20 +46,20 @@ Gist Manager is a web application for managing GitHub Gists with additional feat
    yarn dev
    ```
 
-2. Start the backend server:
+Start the backend server:
 
    ```shell
    yarn server
    ```
 
-3. In a new terminal, build and start the React frontend:
+In a new terminal, build and start the React frontend:
 
    ```shell
    yarn build
    yarn start
    ```
 
-4. Open `http://localhost:3000` in your browser.
+Open `http://localhost:3000` in your browser.
 
 ## Testing
 

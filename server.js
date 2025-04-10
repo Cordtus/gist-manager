@@ -35,13 +35,24 @@ if (process.env.NODE_ENV !== 'production') {
   }));
 }
 
-// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS configuration
+// cors config
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: function(origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'https://gistmd.basementnodes.ca',
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
@@ -57,7 +68,7 @@ app.use(session({
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 3600000 // Session expiration (1 hour)
+    maxAge: 24 * 60 * 60 * 1000 // 24h
   }
 }));
 
@@ -84,35 +95,34 @@ app.use(morgan('combined', {
   }
 }));
 
-// ====== GITHUB OAUTH ROUTES ======
+// GITHUB OAUTH ROUTES
 
-// GitHub OAuth login route - generate state and return auth URL
+// login route - generate state
 app.get('/api/auth/github/login', (req, res) => {
-  // Generate a secure random state for CSRF protection
+  // Generate a secure random state
   const state = crypto.randomBytes(16).toString('hex');
   
-  // Store state in session for verification after redirect
-  req.session.oauth_state = state;
+  // store state in session
+  req.session.oauthState = state;
   
   logger.info(`[OAuth] Generated state: ${state} and stored in session`);
-  console.log(`[OAuth] Generated state: ${state} and stored in session`);
 
   // Build the GitHub OAuth URL with appropriate parameters
   const params = new URLSearchParams({
     client_id: process.env.GITHUB_CLIENT_ID,
     redirect_uri: process.env.REDIRECT_URI || `${req.protocol}://${req.get('host')}/callback`,
-    scope: 'gist user', // Request gist and user permissions
-    state: state // Include state for CSRF protection
+    scope: 'gist user',
+    state: state
   });
 
-  // Return the complete GitHub authorization URL to the client
+  // Return the authorization URL to the client
   res.json({ url: `https://github.com/login/oauth/authorize?${params.toString()}` });
 });
 
 // GitHub OAuth callback route to exchange code for an access token
 app.post('/api/auth/github', async (req, res) => {
   try {
-    const { code, state, skipValidation } = req.body;
+    const { code, state } = req.body;
 
     // Ensure code is provided
     if (!code) {
@@ -120,69 +130,48 @@ app.post('/api/auth/github', async (req, res) => {
       return res.status(400).json({ error: 'Authorization code is required' });
     }
 
-    // Log received state and session state for debugging
-    const sessionState = req.session.oauth_state || null;
+    // Log request details for debugging
     logger.info(`[OAuth] Received code exchange request:`);
     logger.info(`  - State from client: ${state}`);
-    logger.info(`  - State from session: ${sessionState}`);
-    logger.info(`  - Skip validation flag: ${skipValidation}`);
-    console.log(`[OAuth] Received code exchange request:`);
-    console.log(`  - State from client: ${state}`);
-    console.log(`  - State from session: ${sessionState}`);
-    console.log(`  - Skip validation flag: ${skipValidation}`);
-
-    // Determine if state validation should be skipped
-    const shouldSkipValidation = 
-      skipValidation === true || // Client explicitly requested to skip
-      process.env.NODE_ENV === 'development' && process.env.SKIP_OAUTH_STATE_VALIDATION === 'true'; // Environment setting
+    logger.info(`  - State from session: ${req.session.oauthState}`);
     
-    if (!shouldSkipValidation) {
-      // Validate the state parameter to prevent CSRF attacks
-      if (!state) {
-        logger.error('[OAuth] Missing state parameter');
-        return res.status(400).json({ error: 'State parameter is required' });
-      }
-      
-      if (!sessionState) {
-        logger.error('[OAuth] No state found in session');
-        return res.status(400).json({ 
-          error: 'Session state not found', 
-          message: 'Your session may have expired. Please try logging in again.'
-        });
-      }
-      
-      if (state !== sessionState) {
-        logger.error(`[OAuth] State mismatch: expected ${sessionState}, got ${state}`);
+    // validate state (in prod only)
+    if (process.env.NODE_ENV !== 'development') {
+      if (!req.session.oauthState || state !== req.session.oauthState) {
+        logger.error('[OAuth] State validation failed');
         return res.status(400).json({ 
           error: 'Invalid state parameter',
-          message: 'The state parameter does not match. This may indicate a CSRF attack.'
+          message: 'Authentication failed due to invalid state. This could be a CSRF attempt or session expiration.'
         });
       }
-      
-      logger.info('[OAuth] State parameter validated successfully');
-      console.log('[OAuth] State parameter validated successfully');
-    } else {
-      logger.warn('[OAuth] State validation skipped (development mode)');
-      console.warn('[OAuth] State validation skipped (development mode)');
+    } else if (!req.session.oauthState) {
+      logger.warn('[OAuth] No state found in session but proceeding (development mode)');
+    } else if (state !== req.session.oauthState) {
+      logger.warn(`[OAuth] State mismatch but proceeding (development mode): ${state} vs ${req.session.oauthState}`);
     }
 
-    // Clear the state from session after validation
-    delete req.session.oauth_state;
+    // clear state after each use
+    req.session.oauthState = null;
     logger.info('[OAuth] State cleared from session');
 
-    // Exchange the authorization code for an access token
+    // determine redirect URI
+    const effectiveRedirectUri = 
+      process.env.REDIRECT_URI || 
+      `${req.protocol}://${req.get('host')}/callback`;
+      
+    // exchange the auth code for token
     const tokenResponse = await axios.post(
       'https://github.com/login/oauth/access_token',
       {
         client_id: process.env.GITHUB_CLIENT_ID,
         client_secret: process.env.GITHUB_CLIENT_SECRET,
         code,
-        redirect_uri: process.env.REDIRECT_URI || `${req.protocol}://${req.get('host')}/callback`,
+        redirect_uri: effectiveRedirectUri,
       },
       { headers: { Accept: 'application/json' } }
     );
 
-    // Check if we received a valid access token
+    // check if received valid token
     const { access_token, error: githubError, error_description } = tokenResponse.data;
 
     if (githubError) {
@@ -198,22 +187,31 @@ app.post('/api/auth/github', async (req, res) => {
       return res.status(400).json({ error: 'No access token received from GitHub' });
     }
 
-    // Fetch user data for verification (optional)
+    // store token in session
+    req.session.githubToken = access_token;
+
+    // fetch user for verification
     try {
       const userResponse = await axios.get('https://api.github.com/user', {
         headers: { Authorization: `Bearer ${access_token}` },
       });
-      const { login, name } = userResponse.data;
+      const { login, name, id } = userResponse.data;
       logger.info(`[OAuth] Successfully authenticated user: ${login}`);
-      console.log(`[OAuth] Successfully authenticated user: ${login} (${name || 'unnamed'})`);
+      
+      // store user session info
+      req.session.user = {
+        id,
+        login,
+        name
+      };
     } catch (userError) {
       logger.warn('[OAuth] Could not fetch user data, but token was received:', userError.message);
     }
 
-    // Return the access token to the client
+    // return access token to client
     logger.info('[OAuth] Authentication successful, returning token');
     res.json({ access_token });
-    
+      
   } catch (error) {
     logger.error('[OAuth] Error during GitHub authentication:', error.message);
     
@@ -223,42 +221,64 @@ app.post('/api/auth/github', async (req, res) => {
     
     res.status(500).json({ 
       error: 'Authentication failed', 
-      message: error.message 
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
 
-// ====== API ROUTES ======
+// Logout endpoint
+app.post('/api/auth/logout', (req, res) => {
+  // Clear session
+  req.session.destroy((err) => {
+    if (err) {
+      logger.error('[OAuth] Error destroying session:', err);
+      return res.status(500).json({ error: 'Failed to logout' });
+    }
+    
+    logger.info('[OAuth] User logged out successfully');
+    res.json({ message: 'Logged out successfully' });
+  });
+});
 
-// Gist API routes
+// verify auth
+app.get('/api/auth/status', (req, res) => {
+  if (req.session.githubToken && req.session.user) {
+    res.json({ 
+      authenticated: true, 
+      user: req.session.user 
+    });
+  } else {
+    res.json({ authenticated: false });
+  }
+});
+
+// API ROUTES
+
 app.use('/api/gists', gistRoutes);
 
-// ====== SERVING STATIC FILES ======
+// SERVING STATIC FILES
 
-// Serve static files from build folder (for React frontend)
 app.use(express.static(path.join(__dirname, 'build')));
 
-// Catchall handler for serving React app (SPA)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
-// ====== ERROR HANDLING ======
+// ERROR HANDLING
 
-// Global error handler middleware
+// global error handler
 app.use((err, req, res, next) => {
   logger.error('Server error:', err);
   
-  // Send appropriate error response
+  // send error response
   res.status(err.status || 500).json({
     error: 'An unexpected error occurred',
     message: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
 });
 
-// ====== SERVER STARTUP ======
-
-// Start the server
+// start server
 app.listen(port, () => {
   logger.info(`Server running on port ${port}`);
   console.log(`Server running on port ${port}`);

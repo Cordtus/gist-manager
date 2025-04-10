@@ -1,5 +1,4 @@
 // App.js
-
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -13,7 +12,14 @@ import DeleteGist from './components/DeleteGist';
 import './styles/index.css';
 
 const AppContent = () => {
-  const { loading } = useAuth();
+  const auth = useAuth();
+  
+  // Guard against undefined auth
+  if (!auth) {
+    return <div>Error: Authentication context is unavailable</div>;
+  }
+  
+  const { loading } = auth;
 
   if (loading) {
     return <div>Loading...</div>;
