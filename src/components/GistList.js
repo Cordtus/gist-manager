@@ -167,59 +167,67 @@ const GistList = () => {
     setCurrentPage(1); // Reset to first page after filtering
   }, [searchIndex]);
 
-  // Fetch gists from API - defined AFTER the functions it uses
-  const fetchGists = useCallback(async () => {
-    // ref check to prevent re-fetching
-    if (hasDataFetchedRef.current) {
-      console.log('Gists already fetched, skipping fetch');
-      return;
-    }
-    
-    try {
-      setLoading(true);
-      setError(null);
-      const gistsData = await getGists();
-      
-      if (Array.isArray(gistsData) && gistsData.length > 0) {
-        setGists(gistsData);
-        buildSearchIndex(gistsData);
-        applyFiltersAndSort(gistsData, searchTerm, filterOptions, sortOption, sortDirection);
-        hasDataFetchedRef.current = true;
-      }
-    } catch (error) {
-      console.error('Error fetching gists:', error);
-      setError('Failed to fetch gists. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  }, [applyFiltersAndSort, buildSearchIndex, filterOptions, searchTerm, sortDirection, sortOption]);
+// Fetch gists from API
+const fetchGists = useCallback(async () => {
+  if (hasDataFetchedRef.current) {
+    console.log('Gists already fetched, skipping fetch');
+    return;
+  }
 
-  // fetch gists
-  useEffect(() => {
-    if (user && !hasDataFetchedRef.current) {
-      fetchGists();
-    }
-  }, [user, fetchGists]);
+  try {
+    setLoading(true);
+    setError(null);
 
-  // Handle search with debounce
-  useEffect(() => {
+    const gistsData = await getGists();
+    if (Array.isArray(gistsData)) {
+      setGists(gistsData);
+      buildSearchIndex(gistsData);
+      applyFiltersAndSort(gistsData, searchTerm, filterOptions, sortOption, sortDirection);
+    }
+  } catch (error) {
+    console.error('Error fetching gists:', error);
+    setError('Failed to fetch gists.'); // Removed the trailing 'r.'
+  } finally {
+    // Always set this, so it won't fetch again
+    hasDataFetchedRef.current = true;
+    setLoading(false);
+  }
+}, [
+  buildSearchIndex,
+  applyFiltersAndSort,
+  searchTerm,
+  filterOptions,
+  sortOption,
+  sortDirection
+]);
+
+
+useEffect(() => {
+  if (user && !hasDataFetchedRef.current) {
+    fetchGists();
+  }
+}, [user, fetchGists]);
+
+
+// Handle search with debounce
+useEffect(() => {
+  if (searchTimeoutRef.current) {
+    clearTimeout(searchTimeoutRef.current);
+  }
+  
+  // skip if no data yet
+  if (gists.length === 0) return;
+  
+  searchTimeoutRef.current = setTimeout(() => {
+    applyFiltersAndSort(gists, searchTerm, filterOptions, sortOption, sortDirection);
+  }, 300);
+  
+  return () => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
-    // skip if no data yet
-    if (gists.length === 0) return;
-    
-    searchTimeoutRef.current = setTimeout(() => {
-      applyFiltersAndSort(gists, searchTerm, filterOptions, sortOption, sortDirection);
-    }, 300);
-    
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchTerm, filterOptions, sortOption, sortDirection, gists, applyFiltersAndSort]);
+  };
+}, [searchTerm, filterOptions, sortOption, sortDirection, gists, applyFiltersAndSort]);
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
