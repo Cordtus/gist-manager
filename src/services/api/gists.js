@@ -10,18 +10,61 @@ import { githubApi } from './github';
  * @param {Function} [setError] - Optional state setter for error handling
  * @returns {Promise<Array>} - Array of gists
  */
+
+// cache
+let isCurrentlyFetching = false;
+let lastFetchTimestamp = 0;
+const FETCH_COOLDOWN = 5000;
+let cachedGistsData = null;
+const CACHE_TTL = 60000;
+
 export const getGists = async (token, setError) => {
+  const now = Date.now();
+  
+  // return cached if available and not stale
+  if (cachedGistsData && (now - lastFetchTimestamp < CACHE_TTL)) {
+    logInfo('Using cached gists data', { cacheAge: now - lastFetchTimestamp });
+    return cachedGistsData;
+  }
+  
+  // prevent simultaneous requests
+  if (isCurrentlyFetching) {
+    logInfo('Fetch prevented: Already fetching gists');
+    return cachedGistsData || [];
+  }
+  
+  // enforce request cooldown
+  if (now - lastFetchTimestamp < FETCH_COOLDOWN) {
+    logInfo('Fetch prevented: Cooldown period not elapsed');
+    return cachedGistsData || [];
+  }
+  
   try {
     logInfo('Fetching gists for authenticated user');
+    isCurrentlyFetching = true;
+    
     const response = await githubApi.get('/gists');
+    
+    // update cache and timestamp
+    cachedGistsData = response.data;
+    lastFetchTimestamp = Date.now();
     logInfo(`Successfully fetched ${response.data.length} gists`);
+    
     return response.data;
   } catch (error) {
     logError('Error fetching gists', { error: error.message });
-    trackError(error, ErrorCategory.API, { action: 'getGists' });
     handleApiError(error, setError);
-    throw error; // Re-throw to allow component-level handling
+    throw error;
+  } finally {
+    isCurrentlyFetching = false;
   }
+};
+
+// force refresh cache
+export const invalidateGistsCache = () => {
+  cachedGistsData = null;
+  lastFetchTimestamp = 0;
+  logInfo('Gists cache invalidated');
 };
 
 /**
@@ -56,6 +99,10 @@ export const createGist = async (gistData, setError) => {
     logInfo('Creating new gist', { description: gistData.description });
     const response = await githubApi.post('/gists', gistData);
     logInfo(`Successfully created gist: ${response.data.id}`);
+    
+    // invalidate cache after create
+    invalidateGistsCache();
+    
     return response.data;
   } catch (error) {
     logError('Error creating gist', { error: error.message });
@@ -77,6 +124,10 @@ export const updateGist = async (gistId, gistData, setError) => {
     logInfo(`Updating gist: ${gistId}`);
     const response = await githubApi.patch(`/gists/${gistId}`, gistData);
     logInfo(`Successfully updated gist: ${gistId}`);
+    
+    // invalidate cache after update
+    invalidateGistsCache();
+    
     return response.data;
   } catch (error) {
     logError(`Error updating gist: ${gistId}`, { error: error.message });
@@ -97,6 +148,10 @@ export const deleteGist = async (gistId, setError) => {
     logInfo(`Deleting gist: ${gistId}`);
     await githubApi.delete(`/gists/${gistId}`);
     logInfo(`Successfully deleted gist: ${gistId}`);
+    
+    // invalidate cache after delete
+    invalidateGistsCache();
+    
     return true; // Return success status
   } catch (error) { 
     logError(`Error deleting gist: ${gistId}`, { error: error.message });
@@ -115,7 +170,7 @@ export const deleteGist = async (gistId, setError) => {
 export const searchGists = async (query, setError) => {
   try {
     logInfo(`Searching gists with query: ${query}`);
-    // First get all gists
+    // fetch all gists (use cache if healthy)
     const allGists = await getGists();
     
     // Client-side filtering (GitHub API doesn't support direct gist content search)

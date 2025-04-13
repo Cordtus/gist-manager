@@ -44,25 +44,24 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
       return;
     }
-
+  
     try {
       setLoading(true);
+      
+      // Use authService to get user data
       const userData = await authService.getCurrentUser();
+      
+      // If userData has email or we got the data we need, just use it
       setUser(userData);
       setError(null);
-      logInfo('User data fetched successfully', { username: userData.login });
     } catch (error) {
-      logError('Error fetching user:', { error: error.message });
-      trackError(error, ErrorCategory.AUTHENTICATION, {
-        step: 'fetchUser',
-        hasToken: !!token
-      });
+      console.error('Error fetching user:', error.message);
       setError('Failed to retrieve user information');
       logout();
     } finally {
       setLoading(false);
     }
-  }, [token, logout]); // Added logout to dependency array
+  }, [token, logout]);
 
   // Check authentication status on application load
   useEffect(() => {
@@ -115,11 +114,15 @@ export const AuthProvider = ({ children }) => {
     };
   }, [logout]);
 
-  // Initiate GitHub login
   const initiateGithubLogin = useCallback(async () => {
     try {
       // Get auth URL from server (which handles state)
-      const response = await axios.get('/api/auth/github/login', { withCredentials: true });
+      const response = await axios.get('/api/auth/github/login', { 
+        params: {
+          scopes: 'gist user user:email'  // Add user:email scope for email access
+        },
+        withCredentials: true 
+      });
       
       if (!response.data || !response.data.url) {
         throw new Error('Invalid response from server');
@@ -128,7 +131,7 @@ export const AuthProvider = ({ children }) => {
       // Redirect to GitHub
       window.location.href = response.data.url;
     } catch (error) {
-      logError('Error initiating GitHub login:', error);
+      console.error('Error initiating GitHub login:', error.message);
       setError('Failed to initiate GitHub login. Please try again later.');
     }
   }, []);

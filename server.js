@@ -105,13 +105,16 @@ app.get('/api/auth/github/login', (req, res) => {
   // store state in session
   req.session.oauthState = state;
   
+  // Get requested scopes or use default
+  const scopes = req.query.scopes || 'gist user';
+  
   logger.info(`[OAuth] Generated state: ${state} and stored in session`);
 
   // Build the GitHub OAuth URL with appropriate parameters
   const params = new URLSearchParams({
     client_id: process.env.GITHUB_CLIENT_ID,
     redirect_uri: process.env.REDIRECT_URI || `${req.protocol}://${req.get('host')}/callback`,
-    scope: 'gist user',
+    scope: scopes,
     state: state
   });
 
@@ -195,14 +198,38 @@ app.post('/api/auth/github', async (req, res) => {
       const userResponse = await axios.get('https://api.github.com/user', {
         headers: { Authorization: `Bearer ${access_token}` },
       });
-      const { login, name, id } = userResponse.data;
+      const { login, name, id, avatar_url, bio, created_at, public_repos, public_gists, followers, following } = userResponse.data;
       logger.info(`[OAuth] Successfully authenticated user: ${login}`);
       
-      // store user session info
+      // Try to get user's email if the scope includes it
+      let email = null;
+      try {
+        const emailResponse = await axios.get('https://api.github.com/user/emails', {
+          headers: { Authorization: `Bearer ${access_token}` },
+        });
+        
+        // Find primary email
+        const primaryEmail = emailResponse.data.find(email => email.primary);
+        if (primaryEmail) {
+          email = primaryEmail.email;
+        }
+      } catch (emailError) {
+        logger.warn('[OAuth] Could not fetch user email - email scope might be missing');
+      }
+      
+      // store user session info with more complete profile
       req.session.user = {
         id,
         login,
-        name
+        name,
+        email,
+        avatar_url,
+        bio,
+        created_at,
+        public_repos,
+        public_gists,
+        followers,
+        following
       };
     } catch (userError) {
       logger.warn('[OAuth] Could not fetch user data, but token was received:', userError.message);
