@@ -5,12 +5,18 @@ import { Link } from 'react-router-dom';
 import { getGists } from '../services/api/gists';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from './common/Spinner';
-import { UserProfile } from './UserProfile';
 
 const Dashboard = () => {
   const [gists, setGists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [metrics, setMetrics] = useState({
+    totalGists: 0,
+    totalFiles: 0,
+    avgFilesPerGist: 0,
+    mostRecentUpdate: null,
+    fileTypes: {}
+  });
   const { user, token } = useAuth();
 
   const fetchGists = useCallback(async () => {
@@ -18,6 +24,39 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
       const gistsData = await getGists(token);
+      
+      // Calculate metrics from gists data
+      const totalGists = gistsData.length;
+      let totalFiles = 0;
+      let mostRecentUpdate = null;
+      const fileTypes = {};
+      
+      gistsData.forEach(gist => {
+        const filesCount = Object.keys(gist.files).length;
+        totalFiles += filesCount;
+        
+        // Track file types for statistics
+        Object.values(gist.files).forEach(file => {
+          const extension = file.filename.split('.').pop().toLowerCase() || 'unknown';
+          fileTypes[extension] = (fileTypes[extension] || 0) + 1;
+        });
+        
+        // Track most recent update
+        const updateDate = new Date(gist.updated_at);
+        if (!mostRecentUpdate || updateDate > mostRecentUpdate) {
+          mostRecentUpdate = updateDate;
+        }
+      });
+      
+      setMetrics({
+        totalGists,
+        totalFiles,
+        avgFilesPerGist: totalGists ? (totalFiles / totalGists).toFixed(1) : 0,
+        mostRecentUpdate,
+        fileTypes
+      });
+      
+      // Only display the 5 most recent gists on dashboard
       setGists(gistsData.slice(0, 5));
     } catch (error) {
       console.error('Error fetching gists:', error);
@@ -33,11 +72,32 @@ const Dashboard = () => {
     }
   }, [user, token, fetchGists]);
 
+  const getGistPreview = (gist) => {
+    // Get first file content preview
+    const firstFile = Object.values(gist.files)[0];
+    if (!firstFile || !firstFile.content) return 'No content available';
+    
+    // Get first line or first 50 characters
+    const content = firstFile.content;
+    const firstLine = content.split('\n')[0].trim();
+    return firstLine.length > 50 ? `${firstLine.substring(0, 50)}...` : firstLine;
+  };
+
   if (!user) {
     return (
-      <div className="text-center">
+      <div className="text-center p-6 bg-white rounded-lg shadow-md">
         <h2 className="text-2xl font-bold mb-4">Welcome to Gist Manager</h2>
-        <p>Please log in to view your dashboard.</p>
+        <p className="text-gray-700 mb-4">Manage your GitHub Gists with powerful features for creating, editing, and organizing your code snippets.</p>
+        <p className="mb-6">Please log in with your GitHub account to get started.</p>
+        <div className="bg-blue-50 p-4 rounded-md text-sm">
+          <h3 className="font-semibold text-blue-700">Features:</h3>
+          <ul className="list-disc pl-5 mt-2 text-blue-800">
+            <li>Create and edit gists with live Markdown preview</li>
+            <li>Search and filter through all your gists</li>
+            <li>Convert between file formats</li>
+            <li>Organize your code snippets efficiently</li>
+          </ul>
+        </div>
       </div>
     );
   }
@@ -47,42 +107,125 @@ const Dashboard = () => {
   }
 
   if (error) {
-    return <div className="text-red-500">{error}</div>;
+    return <div className="text-red-500 p-4 bg-red-50 rounded-md">{error}</div>;
   }
 
-  return (
-    <div>
-      {/* Display full user profile details */}
-      <UserProfile /> {/* Reuse UserProfile component */}
+  // Get top 3 file types
+  const topFileTypes = Object.entries(metrics.fileTypes)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
 
-      {/* Gist list */}
-      <h2 className="text-xl font-bold mb-4">Recent Gists</h2>
-      <ul className="bg-white shadow overflow-hidden sm:rounded-md">
+  return (
+    <div className="space-y-6">
+      {/* User Profile Card */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">User Profile</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-sm text-gray-600">Username:</p>
+            <p className="font-medium">{user.login || 'Not available'}</p>
+            
+            <p className="text-sm text-gray-600 mt-3">Name:</p>
+            <p className="font-medium">{user.name || 'Not provided'}</p>
+            
+            <p className="text-sm text-gray-600 mt-3">Email:</p>
+            <p className="font-medium">{user.email || 'Not provided'}</p>
+          </div>
+          <div>
+            {user.avatar_url && (
+              <img 
+                src={user.avatar_url} 
+                alt="Profile" 
+                className="w-24 h-24 rounded-full border-2 border-gray-200 float-right"
+              />
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {/* Gist Statistics Card */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Gist Statistics</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-blue-50 p-4 rounded-md">
+            <p className="text-sm text-blue-700">Total Gists</p>
+            <p className="text-2xl font-bold text-blue-800">{metrics.totalGists}</p>
+          </div>
+          <div className="bg-green-50 p-4 rounded-md">
+            <p className="text-sm text-green-700">Total Files</p>
+            <p className="text-2xl font-bold text-green-800">{metrics.totalFiles}</p>
+          </div>
+          <div className="bg-purple-50 p-4 rounded-md">
+            <p className="text-sm text-purple-700">Avg. Files per Gist</p>
+            <p className="text-2xl font-bold text-purple-800">{metrics.avgFilesPerGist}</p>
+          </div>
+        </div>
+        
+        {topFileTypes.length > 0 && (
+          <div className="mt-4">
+            <p className="text-sm text-gray-600 mb-2">Top File Types:</p>
+            <div className="flex flex-wrap gap-2">
+              {topFileTypes.map(([type, count]) => (
+                <span key={type} className="px-2 py-1 bg-gray-100 rounded-md text-sm">
+                  {type}: {count}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {metrics.mostRecentUpdate && (
+          <div className="mt-4 text-sm text-gray-600">
+            Last updated: {metrics.mostRecentUpdate.toLocaleDateString()}
+          </div>
+        )}
+      </div>
+
+      {/* Recent Gists */}
+      <div className="bg-white rounded-lg shadow">
+        <h2 className="text-xl font-bold p-6 pb-4 text-gray-800 border-b">Recent Gists</h2>
         {Array.isArray(gists) && gists.length > 0 ? (
-          gists.map(gist => (
-            <li key={gist.id}>
-              <Link to={`/gist/${gist.id}`} className="block hover:bg-gray-50">
-                <div className="px-4 py-4 sm:px-6">
-                  <p className="text-sm font-medium text-indigo-600 truncate">
+          <ul className="divide-y divide-gray-200">
+            {gists.map(gist => (
+              <li key={gist.id}>
+                <Link to={`/gist/${gist.id}`} className="block p-6 hover:bg-gray-50 transition duration-150">
+                  <p className="text-lg font-medium text-indigo-600 truncate">
                     {gist.description || 'Untitled Gist'}
                   </p>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Updated: {new Date(gist.updated_at).toLocaleDateString()}
+                  <p className="mt-1 text-gray-600 italic text-sm">
+                    {getGistPreview(gist)}
                   </p>
-                </div>
-              </Link>
-            </li>
-          ))
+                  <div className="mt-2 flex justify-between items-center">
+                    <div className="flex items-center">
+                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                        {Object.keys(gist.files).length} {Object.keys(gist.files).length === 1 ? 'file' : 'files'}
+                      </span>
+                      <span className="ml-2 text-sm text-gray-500">
+                        Updated: {new Date(gist.updated_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
         ) : (
-          <p>No gists available</p>
+          <div className="p-6 text-center text-gray-500">
+            <p>No gists available</p>
+            <Link to="/gist" className="inline-block mt-4 text-indigo-600 hover:text-indigo-800">
+              Create your first gist
+            </Link>
+          </div>
         )}
-      </ul>
-
-      {/* Link to view all gists */}
-      <Link to="/gists" className="mt-4 inline-block text-indigo-600 hover:text-indigo-800">
-        View all gists
-      </Link>
-
+        
+        {gists.length > 0 && (
+          <div className="p-4 border-t border-gray-200 bg-gray-50">
+            <Link to="/gists" className="text-indigo-600 hover:text-indigo-800 font-medium">
+              View all gists →
+            </Link>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
