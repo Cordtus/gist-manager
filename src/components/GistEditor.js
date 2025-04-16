@@ -40,13 +40,9 @@ const GistEditor = () => {
 
   // Initialize or fetch gist
   useEffect(() => {
-    console.log("GistEditor initializing, id:", id);
     if (id) {
       fetchGist(id);
       checkIfGistIsShared(id);
-    } else {
-      console.log("Creating new gist template");
-      // Default template for new gist already set in initial state
     }
   }, [id]);
 
@@ -85,7 +81,6 @@ const GistEditor = () => {
     };
   }, [isResizing]);
 
-  // The updated handleResizeStart function
   const handleResizeStart = (e) => {
     e.preventDefault();
     setIsResizing(true);
@@ -97,7 +92,6 @@ const GistEditor = () => {
       setError(null);
       const gistData = await getGist(gistId);
       setGist(gistData);
-      console.log("Fetched gist data:", gistData);
     } catch (error) {
       console.error('Error fetching gist:', error);
       setError('Failed to fetch gist. Please try again later.');
@@ -126,7 +120,7 @@ const GistEditor = () => {
     
     const hasEmptyFile = Object.values(gist.files).some(file => !file.content || file.content.trim() === '');
     if (hasEmptyFile) {
-      setError('All files must be non-empty!.');
+      setError('All files must be non-empty!');
       return;
     }
     
@@ -355,8 +349,6 @@ const GistEditor = () => {
   const editorStyle = previewMode ? { width: `${splitRatio}%` } : { width: '100%' };
   const previewStyle = { width: `${100 - splitRatio}%` };
 
-  console.log("Current gist state:", gist);
-
   return (
     <form onSubmit={handleSubmit} className="gist-editor-form bg-white shadow rounded-lg overflow-hidden">
       {/* Gist description and settings */}
@@ -518,7 +510,7 @@ const GistEditor = () => {
                   ref={resizeHandleRef}
                   className={`resize-handle ${isResizing ? 'active' : ''}`}
                   onMouseDown={handleResizeStart}
-                  style={{ left: `${splitRatio}%` }} // Explicitly set the position
+                  style={{ left: `${splitRatio}%` }}
                 ></div>
                 <div
                   ref={previewRef}

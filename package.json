@@ -31,12 +31,14 @@
     "turndown": "^7.2.0",
     "winston": "^3.17.0"
   },
-  "scripts": {
-    "server": "nodemon --no-deprecation server.js",
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "dev": "concurrently \"yarn server\" \"yarn start\""
-  },
+    "scripts": {
+      "server": "nodemon --no-deprecation server.js",
+      "start": "react-scripts start",
+      "build": "react-scripts build",
+      "dev": "concurrently \"yarn server\" \"yarn start\"",
+      "prod": "yarn build && node server.js",
+      "serve-prod": "NODE_ENV=production node server.js"
+    },
   "eslintConfig": {
     "extends": [
       "react-app",
