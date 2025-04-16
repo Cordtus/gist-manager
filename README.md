@@ -22,19 +22,22 @@ Web application for creating, editing, and managing GitHub Gists with Markdown p
 ## Installation
 
 1. Clone repository:
+
    ```bash
    git clone https://github.com/yourusername/gist-manager.git
    cd gist-manager
    ```
 
 2. Install dependencies:
+
    ```bash
    yarn install
    ```
 
 3. Configure environment:
    Create `.env` file with:
-   ```
+
+   ```ini
    GITHUB_CLIENT_ID=your_client_id
    GITHUB_CLIENT_SECRET=your_client_secret
    REDIRECT_URI=http://localhost:3000/callback
@@ -50,16 +53,19 @@ Web application for creating, editing, and managing GitHub Gists with Markdown p
 ## Running
 
 Development mode:
+
 ```bash
 yarn dev
 ```
 
 Production mode:
+
 ```bash
 yarn prod
 ```
 
 Run existing production build:
+
 ```bash
 yarn serve-prod
 ```
@@ -67,18 +73,20 @@ yarn serve-prod
 ## API Structure
 
 ### Authentication Flow
+
 - OAuth 2.0 authorization code flow
 - Session-based authentication with secure cookies
 - Token management with automatic refreshing
 
 ### Core Endpoints
+
 - `/api/auth/github`: GitHub OAuth integration
 - `/api/gists`: CRUD operations for gists
 - `/api/shared-gists`: Community sharing functionality
 
 ## Project Structure
 
-```
+```ini
 /
 ├── public/           # Static assets
 ├── src/              # React frontend

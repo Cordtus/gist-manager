@@ -24,8 +24,8 @@ const GistEditor = () => {
   const [previewMode, setPreviewMode] = useState(false);
   const [wrapText, setWrapText] = useState(true);
   const [success, setSuccess] = useState('');
+  const [splitRatio, setSplitRatio] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
-  const [splitRatio, setSplitRatio] = useState(50); // Default 50/50 split
   const [isShared, setIsShared] = useState(false);
   const [sharingLoading, setSharingLoading] = useState(false);
   
@@ -80,7 +80,7 @@ const GistEditor = () => {
       document.body.style.userSelect = 'auto';
     };
   }, [isResizing]);
-
+  
   const handleResizeStart = (e) => {
     e.preventDefault();
     setIsResizing(true);
@@ -502,7 +502,7 @@ const GistEditor = () => {
               onScroll={syncScroll}
               className={`editor ${wrapText ? 'wrap' : 'no-wrap'}`}
               placeholder="Enter file content here..."
-              style={editorStyle}
+              style={editorStyle}  // Use the editorStyle variable here
             />
             {previewMode && (
               <>
@@ -516,7 +516,7 @@ const GistEditor = () => {
                   ref={previewRef}
                   className="preview"
                   onScroll={syncScroll}
-                  style={previewStyle}
+                  style={previewStyle}  // Use the previewStyle variable here
                 >
                   {isMarkdownFile(fileName) ? (
                     <MarkdownPreview content={file.content || ''} />

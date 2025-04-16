@@ -3,22 +3,22 @@
 .gist-editor-form {
   display: flex;
   flex-direction: column;
-  min-height: 80vh;
-  box-sizing: border-box;
-  padding: 0;
-  overflow: hidden;
+  height: calc(100vh - 140px);
+  min-height: 500px;
   background-color: white;
   border-radius: 0.5rem;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  overflow: hidden;
 }
 
 /* File container and its header */
 .file-container {
-  margin-bottom: 0;
-  flex: 1;
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0; /* Critical for flexbox nesting */
   border-bottom: 1px solid #e5e7eb;
+  overflow: hidden;
 }
 
 .file-header {
@@ -28,6 +28,7 @@
   padding: 0.5rem 1rem;
   background-color: #f9fafb;
   border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .file-name {
@@ -53,23 +54,22 @@
   background-color: #fee2e2;
 }
 
-/* Editor container */
+/* Editor container - The main workspace */
 .editor-container {
   display: flex;
   flex-direction: row;
-  height: calc(100vh - 250px);
-  position: relative;
   flex: 1;
-  min-height: 400px;
+  min-height: 0; /* Critical for proper flex behavior */
+  position: relative;
+  overflow: hidden;
 }
 
 /* Editor and preview - shared styles */
 .editor, .preview {
   height: 100%;
-  padding: 1rem;
   box-sizing: border-box;
   overflow: auto;
-  resize: vertical;
+  padding: 1rem;
 }
 
 /* Editor specific styles */
@@ -80,8 +80,8 @@
   color: #1f2937;
   border: none;
   outline: none;
-  width: 100%;
   background-color: #f8fafc;
+  flex: 1;
 }
 
 .editor.no-wrap {
@@ -99,21 +99,16 @@
   border-left: 1px solid #e5e7eb;
   color: #1f2937;
   line-height: 1.6;
+  flex: 1;
+  overflow-y: auto;
 }
 
 /* Split view configuration */
-.editor-container.split-view {
-  display: flex;
-  position: relative;
-}
-
 .editor-container.split-view .editor,
 .editor-container.split-view .preview {
-  flex-shrink: 0;
-  min-width: 95%;
-  max-width: 5%;
+  flex: none; /* Don't use flex grow/shrink when in split mode */
   height: 100%;
-  transition: width 0.1s ease;
+  overflow-y: auto;
 }
 
 /* Resize handle styling */
@@ -121,7 +116,6 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  transform: translateX(-50%);
   width: 6px;
   background-color: #e5e7eb;
   cursor: col-resize;
@@ -321,6 +315,7 @@
   padding: 0.5rem 1rem;
   background-color: #f3f4f6;
   border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .toolbar-button {
@@ -348,6 +343,7 @@
   background-color: #f9fafb;
   border-bottom: 1px solid #e5e7eb;
   gap: 0.75rem;
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .button {
@@ -397,8 +393,6 @@
   .editor-container.split-view .preview {
     width: 100% !important;
     height: 50%;
-    max-width: 100% !important;
-    min-height: 200px;
   }
   
   .resize-handle {
