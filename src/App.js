@@ -9,7 +9,9 @@ import GistList from './components/GistList';
 import GistEditor from './components/GistEditor';
 import FileConverter from './components/FileConverter';
 import DeleteGist from './components/DeleteGist';
+import UserProfile from './components/UserProfile';
 import './styles/index.css';
+import './styles/markdown-preview.css';
 
 const AppContent = () => {
   const auth = useAuth();
@@ -22,7 +24,14 @@ const AppContent = () => {
   const { loading } = auth;
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-700">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -34,6 +43,7 @@ const AppContent = () => {
         <Route path="/gist/:id?" element={<GistEditor />} />
         <Route path="/convert" element={<FileConverter />} />
         <Route path="/delete/:id" element={<DeleteGist />} />
+        <Route path="/profile" element={<UserProfile />} />
       </Routes>
     </Layout>
   );

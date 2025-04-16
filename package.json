@@ -1,6 +1,6 @@
 {
   "name": "gist-manager",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "private": true,
   "proxy": "http://localhost:5000",
   "dependencies": {
@@ -25,6 +25,7 @@
     "react-router-dom": "^6.28.0",
     "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^15.6.1",
+    "remark-gfm": "^4.0.0",
     "showdown": "^2.1.0",
     "tailwindcss": "^3.4.15",
     "turndown": "^7.2.0",

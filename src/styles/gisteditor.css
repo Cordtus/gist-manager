@@ -1,60 +1,114 @@
-/* Ensure layout is fixed, with no expansion in preview mode */
+/* gisteditor.css */
+
 .gist-editor-form {
   display: flex;
   flex-direction: column;
-  min-height: 80%; /* Ensure the form takes up the full height */
+  min-height: 80vh;
   box-sizing: border-box;
-  padding: 10px;
-  overflow: hidden; /* Prevent the entire page from scrolling */
+  padding: 0;
+  overflow: hidden;
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 /* File container and its header */
 .file-container {
-  margin-bottom: 20px;
+  margin-bottom: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .file-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 5px;
+  padding: 0.5rem 1rem;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .file-name {
   flex: 1;
-  padding: 5px;
-  margin-right: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 14px;
-  box-sizing: border-box;
+  padding: 0.375rem 0.75rem;
+  margin-right: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
 }
 
 .remove-file {
-  color: red;
+  color: #ef4444;
   cursor: pointer;
   font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
 }
 
-/* Ensure editor area and preview are contained within the editor-container */
+.remove-file:hover {
+  background-color: #fee2e2;
+}
+
+/* Editor container */
 .editor-container {
   display: flex;
   flex-direction: row;
-  height: calc(80vh - 60px); /* Subtract the height of the buttons container */
-  box-sizing: border-box;
-  overflow: hidden;  /* Prevent overflow of editor and preview */
+  height: 400px;
+  position: relative;
+  flex: 1;
 }
 
-/* Ensure the editor and preview panes occupy available space correctly */
+/* Resize handle between editor and preview */
+.editor-container.split-view .editor {
+  width: 50%;
+  position: relative;
+  resize: none;
+}
+
+.editor-container.split-view .preview {
+  width: 50%;
+  position: relative;
+}
+
+.resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 5px;
+  background-color: #e5e7eb;
+  cursor: col-resize;
+  z-index: 10;
+  transform: translateX(-50%);
+}
+
+.resize-handle:hover,
+.resize-handle.active {
+  background-color: #6366f1;
+}
+
+/* Editor and preview styling */
 .editor, .preview {
-  flex: 1;  /* Take up all remaining space */
-  padding: 10px;
-  font-family: monospace;
+  height: 100%;
+  padding: 1rem;
   box-sizing: border-box;
-  overflow: auto; /* Enable scrolling for content inside */
+  overflow: auto;
+}
+
+.editor {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #1f2937;
+  border: none;
+  outline: none;
+  resize: none;
+  width: 100%;
+  background-color: #f8fafc;
 }
 
 .editor.no-wrap {
@@ -67,29 +121,229 @@
 }
 
 .preview {
-  background-color: #f9f9f9;
-  border-left: 1px solid #ccc; /* Distinguish the preview pane */
+  background-color: #ffffff;
+  border-left: 1px solid #e5e7eb;
+  color: #1f2937;
+  line-height: 1.6;
 }
 
-/* Ensure toolbar remains fixed over left editor */
-.toolbar {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-start;
-  align-items: center;
-  padding: 5px 10px;
-  background-color: #f4f4f4;
-  border-bottom: 1px solid #ccc;
-  position: sticky; /* Fix toolbar above the left editor */
+/* Markdown preview styling */
+.markdown-preview {
+  padding: 1.5rem;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.markdown-preview h1, 
+.markdown-preview h2, 
+.markdown-preview h3, 
+.markdown-preview h4, 
+.markdown-preview h5, 
+.markdown-preview h6 {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #111827;
+}
+
+.markdown-preview h1 {
+  font-size: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+}
+
+.markdown-preview h2 {
+  font-size: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+}
+
+.markdown-preview h3 {
+  font-size: 1.25rem;
+}
+
+.markdown-preview h4 {
+  font-size: 1rem;
+}
+
+.markdown-preview p {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-preview a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.markdown-preview a:hover {
+  text-decoration: underline;
+}
+
+.markdown-preview ul, 
+.markdown-preview ol {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+.markdown-preview ul {
+  list-style-type: disc;
+}
+
+.markdown-preview ol {
+  list-style-type: decimal;
+}
+
+.markdown-preview li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.markdown-preview blockquote {
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  border-left: 4px solid #d1d5db;
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.markdown-preview code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.875rem;
+  padding: 0.2em 0.4em;
+  background-color: #f1f5f9;
+  border-radius: 0.25rem;
+}
+
+.markdown-preview pre {
+  margin: 1rem 0;
+  padding: 1rem;
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border-radius: 0.375rem;
+  overflow: auto;
+}
+
+.markdown-preview pre code {
+  background-color: transparent;
+  padding: 0;
+  font-size: 0.875rem;
+  color: inherit;
+}
+
+/* Code block terminal style */
+.markdown-preview pre.terminal {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  border-radius: 0.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.markdown-preview pre.terminal::before {
+  content: "";
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 10; /* Ensure it's above other content */
+  height: 1.5rem;
+  background-color: #0f172a;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  padding: 0 0.75rem;
 }
 
-/* Ensure responsive layout */
+.markdown-preview pre.terminal code {
+  padding-top: 1.5rem;
+  display: block;
+}
+
+/* Horizontal rule styling */
+.markdown-preview hr {
+  margin: 2rem 0;
+  border: 0;
+  height: 1px;
+  background-color: #e5e7eb;
+}
+
+/* Table styling */
+.markdown-preview table {
+  width: 100%;
+  margin: 1rem 0;
+  border-collapse: collapse;
+}
+
+.markdown-preview th, 
+.markdown-preview td {
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+}
+
+.markdown-preview th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+  text-align: left;
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.toolbar-button {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.25rem;
+  background-color: white;
+  font-size: 0.875rem;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toolbar-button:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* Buttons container */
+.buttons-container {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  gap: 0.75rem;
+}
+
+/* Media queries for responsiveness */
 @media (max-width: 768px) {
-  .editor, .preview {
-    min-height: 200px;
+  .editor-container.split-view {
+    flex-direction: column;
+  }
+  
+  .editor-container.split-view .editor,
+  .editor-container.split-view .preview {
+    width: 100%;
+    height: 50%;
+  }
+  
+  .resize-handle {
+    left: 0;
+    right: 0;
+    top: 50%;
+    bottom: auto;
+    width: 100%;
+    height: 5px;
+    cursor: row-resize;
+    transform: translateY(-50%);
   }
 }
