@@ -85,6 +85,7 @@ const GistEditor = () => {
     };
   }, [isResizing]);
 
+  // The updated handleResizeStart function
   const handleResizeStart = (e) => {
     e.preventDefault();
     setIsResizing(true);
@@ -517,6 +518,7 @@ const GistEditor = () => {
                   ref={resizeHandleRef}
                   className={`resize-handle ${isResizing ? 'active' : ''}`}
                   onMouseDown={handleResizeStart}
+                  style={{ left: `${splitRatio}%` }} // Explicitly set the position
                 ></div>
                 <div
                   ref={previewRef}
