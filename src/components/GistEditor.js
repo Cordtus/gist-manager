@@ -3,15 +3,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { createGist, updateGist, getGist } from '../services/api/gists';
+import { isGistShared, shareGist, unshareGist } from '../services/api/sharedGists';
 import { useAuth } from '../contexts/AuthContext';
 import MarkdownPreview from './markdown/MarkdownPreview';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import '../styles/gisteditor.css';
 import '../styles/markdown-preview.css';
 
 const GistEditor = () => {
   const [gist, setGist] = useState({ 
     description: '', 
-    files: {},
+    files: {
+      'newfile.md': { content: '' }
+    },
     public: false
   });
   const [loading, setLoading] = useState(false);
@@ -21,6 +26,8 @@ const GistEditor = () => {
   const [success, setSuccess] = useState('');
   const [isResizing, setIsResizing] = useState(false);
   const [splitRatio, setSplitRatio] = useState(50); // Default 50/50 split
+  const [isShared, setIsShared] = useState(false);
+  const [sharingLoading, setSharingLoading] = useState(false);
   
   const { id } = useParams();
   const navigate = useNavigate();
@@ -31,18 +38,15 @@ const GistEditor = () => {
   const containerRef = useRef(null);
   const resizeHandleRef = useRef(null);
 
+  // Initialize or fetch gist
   useEffect(() => {
+    console.log("GistEditor initializing, id:", id);
     if (id) {
       fetchGist(id);
+      checkIfGistIsShared(id);
     } else {
-      // init with empty file for new gist
-      setGist({
-        description: '',
-        files: {
-          'newfile.md': { content: '' }
-        },
-        public: false
-      });
+      console.log("Creating new gist template");
+      // Default template for new gist already set in initial state
     }
   }, [id]);
 
@@ -92,11 +96,21 @@ const GistEditor = () => {
       setError(null);
       const gistData = await getGist(gistId);
       setGist(gistData);
+      console.log("Fetched gist data:", gistData);
     } catch (error) {
       console.error('Error fetching gist:', error);
       setError('Failed to fetch gist. Please try again later.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkIfGistIsShared = async (gistId) => {
+    try {
+      const shared = await isGistShared(gistId);
+      setIsShared(shared);
+    } catch (error) {
+      console.error('Error checking if gist is shared:', error);
     }
   };
 
@@ -122,10 +136,11 @@ const GistEditor = () => {
     try {
       if (id) {
         await updateGist(id, gist);
-        setSuccess('Gist updated.');
+        setSuccess('Gist updated');
+        setTimeout(() => setSuccess(''), 3000);
       } else {
         const newGist = await createGist(gist);
-        setSuccess('New Gist created.');
+        setSuccess('Gist created');
         // switch to editor for new gist
         setTimeout(() => {
           navigate(`/gist/${newGist.id}`);
@@ -200,6 +215,36 @@ const GistEditor = () => {
     }));
   };
 
+  const handleShareGist = async () => {
+    if (!id) return; // Can't share unsaved gist
+    
+    try {
+      setSharingLoading(true);
+      
+      if (isShared) {
+        await unshareGist(id);
+        setIsShared(false);
+        setSuccess('Gist removed from community sharing!');
+      } else {
+        if (!gist.public) {
+          setError('Only public gists can be shared with the community');
+          setSharingLoading(false);
+          return;
+        }
+        await shareGist(id, gist);
+        setIsShared(true);
+        setSuccess('Gist shared with the community!');
+      }
+      
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error) {
+      console.error('Error sharing/unsharing gist:', error);
+      setError(`Failed to ${isShared ? 'unshare' : 'share'} gist. Please try again later.`);
+    } finally {
+      setSharingLoading(false);
+    }
+  };
+
   const syncScroll = (e) => {
     if (!previewMode) return;
 
@@ -256,6 +301,47 @@ const GistEditor = () => {
   const handleHorizontalRuleClick = () => insertText('\n---\n');
   const handleDetailsClick = () => insertText('<details>\n<summary>Title</summary>\n\n', '\n\n</details>');
 
+  // check if file is markdown
+  const isMarkdownFile = (filename) => {
+    return filename.endsWith('.md') || filename.endsWith('.markdown') || filename.endsWith('.mdx');
+  };
+
+  // determine syntax highlighting
+  const getFileLanguage = (filename) => {
+    const extension = filename.split('.').pop().toLowerCase();
+    
+    const languageMap = {
+      'js': 'javascript',
+      'jsx': 'jsx',
+      'ts': 'typescript',
+      'tsx': 'tsx',
+      'py': 'python',
+      'rb': 'ruby',
+      'java': 'java',
+      'c': 'c',
+      'cpp': 'cpp',
+      'cs': 'csharp',
+      'go': 'go',
+      'php': 'php',
+      'html': 'html',
+      'css': 'css',
+      'scss': 'scss',
+      'md': 'markdown',
+      'mdx': 'markdown',
+      'json': 'json',
+      'yml': 'yaml',
+      'yaml': 'yaml',
+      'sh': 'bash',
+      'bash': 'bash',
+      'bat': 'batch',
+      'ps1': 'powershell',
+      'sql': 'sql',
+      'txt': 'text'
+    };
+    
+    return languageMap[extension] || 'text';
+  };
+
   if (!user) {
     return <div className="p-6 bg-white shadow rounded-lg">Please log in to edit gists.</div>;
   }
@@ -267,6 +353,8 @@ const GistEditor = () => {
   // custom styles for editor and preview based on splitRatio
   const editorStyle = previewMode ? { width: `${splitRatio}%` } : { width: '100%' };
   const previewStyle = { width: `${100 - splitRatio}%` };
+
+  console.log("Current gist state:", gist);
 
   return (
     <form onSubmit={handleSubmit} className="gist-editor-form bg-white shadow rounded-lg overflow-hidden">
@@ -343,6 +431,19 @@ const GistEditor = () => {
           {loading ? 'Saving...' : (id ? 'Update Gist' : 'Create Gist')}
         </button>
         
+        {id && (
+          <button
+            type="button"
+            onClick={handleShareGist}
+            disabled={sharingLoading || (!gist.public && !isShared)}
+            className={`button ${isShared ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
+          >
+            {sharingLoading 
+              ? 'Processing...' 
+              : (isShared ? 'Unshare from Community' : 'Share with Community')}
+          </button>
+        )}
+        
         <div className="flex items-center ml-auto">
           <label className="wrap-text flex items-center">
             <input
@@ -363,11 +464,11 @@ const GistEditor = () => {
         <button type="button" onClick={handleH1Click} className="toolbar-button" title="Heading 1">H1</button>
         <button type="button" onClick={handleH2Click} className="toolbar-button" title="Heading 2">H2</button>
         <button type="button" onClick={handleH3Click} className="toolbar-button" title="Heading 3">H3</button>
-        <button type="button" onClick={handleLinkClick} className="toolbar-button" title="Link">[Link]</button>
-        <button type="button" onClick={handleCodeClick} className="toolbar-button" title="Inline Code">Code</button>
-        <button type="button" onClick={handleCodeBlockClick} className="toolbar-button" title="Code Block">Code Block</button>
-        <button type="button" onClick={handleListClick} className="toolbar-button" title="List">• List</button>
-        <button type="button" onClick={handleQuoteClick} className="toolbar-button" title="Quote">Quote</button>
+        <button type="button" onClick={handleLinkClick} className="toolbar-button" title="Link">[L]</button>
+        <button type="button" onClick={handleCodeClick} className="toolbar-button" title="Inline Code">`</button>
+        <button type="button" onClick={handleCodeBlockClick} className="toolbar-button" title="Code Block">```</button>
+        <button type="button" onClick={handleListClick} className="toolbar-button" title="List">• </button>
+        <button type="button" onClick={handleQuoteClick} className="toolbar-button" title="Quote">{'>'}</button>
         <button type="button" onClick={handleHorizontalRuleClick} className="toolbar-button" title="Horizontal Rule">---</button>
         <button type="button" onClick={handleDetailsClick} className="toolbar-button" title="Collapsible Section">Details</button>
       </div>
@@ -387,13 +488,15 @@ const GistEditor = () => {
               }}
               className="file-name"
             />
-            <button
-              type="button"
-              onClick={() => removeFile(fileName)}
-              className="remove-file"
-            >
-              Remove
-            </button>
+            {Object.keys(gist.files).length > 1 && (
+              <button
+                type="button"
+                onClick={() => removeFile(fileName)}
+                className="remove-file"
+              >
+                Remove
+              </button>
+            )}
           </div>
           <div 
             ref={containerRef}
@@ -401,7 +504,7 @@ const GistEditor = () => {
           >
             <textarea
               ref={editorRef}
-              value={file.content}
+              value={file.content || ''}
               onChange={(e) => handleFileChange(fileName, e.target.value)}
               onScroll={syncScroll}
               className={`editor ${wrapText ? 'wrap' : 'no-wrap'}`}
@@ -421,7 +524,17 @@ const GistEditor = () => {
                   onScroll={syncScroll}
                   style={previewStyle}
                 >
-                  <MarkdownPreview content={file.content} />
+                  {isMarkdownFile(fileName) ? (
+                    <MarkdownPreview content={file.content || ''} />
+                  ) : (
+                    <SyntaxHighlighter
+                      language={getFileLanguage(fileName)}
+                      style={tomorrow}
+                      className="syntax-highlighter"
+                    >
+                      {file.content || ''}
+                    </SyntaxHighlighter>
+                  )}
                 </div>
               </>
             )}

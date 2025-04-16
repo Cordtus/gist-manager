@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
+import "../../styles/markdown-preview.css";
 
 const MarkdownPreview = ({ content }) => {
   return (
@@ -30,6 +31,8 @@ const MarkdownPreview = ({ content }) => {
                 style={tomorrow}
                 language={language}
                 className={language === 'text' ? 'terminal-plain' : 'terminal-code'}
+                showLineNumbers={true}
+                wrapLongLines={true}
                 {...props}
               >
                 {String(children).replace(/\n$/, '')}
@@ -114,6 +117,44 @@ const MarkdownPreview = ({ content }) => {
             </summary>
           );
         },
+        
+        // link rendering
+        a({ href, children, ...props }) {
+          return (
+            <a 
+              href={href} 
+              target={href.startsWith('http') ? '_blank' : undefined}
+              rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+              className="md-link"
+              {...props}
+            >
+              {children}
+            </a>
+          );
+        },
+        
+        // image rendering
+        img({ src, alt, ...props }) {
+          return (
+            <div className="image-container">
+              <img src={src} alt={alt || ''} className="md-image" {...props} />
+              {alt && <span className="image-caption">{alt}</span>}
+            </div>
+          );
+        },
+        
+        // list rendering
+        ul({ children, ...props }) {
+          return <ul className="md-list" {...props}>{children}</ul>;
+        },
+        
+        ol({ children, ...props }) {
+          return <ol className="md-ordered-list" {...props}>{children}</ol>;
+        },
+        
+        li({ children, ...props }) {
+          return <li className="md-list-item" {...props}>{children}</li>;
+        }
       }}
     >
       {content}

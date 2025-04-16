@@ -1,28 +1,95 @@
 // components/Sidebar.js
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { FaHome, FaListAlt, FaPlus, FaExchangeAlt } from 'react-icons/fa';
+import { Link, useLocation } from 'react-router-dom';
+import { FaHome, FaListAlt, FaPlus, FaExchangeAlt, FaUsers, FaUser } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 
 const Sidebar = () => {
   const { user, logout, initiateGithubLogin } = useAuth();
+  const location = useLocation();
+
+  // Helper function to determine active link
+  const isActive = (path) => {
+    if (path === '/' && location.pathname === '/') return true;
+    if (path !== '/' && location.pathname.startsWith(path)) return true;
+    return false;
+  };
 
   return (
     <div className="bg-gray-800 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out">
-      <nav>
-        <Link to="/" className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white">
+      <div className="px-4">
+        <h2 className="text-xl font-bold">Gist Manager</h2>
+      </div>
+      
+      <nav className="space-y-1">
+        <Link 
+          to="/" 
+          className={`block py-2.5 px-4 rounded transition duration-200 ${
+            isActive('/') 
+              ? 'bg-gray-700 text-white' 
+              : 'hover:bg-gray-700 hover:text-white'
+          }`}
+        >
           <FaHome className="inline-block mr-2" /> Dashboard
         </Link>
-        <Link to="/gists" className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white">
+        
+        <Link 
+          to="/gists" 
+          className={`block py-2.5 px-4 rounded transition duration-200 ${
+            isActive('/gists') 
+              ? 'bg-gray-700 text-white' 
+              : 'hover:bg-gray-700 hover:text-white'
+          }`}
+        >
           <FaListAlt className="inline-block mr-2" /> My Gists
         </Link>
-        <Link to="/gist" className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white">
+        
+        <Link 
+          to="/gist" 
+          className={`block py-2.5 px-4 rounded transition duration-200 ${
+            location.pathname === '/gist' 
+              ? 'bg-gray-700 text-white' 
+              : 'hover:bg-gray-700 hover:text-white'
+          }`}
+        >
           <FaPlus className="inline-block mr-2" /> New Gist
         </Link>
-        <Link to="/convert" className="block py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 hover:text-white">
+        
+        <Link 
+          to="/convert" 
+          className={`block py-2.5 px-4 rounded transition duration-200 ${
+            isActive('/convert') 
+              ? 'bg-gray-700 text-white' 
+              : 'hover:bg-gray-700 hover:text-white'
+          }`}
+        >
           <FaExchangeAlt className="inline-block mr-2" /> File Converter
         </Link>
+        
+        <Link 
+          to="/shared" 
+          className={`block py-2.5 px-4 rounded transition duration-200 ${
+            isActive('/shared') 
+              ? 'bg-gray-700 text-white' 
+              : 'hover:bg-gray-700 hover:text-white'
+          }`}
+        >
+          <FaUsers className="inline-block mr-2" /> Community Gists
+        </Link>
+        
+        {user && (
+          <Link 
+            to="/profile" 
+            className={`block py-2.5 px-4 rounded transition duration-200 ${
+              isActive('/profile') 
+                ? 'bg-gray-700 text-white' 
+                : 'hover:bg-gray-700 hover:text-white'
+            }`}
+          >
+            <FaUser className="inline-block mr-2" /> My Profile
+          </Link>
+        )}
       </nav>
 
       {/* Display login/logout section at the bottom */}
@@ -35,7 +102,7 @@ const Sidebar = () => {
             {/* Logout button */}
             <button 
               onClick={logout} 
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 w-full"
             >
               Logout
             </button>
@@ -44,7 +111,7 @@ const Sidebar = () => {
           /* Login with GitHub button */
           <button 
             onClick={initiateGithubLogin} 
-            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 w-full"
           >
             Login with GitHub
           </button>
