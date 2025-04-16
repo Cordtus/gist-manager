@@ -9,7 +9,7 @@ import GistList from './components/GistList';
 import GistEditor from './components/GistEditor';
 import FileConverter from './components/FileConverter';
 import DeleteGist from './components/DeleteGist';
-import UserProfile from './components/UserProfile';
+import { UserProfile } from './components/UserProfile';
 import './styles/index.css';
 import './styles/markdown-preview.css';
 

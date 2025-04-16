@@ -25,18 +25,18 @@
     "react-router-dom": "^6.28.0",
     "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^15.6.1",
-    "remark-gfm": "^4.0.0",
+    "remark-gfm": "^4.0.1",
     "showdown": "^2.1.0",
     "tailwindcss": "^3.4.15",
     "turndown": "^7.2.0",
     "winston": "^3.17.0"
   },
-"scripts": {
-  "server": "nodemon --no-deprecation server.js",
-  "start": "react-scripts start",
-  "build": "react-scripts build",
-  "dev": "concurrently \"yarn server\" \"yarn start\""
-},
+  "scripts": {
+    "server": "nodemon --no-deprecation server.js",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "dev": "concurrently \"yarn server\" \"yarn start\""
+  },
   "eslintConfig": {
     "extends": [
       "react-app",
