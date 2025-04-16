@@ -17,7 +17,7 @@ const Dashboard = () => {
     mostRecentUpdate: null,
     fileTypes: {}
   });
-  const { user, token } = useAuth();
+  const { user, token, initiateGithubLogin } = useAuth();
 
   const fetchGists = useCallback(async () => {
     try {
@@ -69,6 +69,8 @@ const Dashboard = () => {
   useEffect(() => {
     if (user && token) {
       fetchGists();
+    } else {
+      setLoading(false);
     }
   }, [user, token, fetchGists]);
 
@@ -85,18 +87,63 @@ const Dashboard = () => {
 
   if (!user) {
     return (
-      <div className="text-center p-6 bg-white rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold mb-4">Welcome to Gist Manager</h2>
-        <p className="text-gray-700 mb-4">Manage your GitHub Gists with powerful features for creating, editing, and organizing your code snippets.</p>
-        <p className="mb-6">Please log in with your GitHub account to get started.</p>
-        <div className="bg-blue-50 p-4 rounded-md text-sm">
-          <h3 className="font-semibold text-blue-700">Features:</h3>
-          <ul className="list-disc pl-5 mt-2 text-blue-800">
-            <li>Create and edit gists with live Markdown preview</li>
-            <li>Search and filter through all your gists</li>
-            <li>Convert between file formats</li>
-            <li>Organize your code snippets efficiently</li>
-          </ul>
+      <div className="flex flex-col space-y-8">
+        {/* Hero section */}
+        <div className="bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-lg shadow-lg p-8">
+          <h1 className="text-3xl font-bold mb-4">Welcome to Gist Manager</h1>
+          <p className="text-lg mb-6">
+            A powerful tool to create, edit, and organize your GitHub Gists with advanced features.
+          </p>
+          <button 
+            onClick={initiateGithubLogin}
+            className="bg-white text-indigo-600 px-6 py-3 rounded-md font-medium hover:bg-indigo-50 transition duration-200"
+          >
+            Connect with GitHub
+          </button>
+        </div>
+        
+        {/* Features grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
+            <div className="text-indigo-600 text-xl mb-2">✏️ Seamless Editing</div>
+            <p className="text-gray-600">
+              Create and edit gists with a live Markdown preview. Organize your code snippets efficiently.
+            </p>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
+            <div className="text-indigo-600 text-xl mb-2">🔍 Smart Search</div>
+            <p className="text-gray-600">
+              Quickly find what you need with powerful search and filtering capabilities.
+            </p>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
+            <div className="text-indigo-600 text-xl mb-2">🔄 File Conversion</div>
+            <p className="text-gray-600">
+              Convert between file formats effortlessly, including Markdown, HTML, and plain text.
+            </p>
+          </div>
+          
+          <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
+            <div className="text-indigo-600 text-xl mb-2">👥 Community Sharing</div>
+            <p className="text-gray-600">
+              Share your public gists with the community and discover gists shared by others.
+            </p>
+          </div>
+        </div>
+        
+        {/* CTA section */}
+        <div className="bg-gray-50 p-6 rounded-lg text-center">
+          <p className="text-gray-600 mb-4">
+            Ready to start managing your GitHub Gists more efficiently?
+          </p>
+          <button 
+            onClick={initiateGithubLogin}
+            className="bg-indigo-600 text-white px-6 py-2 rounded-md font-medium hover:bg-indigo-700 transition duration-200"
+          >
+            Sign in with GitHub
+          </button>
         </div>
       </div>
     );
