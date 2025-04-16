@@ -57,18 +57,19 @@
 .editor-container {
   display: flex;
   flex-direction: row;
-  height: calc(100vh - 250px); /* Adjust based on header */
+  height: calc(100vh - 250px);
   position: relative;
   flex: 1;
   min-height: 400px;
 }
 
-/* Editor and preview styling - common properties */
+/* Editor and preview - shared styles */
 .editor, .preview {
   height: 100%;
   padding: 1rem;
   box-sizing: border-box;
   overflow: auto;
+  resize: vertical;
 }
 
 /* Editor specific styles */
@@ -81,7 +82,6 @@
   outline: none;
   width: 100%;
   background-color: #f8fafc;
-  resize: vertical;
 }
 
 .editor.no-wrap {
@@ -99,7 +99,6 @@
   border-left: 1px solid #e5e7eb;
   color: #1f2937;
   line-height: 1.6;
-  resize: vertical;
 }
 
 /* Split view configuration */
@@ -111,9 +110,10 @@
 .editor-container.split-view .editor,
 .editor-container.split-view .preview {
   flex-shrink: 0;
-  min-width: 10%; /* Ensure neither panel can be totally hidden */
-  max-width: 90%; /* Ensure neither panel takes up whole width */
+  min-width: 95%;
+  max-width: 5%;
   height: 100%;
+  transition: width 0.1s ease;
 }
 
 /* Resize handle styling */
@@ -150,6 +150,7 @@
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
+/* Heading styles */
 .markdown-preview h1, 
 .markdown-preview h2, 
 .markdown-preview h3, 
@@ -163,16 +164,18 @@
   color: #111827;
 }
 
-.markdown-preview h1 {
-  font-size: 2rem;
+.markdown-preview h1, 
+.markdown-preview h2 {
   border-bottom: 1px solid #e5e7eb;
   padding-bottom: 0.5rem;
 }
 
+.markdown-preview h1 {
+  font-size: 2rem;
+}
+
 .markdown-preview h2 {
   font-size: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 0.5rem;
 }
 
 .markdown-preview h3 {
@@ -188,6 +191,7 @@
   margin-bottom: 0.75rem;
 }
 
+/* Links */
 .markdown-preview a {
   color: #2563eb;
   text-decoration: none;
@@ -197,6 +201,7 @@
   text-decoration: underline;
 }
 
+/* Lists */
 .markdown-preview ul, 
 .markdown-preview ol {
   margin-top: 0.5rem;
@@ -217,6 +222,7 @@
   margin-bottom: 0.25rem;
 }
 
+/* Blockquotes */
 .markdown-preview blockquote {
   margin: 1rem 0;
   padding: 0.5rem 1rem;
@@ -225,6 +231,7 @@
   color: #4b5563;
 }
 
+/* Code elements */
 .markdown-preview code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 0.875rem;
@@ -388,14 +395,14 @@
   
   .editor-container.split-view .editor,
   .editor-container.split-view .preview {
-    width: 100% !important; /* Override inline styles for mobile */
+    width: 100% !important;
     height: 50%;
-    max-width: 100% !important; /* Override max-width limitation for mobile */
+    max-width: 100% !important;
     min-height: 200px;
   }
   
   .resize-handle {
-    left: 0;
+    left: 0 !important;
     right: 0;
     top: 50%;
     bottom: auto;

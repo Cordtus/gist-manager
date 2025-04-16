@@ -8,7 +8,6 @@ import Callback from './components/Callback';
 import GistList from './components/GistList';
 import GistEditor from './components/GistEditor';
 import FileConverter from './components/FileConverter';
-import DeleteGist from './components/DeleteGist';
 import { UserProfile } from './components/UserProfile';
 import SharedGistList from './components/SharedGistList';
 import SharedGistDetail from './components/SharedGistDetail';
@@ -44,7 +43,6 @@ const AppContent = () => {
         <Route path="/gists" element={<GistList />} />
         <Route path="/gist/:id?" element={<GistEditor />} />
         <Route path="/convert" element={<FileConverter />} />
-        <Route path="/delete/:id" element={<DeleteGist />} />
         <Route path="/profile" element={<UserProfile />} />
         <Route path="/shared" element={<SharedGistList />} />
         <Route path="/shared/:sharedId" element={<SharedGistDetail />} />
