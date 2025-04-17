@@ -21,6 +21,11 @@
   overflow: hidden;
 }
 
+/* Dark mode styles for file container */
+.dark .file-container {
+  border-bottom-color: #4a5568;
+}
+
 .file-header {
   display: flex;
   justify-content: space-between;
@@ -31,6 +36,12 @@
   flex-shrink: 0; /* Prevent header from shrinking */
 }
 
+/* Dark mode styles for file header */
+.dark .file-header {
+  background-color: #2d3748;
+  border-bottom-color: #4a5568;
+}
+
 .file-name {
   flex: 1;
   padding: 0.375rem 0.75rem;
@@ -39,6 +50,13 @@
   border-radius: 0.25rem;
   font-size: 0.875rem;
   line-height: 1.25rem;
+}
+
+/* Dark mode styles for file name input */
+.dark .file-name {
+  border-color: #4a5568;
+  background-color: #1a202c;
+  color: #e2e8f0;
 }
 
 .remove-file {
@@ -52,6 +70,15 @@
 
 .remove-file:hover {
   background-color: #fee2e2;
+}
+
+/* Dark mode styles for remove file button */
+.dark .remove-file {
+  color: #f87171;
+}
+
+.dark .remove-file:hover {
+  background-color: rgba(248, 113, 113, 0.2);
 }
 
 /* Editor container - The main workspace */
@@ -82,6 +109,13 @@
   outline: none;
   background-color: #f8fafc;
   flex: 1;
+  resize: none; /* Prevent default textarea resizing */
+}
+
+/* Dark mode styles for editor */
+.dark .editor {
+  background-color: #1a202c;
+  color: #e2e8f0;
 }
 
 .editor.no-wrap {
@@ -103,6 +137,13 @@
   overflow-y: auto;
 }
 
+/* Dark mode styles for preview */
+.dark .preview {
+  background-color: #2d3748;
+  color: #e2e8f0;
+  border-left-color: #4a5568;
+}
+
 /* Split view configuration */
 .editor-container.split-view .editor,
 .editor-container.split-view .preview {
@@ -119,15 +160,48 @@
   width: 6px;
   background-color: #e5e7eb;
   cursor: col-resize;
-  z-index: 10;
+  z-index: 50;
   opacity: 0.7;
   transition: background-color 0.2s, opacity 0.2s;
+}
+
+/* indicator in handle for visibility */
+.resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 30px;
+  background-color: #9ca3af;
+  border-radius: 2px;
 }
 
 .resize-handle:hover,
 .resize-handle.active {
   background-color: #6366f1;
   opacity: 1;
+  width: 8px;
+}
+
+.resize-handle:hover::after,
+.resize-handle.active::after {
+  background-color: #ffffff;
+}
+
+/* Dark mode styles for resize handle */
+.dark .resize-handle {
+  background-color: #4a5568;
+}
+
+.dark .resize-handle::after {
+  background-color: #cbd5e0;
+}
+
+.dark .resize-handle:hover,
+.dark .resize-handle.active {
+  background-color: #6366f1;
 }
 
 /* Syntax highlighter container */
@@ -144,6 +218,11 @@
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
+/* Dark mode for markdown preview general content */
+.dark .markdown-preview {
+  color: #e2e8f0;
+}
+
 /* Heading styles */
 .markdown-preview h1, 
 .markdown-preview h2, 
@@ -158,10 +237,26 @@
   color: #111827;
 }
 
+/* Dark mode for headings */
+.dark .markdown-preview h1,
+.dark .markdown-preview h2,
+.dark .markdown-preview h3,
+.dark .markdown-preview h4,
+.dark .markdown-preview h5,
+.dark .markdown-preview h6 {
+  color: #f7fafc;
+}
+
 .markdown-preview h1, 
 .markdown-preview h2 {
   border-bottom: 1px solid #e5e7eb;
   padding-bottom: 0.5rem;
+}
+
+/* Dark mode for heading borders */
+.dark .markdown-preview h1,
+.dark .markdown-preview h2 {
+  border-bottom-color: #4a5568;
 }
 
 .markdown-preview h1 {
@@ -195,6 +290,11 @@
   text-decoration: underline;
 }
 
+/* Dark mode for links */
+.dark .markdown-preview a {
+  color: #60a5fa;
+}
+
 /* Lists */
 .markdown-preview ul, 
 .markdown-preview ol {
@@ -225,6 +325,13 @@
   color: #4b5563;
 }
 
+/* Dark mode for blockquotes */
+.dark .markdown-preview blockquote {
+  border-left-color: #4a5568;
+  background-color: #1f2937;
+  color: #d1d5db;
+}
+
 /* Code elements */
 .markdown-preview code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -232,6 +339,12 @@
   padding: 0.2em 0.4em;
   background-color: #f1f5f9;
   border-radius: 0.25rem;
+}
+
+/* Dark mode for inline code */
+.dark .markdown-preview code {
+  background-color: #1f2937;
+  color: #e2e8f0;
 }
 
 .markdown-preview pre {
@@ -254,10 +367,11 @@
 .markdown-preview pre.terminal {
   background-color: #1e293b;
   color: #e2e8f0;
-  border-radius: 0.5rem;
+  border-radius: 0.25rem;
   max-height: 400px;
   overflow-y: auto;
   position: relative;
+  border: 1px solid #4a5568;
 }
 
 .markdown-preview pre.terminal::before {
@@ -268,8 +382,8 @@
   right: 0;
   height: 1.5rem;
   background-color: #0f172a;
-  border-top-left-radius: 0.5rem;
-  border-top-right-radius: 0.5rem;
+  border-top-left-radius: 0.25rem;
+  border-top-right-radius: 0.25rem;
   display: flex;
   align-items: center;
   padding: 0 0.75rem;
@@ -280,12 +394,27 @@
   display: block;
 }
 
+/* Dark mode terminal adaptations */
+.dark .markdown-preview pre.terminal {
+  border-color: #1a202c;
+  background-color: #111827;
+}
+
+.dark .markdown-preview pre.terminal::before {
+  background-color: #0f172a;
+}
+
 /* Horizontal rule styling */
 .markdown-preview hr {
   margin: 2rem 0;
   border: 0;
   height: 1px;
   background-color: #e5e7eb;
+}
+
+/* Dark mode horizontal rule */
+.dark .markdown-preview hr {
+  background-color: #4a5568;
 }
 
 /* Table styling */
@@ -307,6 +436,20 @@
   text-align: left;
 }
 
+/* Dark mode for tables */
+.dark .markdown-preview table th,
+.dark .markdown-preview table td {
+  border-color: #4a5568;
+}
+
+.dark .markdown-preview table th {
+  background-color: #1f2937;
+}
+
+.dark .markdown-preview table tr:nth-child(even) {
+  background-color: #283141;
+}
+
 /* Toolbar */
 .toolbar {
   display: flex;
@@ -316,6 +459,12 @@
   background-color: #f3f4f6;
   border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+/* Dark mode for toolbar */
+.dark .toolbar {
+  background-color: #2d3748;
+  border-bottom-color: #4a5568;
 }
 
 .toolbar-button {
@@ -334,6 +483,18 @@
   border-color: #9ca3af;
 }
 
+/* Dark mode for toolbar buttons */
+.dark .toolbar-button {
+  background-color: #1a202c;
+  border-color: #4a5568;
+  color: #e2e8f0;
+}
+
+.dark .toolbar-button:hover {
+  background-color: #2d3748;
+  border-color: #6366f1;
+}
+
 /* Buttons container */
 .buttons-container {
   display: flex;
@@ -343,7 +504,13 @@
   background-color: #f9fafb;
   border-bottom: 1px solid #e5e7eb;
   gap: 0.75rem;
-  flex-shrink: 0; /* Prevent header from shrinking */
+  flex-shrink: 0;
+}
+
+/* Dark mode for buttons container */
+.dark .buttons-container {
+  background-color: #2d3748;
+  border-bottom-color: #4a5568;
 }
 
 .button {
@@ -373,6 +540,20 @@
   cursor: not-allowed;
 }
 
+/* Dark mode for primary button */
+.dark .button.primary {
+  background-color: #6366f1;
+}
+
+.dark .button.primary:hover {
+  background-color: #4f46e5;
+}
+
+.dark .button.primary:disabled {
+  background-color: rgba(99, 102, 241, 0.4);
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .button.secondary {
   background-color: white;
   color: #4f46e5;
@@ -381,6 +562,17 @@
 
 .button.secondary:hover {
   background-color: #f5f3ff;
+}
+
+/* Dark mode for secondary button */
+.dark .button.secondary {
+  background-color: #1a202c;
+  color: #6366f1;
+  border-color: #6366f1;
+}
+
+.dark .button.secondary:hover {
+  background-color: rgba(99, 102, 241, 0.1);
 }
 
 /* Media queries for responsiveness */
@@ -404,6 +596,12 @@
     height: 6px;
     cursor: row-resize;
     transform: translateY(-50%);
+  }
+  
+  /* Modified for vertical resizing on mobile */
+  .resize-handle::after {
+    width: 30px;
+    height: 2px;
   }
   
   .buttons-container {

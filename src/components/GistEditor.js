@@ -46,45 +46,54 @@ const GistEditor = () => {
     }
   }, [id]);
 
-  // Setup resize event listeners
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!isResizing || !containerRef.current) return;
-      
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const newRatio = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-      
-      // Limit the minimum size of each panel
-      if (newRatio >= 15 && newRatio <= 85) {
-        setSplitRatio(newRatio);
-      }
-    };
+// Setup resize event listeners
+useEffect(() => {
+  const handleMouseMove = (e) => {
+    if (!isResizing || !containerRef.current) return;
     
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      document.body.style.cursor = 'default';
-      document.body.style.userSelect = 'auto';
-    };
+    const containerRect = containerRef.current.getBoundingClientRect();
+    const newRatio = ((e.clientX - containerRect.left) / containerRect.width) * 100;
     
-    if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-    }
-    
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'default';
-      document.body.style.userSelect = 'auto';
-    };
-  }, [isResizing]);
-  
-  const handleResizeStart = (e) => {
-    e.preventDefault();
-    setIsResizing(true);
+    // Limit the minimum size of each panel (15% - 85%)
+    const limitedRatio = Math.min(Math.max(newRatio, 15), 85);
+    setSplitRatio(limitedRatio);
   };
+  
+  const handleMouseUp = () => {
+    setIsResizing(false);
+    document.body.style.cursor = 'default';
+    document.body.style.userSelect = 'auto';
+    
+    // Remove the active class from resize handle when mouse is released
+    if (resizeHandleRef.current) {
+      resizeHandleRef.current.classList.remove('active');
+    }
+  };
+  
+  if (isResizing) {
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    
+    // Add active class to resize handle during resizing
+    if (resizeHandleRef.current) {
+      resizeHandleRef.current.classList.add('active');
+    }
+  }
+  
+  return () => {
+    document.removeEventListener('mousemove', handleMouseMove);
+    document.removeEventListener('mouseup', handleMouseUp);
+    document.body.style.cursor = 'default';
+    document.body.style.userSelect = 'auto';
+  };
+}, [isResizing]);
+
+const handleResizeStart = (e) => {
+  e.preventDefault();
+  setIsResizing(true);
+};
 
   const fetchGist = async (gistId) => {
     try {
@@ -210,17 +219,19 @@ const GistEditor = () => {
     }));
   };
 
-  const handleShareGist = async () => {
+  const handleShareGist = async (e) => {
     if (!id) return; // Can't share unsaved gist
+    
+    const shouldBeShared = e.target.checked;
     
     try {
       setSharingLoading(true);
       
-      if (isShared) {
+      if (!shouldBeShared && isShared) {
         await unshareGist(id);
         setIsShared(false);
         setSuccess('Gist removed from community sharing!');
-      } else {
+      } else if (shouldBeShared && !isShared) {
         if (!gist.public) {
           setError('Only public gists can be shared with the community');
           setSharingLoading(false);
@@ -352,9 +363,10 @@ const GistEditor = () => {
   return (
     <form onSubmit={handleSubmit} className="gist-editor-form bg-white shadow rounded-lg overflow-hidden">
       {/* Gist description and settings */}
-      <div className="p-4 border-b border-gray-200">
+
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="mb-4">
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Description [optional]
           </label>
           <input
@@ -363,22 +375,57 @@ const GistEditor = () => {
             value={gist.description}
             onChange={handleDescriptionChange}
             placeholder="Enter a description for your gist"
-            className="w-full p-2 border border-gray-300 rounded focus-ring"
+            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500 dark:bg-gray-800 dark:text-gray-200"
           />
         </div>
         
-        <div className="flex items-center mb-4">
-          <input
-            type="checkbox"
-            id="public"
-            checked={gist.public}
-            onChange={handlePublicChange}
-            className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
-          />
-          <label htmlFor="public" className="ml-2 block text-sm text-gray-700">
-            Public gist
-          </label>
-          <span className="ml-2 text-xs text-gray-500">(Anyone can see this gist)</span>
+        <div className="flex flex-wrap gap-4 items-center mb-4">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="public"
+              checked={gist.public}
+              onChange={handlePublicChange}
+              className="h-4 w-4 text-indigo-600 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-800"
+            />
+            <label htmlFor="public" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+              Public gist
+            </label>
+            <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">(Anyone can see this gist)</span>
+          </div>
+          
+          {/* Status Badge */}
+          {id && (
+            <div className="flex items-center">
+              <span className={`px-2 py-1 text-xs rounded-full ${
+                gist.public 
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
+                  : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+              }`}>
+                {gist.public ? 'Public' : 'Private'}
+              </span>
+            </div>
+          )}
+          
+          {/* Add "Share with Community" checkbox when public is checked */}
+          {id && gist.public && (
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="share-community"
+                checked={isShared}
+                onChange={handleShareGist}
+                className="h-4 w-4 text-indigo-600 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-800"
+                disabled={sharingLoading}
+              />
+              <label htmlFor="share-community" className="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                Share with Community
+              </label>
+              <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                (Make this gist visible in Community Gists)
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -395,60 +442,47 @@ const GistEditor = () => {
         </div>
       )}
 
-      {/* Buttons area (Save/Mode/Wrap Text) */}
-      <div className={`buttons-container ${previewMode ? 'preview' : ''} p-4 border-b border-gray-200 flex-wrap`}>
-        <button
-          type="button"
-          onClick={addNewFile}
-          className="button secondary flex items-center"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add File
-        </button>
-        
-        <button
-          type="button"
-          onClick={() => setPreviewMode(!previewMode)}
-          className="button secondary"
-        >
-          {previewMode ? 'Editor Mode' : 'Preview Mode'}
-        </button>
-        
-        <button
-          type="submit"
-          className="button primary"
-          disabled={loading}
-        >
-          {loading ? 'Saving...' : (id ? 'Update Gist' : 'Create Gist')}
-        </button>
-        
-        {id && (
-          <button
-            type="button"
-            onClick={handleShareGist}
-            disabled={sharingLoading || (!gist.public && !isShared)}
-            className={`button ${isShared ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
-          >
-            {sharingLoading 
-              ? 'Processing...' 
-              : (isShared ? 'Unshare from Community' : 'Share with Community')}
-          </button>
-        )}
-        
-        <div className="flex items-center ml-auto">
-          <label className="wrap-text flex items-center">
-            <input
-              type="checkbox"
-              checked={wrapText}
-              onChange={toggleWrapText}
-              className="mr-2"
-            />
-            <span className="text-sm">Wrap Text</span>
-          </label>
-        </div>
-      </div>
+    {/* Buttons area (Save/Mode/Wrap Text) */}
+    <div className={`buttons-container ${previewMode ? 'preview' : ''} p-4 border-b border-gray-200 dark:border-gray-700 flex-wrap`}>
+            <button
+              type="button"
+              onClick={addNewFile}
+              className="button secondary flex items-center dark:bg-gray-800 dark:text-indigo-400 dark:border-indigo-500"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add File
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => setPreviewMode(!previewMode)}
+              className="button secondary dark:bg-gray-800 dark:text-indigo-400 dark:border-indigo-500"
+            >
+              {previewMode ? 'Editor Mode' : 'Preview Mode'}
+            </button>
+            
+            <button
+              type="submit"
+              className="button primary dark:bg-indigo-600 dark:hover:bg-indigo-700"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : (id ? 'Update Gist' : 'Create Gist')}
+            </button>
+            
+            <div className="flex items-center ml-auto">
+              <label className="wrap-text flex items-center dark:text-gray-300">
+                <input
+                  type="checkbox"
+                  checked={wrapText}
+                  onChange={toggleWrapText}
+                  className="mr-2 dark:bg-gray-800 dark:border-gray-600"
+                />
+                <span className="text-sm">Wrap Text</span>
+              </label>
+            </div>
+          </div>
 
       {/* Toolbar */}
       <div className="toolbar">

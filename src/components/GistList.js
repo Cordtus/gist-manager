@@ -532,80 +532,95 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* Gists List */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+{/* Gists List */}
+      <div className="bg-white dark:bg-dark-bg-primary shadow rounded-lg overflow-hidden p-6">
         {loading && gists.length > 0 && (
-          <div className="py-4 text-center text-gray-500">
+          <div className="py-4 text-center text-gray-500 dark:text-gray-400">
             <Spinner />
             <p className="mt-2">Updating gists...</p>
           </div>
         )}
         
         {currentGists.length > 0 ? (
-          <ul className="divide-y divide-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {currentGists.map(gist => (
-              <li key={gist.id}>
-                <Link to={`/gist/${gist.id}`} className="block hover:bg-gray-50 transition-colors duration-150">
-                  <div className="px-6 py-4">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-medium text-indigo-600 truncate">
-                        {gist.description || 'Untitled Gist'}
-                      </h3>
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          Object.keys(gist.files).length > 1 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-blue-100 text-blue-800'
-                        }`}>
-                          {Object.keys(gist.files).length} {Object.keys(gist.files).length === 1 ? 'file' : 'files'}
-                        </span>
-                        <button
-                          onClick={(e) => handleDeleteClick(gist, e)}
-                          className="text-sm text-red-600 hover:text-red-900 transition-colors"
-                          aria-label="Delete gist"
-                        >
-                          Delete
-                        </button>
-                      </div>
+              <div key={gist.id} className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200 border border-gray-200 dark:border-gray-700">
+                <Link to={`/gist/${gist.id}`} className="block h-full">
+                  <div className="p-4 flex flex-col h-full">
+                    {/* Badge for public/private status */}
+                    <div className="flex justify-between items-start mb-2">
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        gist.public 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
+                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                      }`}>
+                        {gist.public ? 'Public' : 'Private'}
+                      </span>
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        Object.keys(gist.files).length > 1 
+                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' 
+                          : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                      }`}>
+                        {Object.keys(gist.files).length} {Object.keys(gist.files).length === 1 ? 'file' : 'files'}
+                      </span>
                     </div>
-                    <p className="mt-2 text-gray-600 italic text-sm">
+                    
+                    {/* Gist title */}
+                    <h3 className="text-lg font-medium text-indigo-600 dark:text-indigo-400 truncate mb-2">
+                      {gist.description || 'Untitled Gist'}
+                    </h3>
+                    
+                    {/* Gist preview */}
+                    <p className="text-gray-600 dark:text-gray-300 italic text-sm mb-3 flex-grow">
                       {getGistPreview(gist)}
                     </p>
-                    <div className="mt-2 flex flex-wrap gap-2">
+                    
+                    {/* File tags */}
+                    <div className="flex flex-wrap gap-2 mb-3">
                       {Object.keys(gist.files).slice(0, 3).map(filename => (
-                        <span key={filename} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                        <span key={filename} className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded dark:text-gray-300">
                           {filename}
                         </span>
                       ))}
                       {Object.keys(gist.files).length > 3 && (
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                        <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded dark:text-gray-300">
                           +{Object.keys(gist.files).length - 3} more
                         </span>
                       )}
                     </div>
-                    <p className="mt-2 text-xs text-gray-500">
-                      Updated: {new Date(gist.updated_at).toLocaleDateString()}
-                    </p>
+                    
+                    {/* Footer with date and actions */}
+                    <div className="mt-auto flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Updated: {new Date(gist.updated_at).toLocaleDateString()}
+                      </p>
+                      <button
+                        onClick={(e) => handleDeleteClick(gist, e)}
+                        className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
+                        aria-label="Delete gist"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </Link>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         ) : (
-          <div className="py-8 px-6 text-center text-gray-500">
+          <div className="py-8 px-6 text-center text-gray-500 dark:text-gray-400">
             {loading ? (
               <Spinner />
             ) : (
               <>
                 <p>No gists found{searchTerm ? ` matching "${searchTerm}"` : ''}.</p>
-                <Link to="/gist" className="inline-block mt-4 text-indigo-600 hover:text-indigo-800">
+                <Link to="/gist" className="inline-block mt-4 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
                   Create a new gist
                 </Link>
               </>
             )}
           </div>
         )}
-      </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
@@ -675,6 +690,7 @@ useEffect(() => {
         message="Are you sure you want to delete this gist? This action cannot be undone."
       />
     </div>
+  </div>
   );
 };
 
