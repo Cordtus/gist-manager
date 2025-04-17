@@ -81,7 +81,7 @@ const Dashboard = () => {
     
     // Get first line or first 50 characters
     const content = firstFile.content;
-    const firstLine = content.split('\n')[0].trim();
+    const firstLine = content.split('<br />')[0].trim();
     return firstLine.length > 50 ? `${firstLine.substring(0, 50)}...` : firstLine;
   };
 
@@ -92,7 +92,15 @@ const Dashboard = () => {
         <div className="bg-gradient-to-r from-indigo-600 to-blue-500 text-white rounded-lg shadow-lg p-8">
           <h1 className="text-3xl font-bold mb-4">Welcome to Gist Manager</h1>
           <p className="text-lg mb-6">
-            A powerful tool to create, edit, and organize your GitHub Gists with advanced features.
+            A tool to create, edit, and organize your GitHub Gists, now with{' '}
+            <span className="relative inline-block">
+              <span className="relative z-10">advanced</span>
+              <span className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center">
+                <span className="absolute w-20 h-[3px] bg-black transform rotate-[25deg]" />
+                <span className="absolute w-20 h-[3px] bg-black transform -rotate-[25deg]" />
+              </span>
+            </span>{' '}
+            features!
           </p>
           <button 
             onClick={initiateGithubLogin}
@@ -101,53 +109,38 @@ const Dashboard = () => {
             Connect with GitHub
           </button>
         </div>
-        
+  
         {/* Features grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
-            <div className="text-indigo-600 text-xl mb-2">✏️ Seamless Editing</div>
-            <p className="text-gray-600">
-              Create and edit gists with a live Markdown preview. Organize your code snippets efficiently.
-            </p>
+            <div className="text-indigo-600 text-xl mb-2">✏️ Better Editing</div>
+            <p className="text-gray-600">Create and edit with a live Markdown preview.</p>
           </div>
-          
+  
           <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
             <div className="text-indigo-600 text-xl mb-2">🔍 Smart Search</div>
-            <p className="text-gray-600">
-              Quickly find what you need with powerful search and filtering capabilities.
-            </p>
+            <p className="text-gray-600">Find past work without clicking through 50 pages one-by-one
+              <br /> with basic search and filtering.</p>
           </div>
-          
+  
           <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
             <div className="text-indigo-600 text-xl mb-2">🔄 File Conversion</div>
             <p className="text-gray-600">
-              Convert between file formats effortlessly, including Markdown, HTML, and plain text.
+              Convert text and code snippets:
+              <br /> - Markdown&lt;&gt;HTML&lt;&gt;Plaintext
+              <br /> - JSON(string&lt;&gt;pretty).
             </p>
           </div>
-          
+  
           <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
             <div className="text-indigo-600 text-xl mb-2">👥 Community Sharing</div>
-            <p className="text-gray-600">
-              Share your public gists with the community and discover gists shared by others.
-            </p>
+            <p className="text-gray-600">Share gists and discover content from others.</p>
           </div>
-        </div>
-        
-        {/* CTA section */}
-        <div className="bg-gray-50 p-6 rounded-lg text-center">
-          <p className="text-gray-600 mb-4">
-            Ready to start managing your GitHub Gists more efficiently?
-          </p>
-          <button 
-            onClick={initiateGithubLogin}
-            className="bg-indigo-600 text-white px-6 py-2 rounded-md font-medium hover:bg-indigo-700 transition duration-200"
-          >
-            Sign in with GitHub
-          </button>
         </div>
       </div>
     );
   }
+
 
   if (loading) {
     return <Spinner />;
