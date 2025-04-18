@@ -49,41 +49,39 @@ const DeleteGist = () => {
   };
 
   if (!user) {
-    return <div>Please log in to delete gists.</div>;
+    return <div className="card card-body">Please log in to delete gists.</div>;
   }
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <div className="card card-body">Loading...</div>;
   }
 
   if (!gist) {
-    return <div>Gist not found.</div>;
+    return <div className="card card-body">Gist not found.</div>;
   }
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Delete Gist</h2>
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-4">
-        <div className="px-4 py-5 sm:px-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
-            {gist.description || 'Untitled Gist'}
-          </h3>
-          <p className="mt-1 max-w-2xl text-sm text-gray-500">
-            Created: {new Date(gist.created_at).toLocaleDateString()}
-          </p>
-        </div>
+      <h2 className="heading-primary">Delete Gist</h2>
+      <div className="card card-body mb-4">
+        <h3 className="heading-tertiary">
+          {gist.description || 'Untitled Gist'}
+        </h3>
+        <p className="text-secondary">
+          Created: {new Date(gist.created_at).toLocaleDateString()}
+        </p>
       </div>
       <div className="flex justify-end space-x-4">
         <button
           onClick={() => navigate('/gists')}
-          className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          className="btn btn-secondary"
         >
           Cancel
         </button>
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          className="btn btn-danger"
         >
           {deleting ? 'Deleting...' : 'Delete'}
         </button>

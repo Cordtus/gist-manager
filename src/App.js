@@ -12,8 +12,6 @@ import FileConverter from './components/FileConverter';
 import { UserProfile } from './components/UserProfile';
 import SharedGistList from './components/SharedGistList';
 import SharedGistDetail from './components/SharedGistDetail';
-import './styles/index.css';
-import './styles/markdown-preview.css';
 
 const AppContent = () => {
   const auth = useAuth();

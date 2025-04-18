@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { getGists } from '../services/api/gists';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from './common/Spinner';
+import { getGistPreview } from './common/GistPreview';
 
 const Dashboard = () => {
   const [gists, setGists] = useState([]);
@@ -74,17 +75,6 @@ const Dashboard = () => {
     }
   }, [user, token, fetchGists]);
 
-  const getGistPreview = (gist) => {
-    // Get first file content preview
-    const firstFile = Object.values(gist.files)[0];
-    if (!firstFile || !firstFile.content) return 'No content available';
-    
-    // Get first line or first 50 characters
-    const content = firstFile.content;
-    const firstLine = content.split('<br />')[0].trim();
-    return firstLine.length > 50 ? `${firstLine.substring(0, 50)}...` : firstLine;
-  };
-
   if (!user) {
     return (
       <div className="flex flex-col space-y-8">
@@ -104,7 +94,7 @@ const Dashboard = () => {
           </p>
           <button 
             onClick={initiateGithubLogin}
-            className="bg-white text-indigo-600 px-6 py-3 rounded-md font-medium hover:bg-indigo-50 transition duration-200"
+            className="btn bg-white text-indigo-600 hover:bg-indigo-50 transition duration-200"
           >
             Connect with GitHub
           </button>
@@ -112,35 +102,34 @@ const Dashboard = () => {
   
         {/* Features grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
+          <div className="card card-body hover:shadow-md transition-shadow">
             <div className="text-indigo-600 text-xl mb-2">✏️ Better Editing</div>
-            <p className="text-gray-600">Create and edit with a live Markdown preview.</p>
+            <p className="text-secondary">Create and edit with a live Markdown preview.</p>
           </div>
   
-          <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
+          <div className="card card-body hover:shadow-md transition-shadow">
             <div className="text-indigo-600 text-xl mb-2">🔍 Smart Search</div>
-            <p className="text-gray-600">Find past work without clicking through 50 pages one-by-one
+            <p className="text-secondary">Find past work without clicking through 50 pages one-by-one
               <br /> with basic search and filtering.</p>
           </div>
   
-          <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
+          <div className="card card-body hover:shadow-md transition-shadow">
             <div className="text-indigo-600 text-xl mb-2">🔄 File Conversion</div>
-            <p className="text-gray-600">
+            <p className="text-secondary">
               Convert text and code snippets:
               <br /> - Markdown&lt;&gt;HTML&lt;&gt;Plaintext
               <br /> - JSON(string&lt;&gt;pretty).
             </p>
           </div>
   
-          <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
+          <div className="card card-body hover:shadow-md transition-shadow">
             <div className="text-indigo-600 text-xl mb-2">👥 Community Sharing</div>
-            <p className="text-gray-600">Share gists and discover content from others.</p>
+            <p className="text-secondary">Share gists and discover content from others.</p>
           </div>
         </div>
       </div>
     );
   }
-
 
   if (loading) {
     return <Spinner />;
@@ -158,17 +147,17 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       {/* User Profile Card */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">User Profile</h2>
+      <div className="card card-body">
+        <h2 className="heading-secondary border-b pb-2">User Profile</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-gray-600">Username:</p>
+            <p className="text-secondary">Username:</p>
             <p className="font-medium">{user.login || 'Not available'}</p>
             
-            <p className="text-sm text-gray-600 mt-3">Name:</p>
+            <p className="text-secondary mt-3">Name:</p>
             <p className="font-medium">{user.name || 'Not provided'}</p>
             
-            <p className="text-sm text-gray-600 mt-3">Email:</p>
+            <p className="text-secondary mt-3">Email:</p>
             <p className="font-medium">{user.email || 'Not provided'}</p>
           </div>
           <div>
@@ -184,8 +173,8 @@ const Dashboard = () => {
       </div>
       
       {/* Gist Statistics Card */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Gist Statistics</h2>
+      <div className="card card-body">
+        <h2 className="heading-secondary border-b pb-2">Gist Statistics</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-blue-50 p-4 rounded-md">
             <p className="text-sm text-blue-700">Total Gists</p>
@@ -203,10 +192,10 @@ const Dashboard = () => {
         
         {topFileTypes.length > 0 && (
           <div className="mt-4">
-            <p className="text-sm text-gray-600 mb-2">Top File Types:</p>
+            <p className="text-secondary mb-2">Top File Types:</p>
             <div className="flex flex-wrap gap-2">
               {topFileTypes.map(([type, count]) => (
-                <span key={type} className="px-2 py-1 bg-gray-100 rounded-md text-sm">
+                <span key={type} className="badge badge-gray">
                   {type}: {count}
                 </span>
               ))}
@@ -215,32 +204,32 @@ const Dashboard = () => {
         )}
         
         {metrics.mostRecentUpdate && (
-          <div className="mt-4 text-sm text-gray-600">
+          <div className="mt-4 text-tertiary">
             Last updated: {metrics.mostRecentUpdate.toLocaleDateString()}
           </div>
         )}
       </div>
 
       {/* Recent Gists */}
-      <div className="bg-white rounded-lg shadow">
-        <h2 className="text-xl font-bold p-6 pb-4 text-gray-800 border-b">Recent Gists</h2>
+      <div className="card">
+        <h2 className="heading-secondary p-6 pb-4 border-b">Recent Gists</h2>
         {Array.isArray(gists) && gists.length > 0 ? (
-          <ul className="divide-y divide-gray-200">
+          <ul className="list-divider">
             {gists.map(gist => (
               <li key={gist.id}>
-                <Link to={`/gist/${gist.id}`} className="block p-6 hover:bg-gray-50 transition duration-150">
-                  <p className="text-lg font-medium text-indigo-600 truncate">
+                <Link to={`/gist/${gist.id}`} className="block p-6 hover-bg">
+                  <p className="gist-title">
                     {gist.description || 'Untitled Gist'}
                   </p>
-                  <p className="mt-1 text-gray-600 italic text-sm">
+                  <p className="mt-1 text-secondary italic">
                     {getGistPreview(gist)}
                   </p>
                   <div className="mt-2 flex justify-between items-center">
                     <div className="flex items-center">
-                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                      <span className="badge badge-blue">
                         {Object.keys(gist.files).length} {Object.keys(gist.files).length === 1 ? 'file' : 'files'}
                       </span>
-                      <span className="ml-2 text-sm text-gray-500">
+                      <span className="ml-2 text-tertiary">
                         Updated: {new Date(gist.updated_at).toLocaleDateString()}
                       </span>
                     </div>

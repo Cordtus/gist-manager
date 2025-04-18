@@ -1,4 +1,4 @@
-/* gisteditor.css */
+/* /src/styles/gisteditor.css */
 
 .gist-editor-form {
   display: flex;
@@ -81,14 +81,14 @@
   background-color: rgba(248, 113, 113, 0.2);
 }
 
-/* Editor container - The main workspace */
+/* Editor container - main workspace */
 .editor-container {
   display: flex;
   flex-direction: row;
   flex: 1;
-  min-height: 0; /* Critical for proper flex behavior */
+  min-height: 0;
   position: relative;
-  overflow: hidden;
+  overflow: visible !important;
 }
 
 /* Editor and preview - shared styles */
@@ -97,6 +97,7 @@
   box-sizing: border-box;
   overflow: auto;
   padding: 1rem;
+  pointer-events: auto;
 }
 
 /* Editor specific styles */
@@ -157,51 +158,105 @@
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 6px;
-  background-color: #e5e7eb;
+  width: 10px;
+  margin-left: -5px;
+  background-color: transparent;
   cursor: col-resize;
-  z-index: 50;
-  opacity: 0.7;
-  transition: background-color 0.2s, opacity 0.2s;
+  z-index: 100;
+  transition: background-color 0.2s;
 }
 
-/* indicator in handle for visibility */
+/* Visible editor-to-preview ratio slider */
 .resize-handle::after {
   content: "";
   position: absolute;
-  top: 50%;
+  top: 0;
+  bottom: 0;
   left: 50%;
-  transform: translate(-50%, -50%);
-  width: 2px;
-  height: 30px;
-  background-color: #9ca3af;
+  width: 4px;
+  transform: translateX(-50%);
+  background-color: #e5e7eb;
   border-radius: 2px;
+  opacity: 0.5;
+  transition: opacity 0.2s, width 0.2s;
 }
 
-.resize-handle:hover,
-.resize-handle.active {
-  background-color: #6366f1;
-  opacity: 1;
-  width: 8px;
-}
-
-.resize-handle:hover::after,
-.resize-handle.active::after {
-  background-color: #ffffff;
-}
-
-/* Dark mode styles for resize handle */
-.dark .resize-handle {
+/* Dark mode for handle */
+.dark .resize-handle::after {
   background-color: #4a5568;
 }
 
-.dark .resize-handle::after {
-  background-color: #cbd5e0;
+/* Hover styles */
+.resize-handle:hover::after,
+.resize-handle.active::after {
+  opacity: 1;
+  width: 6px;
+  background-color: #6366f1;
 }
 
-.dark .resize-handle:hover,
-.dark .resize-handle.active {
-  background-color: #6366f1;
+/* Active state during dragging */
+.resize-handle.active {
+  background-color: rgba(99, 102, 241, 0.1);
+}
+
+/* Mobile/responsive adjustments for vertical resize */
+@media (max-width: 768px) {
+  .editor-container.split-view {
+    flex-direction: column;
+    height: auto;
+    min-height: 400px;
+  }
+
+  .editor-container.split-view .editor,
+  .editor-container.split-view .preview {
+    width: 100% !important;
+    height: auto;
+    min-height: 200px;
+  }
+
+  .resize-handle {
+    top: auto;
+    bottom: 50%; 
+    left: 0 !important;
+    right: 0;
+    width: 100%;
+    height: 10px;
+    margin-left: 0;
+    margin-bottom: -5px;
+    cursor: row-resize;
+  }
+
+  .resize-handle::after {
+    top: 50%;
+    left: 0;
+    right: 0;
+    bottom: auto;
+    width: auto;
+    height: 4px;
+    transform: translateY(-50%);
+  }
+}
+
+/* Visual resizable panel indicator */
+.editor-container.split-view::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: calc(50% - 10px);
+  width: 20px;
+  height: 4px;
+  background-color: #e5e7eb;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.editor-container.split-view:hover::before {
+  opacity: 0.5;
+}
+
+.dark .editor-container.split-view::before {
+  background-color: #4a5568;
 }
 
 /* Syntax highlighter container */
@@ -210,244 +265,6 @@
   padding: 1rem !important;
   border-radius: 0.375rem !important;
   min-height: 100%;
-}
-
-/* Markdown preview styling */
-.markdown-preview {
-  padding: 1.5rem;
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-}
-
-/* Dark mode for markdown preview general content */
-.dark .markdown-preview {
-  color: #e2e8f0;
-}
-
-/* Heading styles */
-.markdown-preview h1, 
-.markdown-preview h2, 
-.markdown-preview h3, 
-.markdown-preview h4, 
-.markdown-preview h5, 
-.markdown-preview h6 {
-  margin-top: 1.5rem;
-  margin-bottom: 1rem;
-  font-weight: 600;
-  line-height: 1.25;
-  color: #111827;
-}
-
-/* Dark mode for headings */
-.dark .markdown-preview h1,
-.dark .markdown-preview h2,
-.dark .markdown-preview h3,
-.dark .markdown-preview h4,
-.dark .markdown-preview h5,
-.dark .markdown-preview h6 {
-  color: #f7fafc;
-}
-
-.markdown-preview h1, 
-.markdown-preview h2 {
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 0.5rem;
-}
-
-/* Dark mode for heading borders */
-.dark .markdown-preview h1,
-.dark .markdown-preview h2 {
-  border-bottom-color: #4a5568;
-}
-
-.markdown-preview h1 {
-  font-size: 2rem;
-}
-
-.markdown-preview h2 {
-  font-size: 1.5rem;
-}
-
-.markdown-preview h3 {
-  font-size: 1.25rem;
-}
-
-.markdown-preview h4 {
-  font-size: 1rem;
-}
-
-.markdown-preview p {
-  margin-top: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-/* Links */
-.markdown-preview a {
-  color: #2563eb;
-  text-decoration: none;
-}
-
-.markdown-preview a:hover {
-  text-decoration: underline;
-}
-
-/* Dark mode for links */
-.dark .markdown-preview a {
-  color: #60a5fa;
-}
-
-/* Lists */
-.markdown-preview ul, 
-.markdown-preview ol {
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
-  padding-left: 1.5rem;
-}
-
-.markdown-preview ul {
-  list-style-type: disc;
-}
-
-.markdown-preview ol {
-  list-style-type: decimal;
-}
-
-.markdown-preview li {
-  margin-top: 0.25rem;
-  margin-bottom: 0.25rem;
-}
-
-/* Blockquotes */
-.markdown-preview blockquote {
-  margin: 1rem 0;
-  padding: 0.5rem 1rem;
-  border-left: 4px solid #d1d5db;
-  background-color: #f3f4f6;
-  color: #4b5563;
-}
-
-/* Dark mode for blockquotes */
-.dark .markdown-preview blockquote {
-  border-left-color: #4a5568;
-  background-color: #1f2937;
-  color: #d1d5db;
-}
-
-/* Code elements */
-.markdown-preview code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 0.875rem;
-  padding: 0.2em 0.4em;
-  background-color: #f1f5f9;
-  border-radius: 0.25rem;
-}
-
-/* Dark mode for inline code */
-.dark .markdown-preview code {
-  background-color: #1f2937;
-  color: #e2e8f0;
-}
-
-.markdown-preview pre {
-  margin: 1rem 0;
-  padding: 1rem;
-  background-color: #1e293b;
-  color: #e2e8f0;
-  border-radius: 0.375rem;
-  overflow: auto;
-}
-
-.markdown-preview pre code {
-  background-color: transparent;
-  padding: 0;
-  font-size: 0.875rem;
-  color: inherit;
-}
-
-/* Code block terminal style */
-.markdown-preview pre.terminal {
-  background-color: #1e293b;
-  color: #e2e8f0;
-  border-radius: 0.25rem;
-  max-height: 400px;
-  overflow-y: auto;
-  position: relative;
-  border: 1px solid #4a5568;
-}
-
-.markdown-preview pre.terminal::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1.5rem;
-  background-color: #0f172a;
-  border-top-left-radius: 0.25rem;
-  border-top-right-radius: 0.25rem;
-  display: flex;
-  align-items: center;
-  padding: 0 0.75rem;
-}
-
-.markdown-preview pre.terminal code {
-  padding-top: 1.5rem;
-  display: block;
-}
-
-/* Dark mode terminal adaptations */
-.dark .markdown-preview pre.terminal {
-  border-color: #1a202c;
-  background-color: #111827;
-}
-
-.dark .markdown-preview pre.terminal::before {
-  background-color: #0f172a;
-}
-
-/* Horizontal rule styling */
-.markdown-preview hr {
-  margin: 2rem 0;
-  border: 0;
-  height: 1px;
-  background-color: #e5e7eb;
-}
-
-/* Dark mode horizontal rule */
-.dark .markdown-preview hr {
-  background-color: #4a5568;
-}
-
-/* Table styling */
-.markdown-preview table {
-  width: 100%;
-  margin: 1rem 0;
-  border-collapse: collapse;
-}
-
-.markdown-preview th, 
-.markdown-preview td {
-  padding: 0.5rem;
-  border: 1px solid #d1d5db;
-}
-
-.markdown-preview th {
-  background-color: #f3f4f6;
-  font-weight: 600;
-  text-align: left;
-}
-
-/* Dark mode for tables */
-.dark .markdown-preview table th,
-.dark .markdown-preview table td {
-  border-color: #4a5568;
-}
-
-.dark .markdown-preview table th {
-  background-color: #1f2937;
-}
-
-.dark .markdown-preview table tr:nth-child(even) {
-  background-color: #283141;
 }
 
 /* Toolbar */

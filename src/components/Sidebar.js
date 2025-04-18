@@ -19,7 +19,7 @@ const Sidebar = () => {
   };
 
   return (
-    <div className="bg-gray-800 dark:bg-gray-900 text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out">
+    <div className={`bg-gray-800 ${theme === 'dark' ? 'bg-gray-900' : ''} text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition duration-200 ease-in-out`}>
       <div className="px-4">
         <h2 className="text-xl font-bold">Gist Manager</h2>
       </div>
@@ -29,8 +29,8 @@ const Sidebar = () => {
           to="/" 
           className={`block py-2.5 px-4 rounded transition duration-200 ${
             isActive('/') 
-              ? 'bg-gray-700 dark:bg-gray-800 text-white' 
-              : 'hover:bg-gray-700 hover:text-white dark:hover:bg-gray-800'
+              ? `bg-gray-700 ${theme === 'dark' ? 'bg-gray-800' : ''} text-white` 
+              : `hover:bg-gray-700 hover:text-white ${theme === 'dark' ? 'hover:bg-gray-800' : ''}`
           }`}
         >
           <FaHome className="inline-block mr-2" /> Dashboard
@@ -40,8 +40,8 @@ const Sidebar = () => {
           to="/gists" 
           className={`block py-2.5 px-4 rounded transition duration-200 ${
             isActive('/gists') 
-              ? 'bg-gray-700 dark:bg-gray-800 text-white' 
-              : 'hover:bg-gray-700 hover:text-white dark:hover:bg-gray-800'
+              ? `bg-gray-700 ${theme === 'dark' ? 'bg-gray-800' : ''} text-white` 
+              : `hover:bg-gray-700 hover:text-white ${theme === 'dark' ? 'hover:bg-gray-800' : ''}`
           }`}
         >
           <FaListAlt className="inline-block mr-2" /> My Gists
@@ -51,8 +51,8 @@ const Sidebar = () => {
           to="/gist" 
           className={`block py-2.5 px-4 rounded transition duration-200 ${
             location.pathname === '/gist' 
-              ? 'bg-gray-700 dark:bg-gray-800 text-white' 
-              : 'hover:bg-gray-700 hover:text-white dark:hover:bg-gray-800'
+              ? `bg-gray-700 ${theme === 'dark' ? 'bg-gray-800' : ''} text-white` 
+              : `hover:bg-gray-700 hover:text-white ${theme === 'dark' ? 'hover:bg-gray-800' : ''}`
           }`}
         >
           <FaPlus className="inline-block mr-2" /> New Gist
@@ -62,8 +62,8 @@ const Sidebar = () => {
           to="/convert" 
           className={`block py-2.5 px-4 rounded transition duration-200 ${
             isActive('/convert') 
-              ? 'bg-gray-700 dark:bg-gray-800 text-white' 
-              : 'hover:bg-gray-700 hover:text-white dark:hover:bg-gray-800'
+              ? `bg-gray-700 ${theme === 'dark' ? 'bg-gray-800' : ''} text-white` 
+              : `hover:bg-gray-700 hover:text-white ${theme === 'dark' ? 'hover:bg-gray-800' : ''}`
           }`}
         >
           <FaExchangeAlt className="inline-block mr-2" /> File Converter
@@ -73,8 +73,8 @@ const Sidebar = () => {
           to="/shared" 
           className={`block py-2.5 px-4 rounded transition duration-200 ${
             isActive('/shared') 
-              ? 'bg-gray-700 dark:bg-gray-800 text-white' 
-              : 'hover:bg-gray-700 hover:text-white dark:hover:bg-gray-800'
+              ? `bg-gray-700 ${theme === 'dark' ? 'bg-gray-800' : ''} text-white` 
+              : `hover:bg-gray-700 hover:text-white ${theme === 'dark' ? 'hover:bg-gray-800' : ''}`
           }`}
         >
           <FaUsers className="inline-block mr-2" /> Community Gists
@@ -85,8 +85,8 @@ const Sidebar = () => {
             to="/profile" 
             className={`block py-2.5 px-4 rounded transition duration-200 ${
               isActive('/profile') 
-                ? 'bg-gray-700 dark:bg-gray-800 text-white' 
-                : 'hover:bg-gray-700 hover:text-white dark:hover:bg-gray-800'
+                ? `bg-gray-700 ${theme === 'dark' ? 'bg-gray-800' : ''} text-white` 
+                : `hover:bg-gray-700 hover:text-white ${theme === 'dark' ? 'hover:bg-gray-800' : ''}`
             }`}
           >
             <FaUser className="inline-block mr-2" /> My Profile
@@ -95,7 +95,7 @@ const Sidebar = () => {
       </nav>
 
       {/* Display login/logout section at the bottom */}
-      <div className="absolute bottom-0 left-0 w-full p-4 bg-gray-900 dark:bg-black text-center">
+      <div className={`absolute bottom-0 left-0 w-full p-4 bg-gray-900 ${theme === 'dark' ? 'bg-black' : ''} text-center`}>
         {user ? (
           <>
             {/* Show user's GitHub username */}

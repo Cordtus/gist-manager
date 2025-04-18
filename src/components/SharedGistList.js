@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { getAllSharedGists } from '../services/api/sharedGists';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from './common/Spinner';
+import { getGistPreview } from './common/GistPreview';
 
 const SharedGistList = () => {
   const [sharedGists, setSharedGists] = useState([]);
@@ -120,18 +121,6 @@ const SharedGistList = () => {
     });
   };
 
-  // Get a preview of the gist content
-  const getGistPreview = (gist) => {
-    // Get first file content preview
-    const firstFile = Object.values(gist.files)[0];
-    if (!firstFile || !firstFile.content) return 'No content available';
-    
-    // Get first line or first 50 characters
-    const content = firstFile.content;
-    const firstLine = content.split('\n')[0].trim();
-    return firstLine.length > 50 ? `${firstLine.substring(0, 50)}...` : firstLine;
-  };
-
   if (loading) {
     return <Spinner />;
   }
@@ -152,8 +141,8 @@ const SharedGistList = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4">Community Shared Gists</h2>
+      <div className="card card-body">
+        <h2 className="heading-secondary mb-4">Community Shared Gists</h2>
         
         {/* Search and filters */}
         <div className="mb-6">
@@ -163,7 +152,7 @@ const SharedGistList = () => {
               placeholder="Search shared gists by title, username, or filename..."
               value={searchTerm}
               onChange={handleSearchChange}
-              className="w-full p-3 border rounded-lg pl-10 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500 outline-none"
+              className="form-input pl-10"
             />
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-3 top-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -245,53 +234,53 @@ const SharedGistList = () => {
         </div>
         
         {/* Results count */}
-        <div className="text-sm text-gray-500 mb-4">
+        <div className="text-tertiary mb-4">
           Showing {filteredGists.length} shared gists
           {searchTerm && <span> matching "{searchTerm}"</span>}
         </div>
       </div>
       
       {/* Shared Gists List */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="card">
         {filteredGists.length > 0 ? (
-          <div className="divide-y divide-gray-200">
+          <div className="list-divider">
             {filteredGists.map(gist => (
-              <div key={gist.sharedId} className="p-6 hover:bg-gray-50 transition-colors duration-150">
+              <div key={gist.sharedId} className="p-6 hover-bg">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-medium text-indigo-600 truncate">
+                  <h3 className="gist-title">
                     {gist.description || 'Untitled Gist'}
                   </h3>
                   <div className="flex items-center space-x-2">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
+                    <span className={`badge ${
                       Object.keys(gist.files).length > 1 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-blue-100 text-blue-800'
+                        ? 'badge-green' 
+                        : 'badge-blue'
                     }`}>
                       {Object.keys(gist.files).length} {Object.keys(gist.files).length === 1 ? 'file' : 'files'}
                     </span>
                   </div>
                 </div>
                 
-                <p className="text-gray-600 italic text-sm mb-2">
+                <p className="text-secondary italic mb-2">
                   {getGistPreview(gist)}
                 </p>
                 
                 <div className="flex flex-wrap gap-2 mb-2">
                   {Object.keys(gist.files).slice(0, 3).map(filename => (
-                    <span key={filename} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                    <span key={filename} className="badge badge-gray">
                       {filename}
                     </span>
                   ))}
                   {Object.keys(gist.files).length > 3 && (
-                    <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                    <span className="badge badge-gray">
                       +{Object.keys(gist.files).length - 3} more
                     </span>
                   )}
                 </div>
                 
-                <div className="flex justify-between items-center text-xs text-gray-500 mt-3">
+                <div className="flex justify-between items-center text-tertiary mt-3">
                   <div>
-                    <span className="font-medium text-gray-700">Shared by:</span> {gist.username}
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Shared by:</span> {gist.username}
                   </div>
                   <div>
                     <span>Shared: {formatDate(gist.sharedAt)}</span>
@@ -305,13 +294,13 @@ const SharedGistList = () => {
                     href={`https://gist.github.com/${gist.username}/${gist.id}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200 mr-2"
+                    className="btn btn-secondary mr-2 py-1 px-3 text-sm"
                   >
                     View on GitHub
                   </a>
                   <Link 
                     to={`/shared/${gist.sharedId}`}
-                    className="px-3 py-1 text-sm bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200"
+                    className="btn btn-primary py-1 px-3 text-sm"
                   >
                     View Details
                   </Link>

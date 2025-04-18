@@ -6,6 +6,7 @@ import { getGists, deleteGist } from '../services/api/gists';
 import { useAuth } from '../contexts/AuthContext';
 import ConfirmationDialog from './ConfirmationDialog';
 import Spinner from './common/Spinner';
+import { getGistPreview } from './common/GistPreview';
 
 const GistList = () => {
   const [gists, setGists] = useState([]);
@@ -293,18 +294,6 @@ useEffect(() => {
   const refreshGists = async () => {
     hasDataFetchedRef.current = false;
     await fetchGists();
-  };
-
-  // get gist preview
-  const getGistPreview = (gist) => {
-    // Get first file content preview
-    const firstFile = Object.values(gist.files)[0];
-    if (!firstFile || !firstFile.content) return 'No content available';
-    
-    // get first line up to 50 char
-    const content = firstFile.content;
-    const firstLine = content.split('\n')[0].trim();
-    return firstLine.length > 50 ? `${firstLine.substring(0, 50)}...` : firstLine;
   };
 
   // Pagination

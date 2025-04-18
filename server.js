@@ -97,8 +97,8 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       connectSrc: ["'self'", "https://api.github.com", "https://github.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts for development
-      styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles for development
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
       frameSrc: ["'none'"]
     }
