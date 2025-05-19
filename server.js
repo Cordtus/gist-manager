@@ -96,9 +96,14 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      connectSrc: ["'self'", "https://api.github.com", "https://github.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts for development
-      styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles for development
+      connectSrc: [
+        "'self'",
+        process.env.FRONTEND_URL || 'https://gistmd.basementnodes.ca',
+        "https://api.github.com",
+        "https://github.com"
+      ],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
       frameSrc: ["'none'"]
     }
