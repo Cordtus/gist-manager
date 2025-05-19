@@ -2,14 +2,18 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Callback from './components/Callback';
 import GistList from './components/GistList';
 import GistEditor from './components/GistEditor';
 import FileConverter from './components/FileConverter';
-import DeleteGist from './components/DeleteGist';
+import { UserProfile } from './components/UserProfile';
+import SharedGistList from './components/SharedGistList';
+import SharedGistDetail from './components/SharedGistDetail';
 import './styles/index.css';
+import './styles/markdown-preview.css';
 
 const AppContent = () => {
   const auth = useAuth();
@@ -22,7 +26,14 @@ const AppContent = () => {
   const { loading } = auth;
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-screen dark:bg-dark-bg-primary">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-700 dark:text-gray-300">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -33,18 +44,22 @@ const AppContent = () => {
         <Route path="/gists" element={<GistList />} />
         <Route path="/gist/:id?" element={<GistEditor />} />
         <Route path="/convert" element={<FileConverter />} />
-        <Route path="/delete/:id" element={<DeleteGist />} />
+        <Route path="/profile" element={<UserProfile />} />
+        <Route path="/shared" element={<SharedGistList />} />
+        <Route path="/shared/:sharedId" element={<SharedGistDetail />} />
       </Routes>
     </Layout>
   );
 };
 
 const App = () => (
-  <AuthProvider>
-    <Router>
-      <AppContent />
-    </Router>
-  </AuthProvider>
+  <ThemeProvider>
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
+  </ThemeProvider>
 );
 
 export default App;

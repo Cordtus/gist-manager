@@ -9,11 +9,30 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const winston = require('winston');
 const gistRoutes = require('./server/routes/gists');
+const sharedGistsRoutes = require('./server/routes/sharedGists');
 const session = require('express-session');
 const crypto = require('crypto');
+const fs = require('fs').promises;
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+// ensure data dir exists
+const ensureDataDirectory = async () => {
+  const dataDir = path.join(__dirname, 'data');
+  const sharedGistsDir = path.join(dataDir, 'shared-gists');
+  
+  try {
+    await fs.mkdir(dataDir, { recursive: true });
+    await fs.mkdir(sharedGistsDir, { recursive: true });
+    console.log('Data directories initialized');
+  } catch (error) {
+    console.error('Error creating data directories:', error);
+  }
+};
+
+// init data dir
+ensureDataDirectory();
 
 // Enable trust proxy
 app.set('trust proxy', true);
@@ -77,9 +96,14 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      connectSrc: ["'self'", "https://api.github.com", "https://github.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts for development
-      styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles for development
+      connectSrc: [
+        "'self'",
+        process.env.FRONTEND_URL || 'https://gistmd.basementnodes.ca',
+        "https://api.github.com",
+        "https://github.com"
+      ],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
       frameSrc: ["'none'"]
     }
@@ -283,6 +307,7 @@ app.get('/api/auth/status', (req, res) => {
 // API ROUTES
 
 app.use('/api/gists', gistRoutes);
+app.use('/api/shared-gists', sharedGistsRoutes);
 
 // SERVING STATIC FILES
 

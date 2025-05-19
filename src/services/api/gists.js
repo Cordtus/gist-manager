@@ -1,78 +1,100 @@
 // services/api/gists.js
 
-import { handleApiError, logInfo, logError, trackError, ErrorCategory } from '../../utils/logger';
+import { handleApiError, logInfo, logError } from '../../utils/logger';
 import { githubApi } from './github';
 
 /**
- * Fetch all gists for the authenticated user
- * 
- * @param {string} [token] - Optional token, useful for testing or specific user context
- * @param {Function} [setError] - Optional state setter for error handling
- * @returns {Promise<Array>} - Array of gists
+ * In-memory per-token cache structure
  */
-
-// cache
-let isCurrentlyFetching = false;
-let lastFetchTimestamp = 0;
+const cacheByToken = new Map();
 const FETCH_COOLDOWN = 5000;
-let cachedGistsData = null;
 const CACHE_TTL = 60000;
 
+/**
+ * Invalidate all cached gists (e.g., after create/update/delete)
+ */
+export const invalidateGistsCache = () => {
+  cacheByToken.clear();
+  logInfo('Gists cache invalidated');
+};
+
+/**
+ * Fetch all gists for the authenticated user, with pagination
+ * Utilizes per-token caching, cooldown, and concurrency guards
+ *
+ * @param {string} [token]
+ * @param {Function} [setError]
+ * @returns {Promise<Array>}
+ */
 export const getGists = async (token, setError) => {
+  const key = token || 'default';
   const now = Date.now();
-  
-  // return cached if available and not stale
-  if (cachedGistsData && (now - lastFetchTimestamp < CACHE_TTL)) {
-    logInfo('Using cached gists data', { cacheAge: now - lastFetchTimestamp });
-    return cachedGistsData;
+  let entry = cacheByToken.get(key);
+
+  if (!entry) {
+    entry = { data: null, ts: 0, fetching: false };
+    cacheByToken.set(key, entry);
   }
-  
-  // prevent simultaneous requests
-  if (isCurrentlyFetching) {
+
+  // Return cached if fresh
+  if (entry.data && now - entry.ts < CACHE_TTL) {
+    logInfo('Using cached gists data', { cacheAge: now - entry.ts });
+    return entry.data;
+  }
+
+  // Prevent concurrent fetches
+  if (entry.fetching) {
     logInfo('Fetch prevented: Already fetching gists');
-    return cachedGistsData || [];
+    return entry.data || [];
   }
-  
-  // enforce request cooldown
-  if (now - lastFetchTimestamp < FETCH_COOLDOWN) {
+
+  // Respect cooldown
+  if (now - entry.ts < FETCH_COOLDOWN) {
     logInfo('Fetch prevented: Cooldown period not elapsed');
-    return cachedGistsData || [];
+    return entry.data || [];
   }
-  
+
   try {
     logInfo('Fetching gists for authenticated user');
-    isCurrentlyFetching = true;
-    
-    const response = await githubApi.get('/gists');
-    
-    // update cache and timestamp
-    cachedGistsData = response.data;
-    lastFetchTimestamp = Date.now();
-    logInfo(`Successfully fetched ${response.data.length} gists`);
-    
-    return response.data;
+    entry.fetching = true;
+
+    const allGists = [];
+    const perPage = 100;
+    let page = 1;
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    while (true) {
+      const response = await githubApi.get(
+        `/gists?per_page=${perPage}&page=${page}`,
+        { headers }
+      );
+      const gists = response.data;
+      allGists.push(...gists);
+      if (gists.length < perPage) break;
+      page++;
+    }
+
+    // Cache result
+    entry.data = allGists;
+    entry.ts = Date.now();
+    logInfo(`Successfully fetched ${allGists.length} gists`);
+
+    return allGists;
   } catch (error) {
     logError('Error fetching gists', { error: error.message });
     handleApiError(error, setError);
     throw error;
   } finally {
-    isCurrentlyFetching = false;
+    entry.fetching = false;
   }
-};
-
-// force refresh cache
-export const invalidateGistsCache = () => {
-  cachedGistsData = null;
-  lastFetchTimestamp = 0;
-  logInfo('Gists cache invalidated');
 };
 
 /**
  * Fetch a single gist by ID
- * 
- * @param {string} id - The ID of the gist to fetch
- * @param {Function} [setError] - Optional state setter for error handling
- * @returns {Promise<Object>} - The gist data
+ *
+ * @param {string} id
+ * @param {Function} [setError]
+ * @returns {Promise<Object>}
  */
 export const getGist = async (id, setError) => {
   try {
@@ -89,20 +111,18 @@ export const getGist = async (id, setError) => {
 
 /**
  * Create a new gist
- * 
- * @param {Object} gistData - The gist data to be created
- * @param {Function} [setError] - Optional state setter for error handling
- * @returns {Promise<Object>} - The created gist
+ * Invalidates cache on success
+ *
+ * @param {Object} gistData
+ * @param {Function} [setError]
+ * @returns {Promise<Object>}
  */
 export const createGist = async (gistData, setError) => {
   try {
     logInfo('Creating new gist', { description: gistData.description });
     const response = await githubApi.post('/gists', gistData);
     logInfo(`Successfully created gist: ${response.data.id}`);
-    
-    // invalidate cache after create
     invalidateGistsCache();
-    
     return response.data;
   } catch (error) {
     logError('Error creating gist', { error: error.message });
@@ -113,21 +133,19 @@ export const createGist = async (gistData, setError) => {
 
 /**
  * Update an existing gist
- * 
- * @param {string} gistId - The ID of the gist to update
- * @param {Object} gistData - The updated gist data
- * @param {Function} [setError] - Optional state setter for error handling
- * @returns {Promise<Object>} - The updated gist
+ * Invalidates cache on success
+ *
+ * @param {string} gistId
+ * @param {Object} gistData
+ * @param {Function} [setError]
+ * @returns {Promise<Object>}
  */
 export const updateGist = async (gistId, gistData, setError) => {
   try {
     logInfo(`Updating gist: ${gistId}`);
     const response = await githubApi.patch(`/gists/${gistId}`, gistData);
     logInfo(`Successfully updated gist: ${gistId}`);
-    
-    // invalidate cache after update
     invalidateGistsCache();
-    
     return response.data;
   } catch (error) {
     logError(`Error updating gist: ${gistId}`, { error: error.message });
@@ -138,22 +156,20 @@ export const updateGist = async (gistId, gistData, setError) => {
 
 /**
  * Delete a gist
- * 
- * @param {string} gistId - The ID of the gist to delete
- * @param {Function} [setError] - Optional state setter for error handling
- * @returns {Promise<boolean>} - Success status
+ * Invalidates cache on success
+ *
+ * @param {string} gistId
+ * @param {Function} [setError]
+ * @returns {Promise<boolean>}
  */
 export const deleteGist = async (gistId, setError) => {
-  try { 
+  try {
     logInfo(`Deleting gist: ${gistId}`);
     await githubApi.delete(`/gists/${gistId}`);
     logInfo(`Successfully deleted gist: ${gistId}`);
-    
-    // invalidate cache after delete
     invalidateGistsCache();
-    
-    return true; // Return success status
-  } catch (error) { 
+    return true;
+  } catch (error) {
     logError(`Error deleting gist: ${gistId}`, { error: error.message });
     handleApiError(error, setError);
     throw error;
@@ -161,37 +177,26 @@ export const deleteGist = async (gistId, setError) => {
 };
 
 /**
- * Search through user's gists
- * 
+ * Search through user's gists (client-side)
+ * Depends on getGists(token, setError)
+ *
  * @param {string} query - The search query
+ * @param {string} [token] - Optional token context
  * @param {Function} [setError] - Optional state setter for error handling
- * @returns {Promise<Array>} - Array of matching gists
+ * @returns {Promise<Array>}
  */
-export const searchGists = async (query, setError) => {
+export const searchGists = async (query, token, setError) => {
   try {
     logInfo(`Searching gists with query: ${query}`);
-    // fetch all gists (use cache if healthy)
-    const allGists = await getGists();
-    
-    // Client-side filtering (GitHub API doesn't support direct gist content search)
+    const allGists = await getGists(token, setError);
     const normalizedQuery = query.toLowerCase();
     const results = allGists.filter(gist => {
-      // Search in description
-      if (gist.description && gist.description.toLowerCase().includes(normalizedQuery)) {
-        return true;
-      }
-      
-      // Search in filenames
-      if (Object.keys(gist.files).some(filename => 
-        filename.toLowerCase().includes(normalizedQuery))) {
-        return true;
-      }
-      
-      // Search in file content (for truncated files, this will be partial)
-      return Object.values(gist.files).some(file => 
-        file.content && file.content.toLowerCase().includes(normalizedQuery));
+      if (gist.description?.toLowerCase().includes(normalizedQuery)) return true;
+      if (Object.keys(gist.files).some(fn => fn.toLowerCase().includes(normalizedQuery))) return true;
+      return Object.values(gist.files).some(file =>
+        file.content?.toLowerCase().includes(normalizedQuery)
+      );
     });
-    
     logInfo(`Search returned ${results.length} results`);
     return results;
   } catch (error) {
@@ -203,10 +208,10 @@ export const searchGists = async (query, setError) => {
 
 /**
  * Star a gist
- * 
- * @param {string} gistId - The ID of the gist to star
- * @param {Function} [setError] - Optional state setter for error handling
- * @returns {Promise<boolean>} - Success status
+ *
+ * @param {string} gistId
+ * @param {Function} [setError]
+ * @returns {Promise<boolean>}
  */
 export const starGist = async (gistId, setError) => {
   try {
@@ -223,10 +228,10 @@ export const starGist = async (gistId, setError) => {
 
 /**
  * Unstar a gist
- * 
- * @param {string} gistId - The ID of the gist to unstar
- * @param {Function} [setError] - Optional state setter for error handling
- * @returns {Promise<boolean>} - Success status
+ *
+ * @param {string} gistId
+ * @param {Function} [setError]
+ * @returns {Promise<boolean>}
  */
 export const unstarGist = async (gistId, setError) => {
   try {
@@ -243,10 +248,10 @@ export const unstarGist = async (gistId, setError) => {
 
 /**
  * Check if a gist is starred
- * 
- * @param {string} gistId - The ID of the gist to check
- * @param {Function} [setError] - Optional state setter for error handling
- * @returns {Promise<boolean>} - Whether the gist is starred
+ *
+ * @param {string} gistId
+ * @param {Function} [setError]
+ * @returns {Promise<boolean>}
  */
 export const isGistStarred = async (gistId, setError) => {
   try {
@@ -255,7 +260,7 @@ export const isGistStarred = async (gistId, setError) => {
     logInfo(`Gist is starred: ${gistId}`);
     return true;
   } catch (error) {
-    if (error.response && error.response.status === 404) {
+    if (error.response?.status === 404) {
       logInfo(`Gist is not starred: ${gistId}`);
       return false;
     }
