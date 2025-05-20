@@ -1,11 +1,25 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+
     <title>Gist Manager</title>
+
+    <!-- MOVE all scripts into the head -->
+    <script crossorigin="anonymous" defer src="https://github.githubassets.com/assets/wp-runtime-fb531550a936.js"></script>
+    <script crossorigin="anonymous" defer src="https://github.githubassets.com/assets/vendors-node_modules_oddbird_popover-polyfill_dist_popover-fn_js-a8c266e5f126.js"></script>
+    <!-- …other external scripts… -->
+
+    <!-- Your main bundle -->
+    <link href="%PUBLIC_URL%/static/css/main.ffd5a0a8.css" rel="stylesheet" />
+    <script defer="defer" src="%PUBLIC_URL%/static/js/main.9446a02f.js"></script>
   </head>
-  <body>
+  <!-- ADD data-turbo-suppress-warning to suppress if any third-party script ends up in body -->
+  <body data-turbo-suppress-warning style="word-wrap: break-word;">
+    <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
   </body>
 </html>
