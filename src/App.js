@@ -12,8 +12,10 @@ import FileConverter from './components/FileConverter';
 import { UserProfile } from './components/UserProfile';
 import SharedGistList from './components/SharedGistList';
 import SharedGistDetail from './components/SharedGistDetail';
+import ThemeColorSelector from './components/ThemeColorSelector';
 import ThemeSandbox from './components/ThemeSandbox';
 import './styles/index.css';
+import './styles/theme.css';
 import './styles/markdown-preview.css';
 
 const AppContent = () => {
@@ -47,6 +49,7 @@ const AppContent = () => {
         <Route path="/convert" element={<FileConverter />} />
         <Route path="/profile" element={<UserProfile />} />
         <Route path="/theme-sandbox" element={<ThemeSandbox />} />
+        <Route path="/theme-colors" element={<ThemeColorSelector />} />
         <Route path="/shared" element={<SharedGistList />} />
         <Route path="/shared/:sharedId" element={<SharedGistDetail />} />
       </Routes>
