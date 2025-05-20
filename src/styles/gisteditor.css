@@ -620,3 +620,89 @@
     flex-shrink: 0;
   }
 }
+
+/* Collapsible arrows styling */
+.collapsible-arrow {
+  display: inline-block;
+  margin-right: 8px;
+  transition: transform 0.2s ease;
+}
+
+details[open] .collapsible-arrow {
+  transform: rotate(90deg);
+}
+
+/* Anchor links on headings */
+.heading-anchor {
+  position: relative;
+}
+
+.heading-anchor .anchor-link {
+  position: absolute;
+  opacity: 0;
+  margin-left: 0.5rem;
+  color: #6b7280;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.heading-anchor:hover .anchor-link {
+  opacity: 1;
+}
+
+/* Checkboxes in markdown */
+.md-checkbox {
+  margin-right: 0.5rem;
+}
+
+/* Terminal window styling improvements */
+.terminal-wrapper {
+  margin: 1rem 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.terminal-header {
+  display: flex;
+  align-items: center;
+  background-color: #1a202c;
+  padding: 0.5rem 1rem;
+  position: relative;
+}
+
+.terminal-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.terminal-red {
+  background-color: #f87171;
+}
+
+.terminal-yellow {
+  background-color: #fbbf24;
+}
+
+.terminal-green {
+  background-color: #34d399;
+}
+
+.terminal-language {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #d1d5db;
+  font-size: 0.75rem;
+  font-family: monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Ensure code blocks don't overflow the container */
+.markdown-preview pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
