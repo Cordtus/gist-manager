@@ -91,7 +91,7 @@ app.use(session({
   }
 }));
 
-// Add security headers with appropriate CSP
+// CSP config
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -99,11 +99,18 @@ app.use(helmet({
       connectSrc: [
         "'self'",
         process.env.FRONTEND_URL || 'https://gistmd.basementnodes.ca',
-        "https://api.github.com",
-        "https://github.com"
+        'https://api.github.com',
+        'https://github.com'
       ],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: [
+        "'self'",
+        'https://github.githubassets.com'
+      ],
+      scriptSrcElem: [
+        "'self'",
+        'https://github.githubassets.com'
+      ],
+      styleSrc: ["'self'", "'unsafe-inline'"],  // keep if you have inline CSS
       imgSrc: ["'self'", "data:", "https:"],
       frameSrc: ["'none'"]
     }
@@ -111,6 +118,7 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
+
 
 // Logging middleware
 app.use(morgan('combined', {
@@ -306,12 +314,14 @@ app.get('/api/auth/status', (req, res) => {
 
 // API ROUTES
 
-app.use('/api/gists', gistRoutes);
-app.use('/api/shared-gists', sharedGistsRoutes);
+
 
 // SERVING STATIC FILES
 
 app.use(express.static(path.join(__dirname, 'build')));
+
+app.use('/api/gists', gistRoutes);
+app.use('/api/shared-gists', sharedGistsRoutes);
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
