@@ -12,6 +12,7 @@ import FileConverter from './components/FileConverter';
 import { UserProfile } from './components/UserProfile';
 import SharedGistList from './components/SharedGistList';
 import SharedGistDetail from './components/SharedGistDetail';
+import ThemeSandbox from './components/ThemeSandbox';
 import './styles/index.css';
 import './styles/markdown-preview.css';
 
@@ -45,6 +46,7 @@ const AppContent = () => {
         <Route path="/gist/:id?" element={<GistEditor />} />
         <Route path="/convert" element={<FileConverter />} />
         <Route path="/profile" element={<UserProfile />} />
+        <Route path="/theme-sandbox" element={<ThemeSandbox />} />
         <Route path="/shared" element={<SharedGistList />} />
         <Route path="/shared/:sharedId" element={<SharedGistDetail />} />
       </Routes>
