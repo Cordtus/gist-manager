@@ -1,290 +1,163 @@
 /* styles/theme.css */
 
+/* ================================
+   Light-mode variables (default)
+   ================================ */
 :root {
   /* Primary brand colors */
-  --color-primary: #4f46e5;
-  --color-primary-light: #6366f1;
-  --color-primary-dark: #4338ca;
+  --color-primary:   #2563eb;  /* calm blue */
+  --color-primary-light: #3b82f6;
+  --color-primary-dark:  #1e40af;
   --color-primary-contrast: #ffffff;
 
-  /* UI colors */
-  --color-background: #ffffff;
-  --color-surface: #f9fafb;
-  --color-surface-variant: #f3f4f6;
-  --color-border: #e5e7eb;
-  
-  /* Typography colors */
-  --color-text-primary: #1f2937;
+  /* UI palette */
+  --color-background:     #f9fafb;  /* very light gray */
+  --color-surface:        #ffffff;
+  --color-surface-variant:#e5e7eb;
+  --color-border:         #d1d5db;
+
+  /* Text */
+  --color-text-primary:   #1f2937;
   --color-text-secondary: #4b5563;
-  --color-text-tertiary: #6b7280;
-  --color-text-disabled: #9ca3af;
-  
-  /* Functional colors */
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-error: #ef4444;
-  --color-info: #3b82f6;
-  
-  /* Editor colors */
-  --color-editor-bg: #f8fafc;
-  --color-preview-bg: #ffffff;
-  --color-code-bg: #1e293b;
-  --color-code-text: #e2e8f0;
-  --color-inline-code-bg: #f1f5f9;
-  
+  --color-text-tertiary:  #6b7280;
+  --color-text-disabled:  #9ca3af;
+
+  /* Editor bg’s */
+  --color-editor-bg:   #ffffff;
+  --color-preview-bg:  #f3f4f6;
+  --color-code-bg:     #f1f5f9;
+  --color-code-text:   #111827;
+  --color-inline-code-bg: #e5e7eb;
+
   /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  
-  /* Spacing */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  
-  /* Border radius */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-full: 9999px;
-  
-  /* Typography */
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-base: 1rem;
-  --font-size-lg: 1.125rem;
-  --font-size-xl: 1.25rem;
-  --font-size-2xl: 1.5rem;
-  
-  /* Transitions */
-  --transition-fast: 150ms;
-  --transition-normal: 200ms;
-  --transition-slow: 300ms;
+  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md:  0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg:  0 10px 15px rgba(0, 0, 0, 0.1);
+
+  /* Spacing & radius */
+  --space-1: 4px;   --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px;
 }
 
-/* Dark theme variables */
+/* ================================
+   Dark-mode overrides
+   ================================ */
 .dark {
-  /* Primary brand colors (adjusted for dark theme) */
-  --color-primary: #6366f1;
-  --color-primary-light: #818cf8;
-  --color-primary-dark: #4f46e5;
-  
-  /* UI colors */
-  --color-background: #1a202c;
-  --color-surface: #2d3748;
-  --color-surface-variant: #374151;
-  --color-border: #4a5568;
-  
-  /* Typography colors */
-  --color-text-primary: #f7fafc;
+  --color-primary:    #0ea5e9; /* neon cyan */
+  --color-primary-light: #38bdf8;
+  --color-primary-dark:  #0284c7;
+
+  --color-background:     #000000; /* pure black */
+  --color-surface:        #111111;
+  --color-surface-variant:#1a1a1a;
+  --color-border:         #333333;
+
+  --color-text-primary:   #f8fafc;
   --color-text-secondary: #e2e8f0;
-  --color-text-tertiary: #cbd5e0;
-  --color-text-disabled: #718096;
-  
-  /* Editor colors */
-  --color-editor-bg: #1a202c;
-  --color-preview-bg: #2d3748;
-  --color-code-bg: #111827;
-  --color-code-text: #e2e8f0;
-  --color-inline-code-bg: #374151;
-  
-  /* Shadows (adjusted for dark theme) */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  --color-text-tertiary:  #cbd5e1;
+  --color-text-disabled:  #718096;
+
+  --color-editor-bg:   #000000;
+  --color-preview-bg:  #111111;
+  --color-code-bg:     #000000;
+  --color-code-text:   #f8fafc;
+  --color-inline-code-bg: #1a1a1a;
+
+  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md:  0 4px 6px rgba(0, 0, 0, 0.5);
+  --shadow-lg:  0 10px 15px rgba(0, 0, 0, 0.5);
 }
 
-/* Applied theme variables */
-
-/* Typography */
+/* ================================
+   Base element styles
+   ================================ */
 body {
-  font-family: var(--font-sans);
-  font-size: var(--font-size-base);
-  color: var(--color-text-primary);
+  margin: 0;
+  font-family: system-ui, sans-serif;
   background-color: var(--color-background);
+  color: var(--color-text-primary);
   line-height: 1.5;
 }
-
-h1, h2, h3, h4, h5, h6 {
-  color: var(--color-text-primary);
-  margin-top: 0;
-}
-
-h1 {
-  font-size: var(--font-size-2xl);
-}
-
-h2 {
-  font-size: var(--font-size-xl);
-}
-
-h3 {
-  font-size: var(--font-size-lg);
-}
-
-p {
-  margin-top: 0;
-  color: var(--color-text-secondary);
-}
-
 a {
   color: var(--color-primary);
   text-decoration: none;
 }
-
 a:hover {
   text-decoration: underline;
 }
 
-code {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
-  padding: 0.2rem 0.4rem;
-  background-color: var(--color-inline-code-bg);
+/* Inputs, selects, textareas */
+input, select, textarea {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
   border-radius: var(--radius-sm);
+  padding: var(--space-2);
+  transition: border-color 150ms, box-shadow 150ms;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba( /* primary-contrast */ 255,255,255,0.2 );
 }
 
-pre {
-  background-color: var(--color-code-bg);
+/* Buttons */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-4);
+  border: none;
   border-radius: var(--radius-md);
-  padding: var(--space-4);
-  overflow-x: auto;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  background-color: var(--color-primary);
+  color: var(--color-primary-contrast);
+  transition: background-color 150ms;
 }
-
-pre code {
-  padding: 0;
-  background-color: transparent;
-  color: var(--color-code-text);
+.button:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
 }
-
-/* UI Components */
-.card {
+.button.secondary {
   background-color: var(--color-surface);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+.button.secondary:hover {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary-contrast);
+}
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Cards */
+.card {
+  background: var(--color-surface);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   padding: var(--space-4);
 }
 
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--color-primary);
-  color: var(--color-primary-contrast);
-  border: none;
+/* Code blocks and inline code */
+code {
+  background: var(--color-inline-code-bg);
+  border-radius: var(--radius-sm);
+  padding: 0.2em 0.4em;
+  font-family: monospace;
+  color: var(--color-code-text);
+}
+pre {
+  background: var(--color-code-bg);
   border-radius: var(--radius-md);
-  padding: var(--space-2) var(--space-4);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color var(--transition-fast);
+  padding: var(--space-4);
+  overflow-x: auto;
+}
+pre code {
+  background: transparent;
+  padding: 0;
 }
 
-.button:hover {
-  background-color: var(--color-primary-dark);
-}
-
-.button:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
-}
-
-.button.secondary {
-  background-color: transparent;
-  border: 1px solid var(--color-primary);
-  color: var(--color-primary);
-}
-
-.button.secondary:hover {
-  background-color: rgba(99, 102, 241, 0.1);
-}
-
-.form-input {
-  width: 100%;
-  padding: var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-}
-
-.form-label {
-  display: block;
-  margin-bottom: var(--space-1);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-text-secondary);
-}
-
-/* Navigation styles */
-.nav-link {
-  display: flex;
-  align-items: center;
-  padding: var(--space-2) var(--space-4);
-  color: var(--color-text-secondary);
-  border-radius: var(--radius-md);
-  transition: background-color var(--transition-fast);
-}
-
-.nav-link:hover {
-  background-color: var(--color-surface-variant);
-  text-decoration: none;
-}
-
-.nav-link.active {
-  background-color: var(--color-primary);
-  color: var(--color-primary-contrast);
-}
-
-.nav-link .icon {
-  margin-right: var(--space-2);
-}
-
-/* Responsive utilities */
-@media (max-width: 768px) {
-  :root {
-    --font-size-base: 0.9375rem;
-  }
-  
-  .card {
-    padding: var(--space-3);
-  }
-}
-
-/* Transition helpers */
-.transition-all {
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: var(--transition-normal);
-}
-
-.transition-colors {
-  transition-property: background-color, border-color, color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: var(--transition-normal);
-}
-
-.transition-transform {
-  transition-property: transform;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: var(--transition-normal);
-}
-
-/* Focus styles for accessibility */
-:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
-}
+/* Tables, badges, forms, etc., can continue below… */
