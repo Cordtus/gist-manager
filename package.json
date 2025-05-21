@@ -33,14 +33,16 @@
     "turndown": "^7.2.0",
     "winston": "^3.17.0"
   },
-  "scripts": {
-    "server": "nodemon --no-deprecation server.js",
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "dev": "concurrently \"PORT=5000 yarn server\" \"PORT=3020 yarn start\"",
-    "prod": "yarn build && node server.js",
-    "serve-prod": "NODE_ENV=production node server.js"
-  },
+"scripts": {
+  "server":     "nodemon --no-deprecation server.js",
+  "start":      "react-scripts start",
+  "build":      "react-scripts build",
+  "dev":        "concurrently \"PORT=5000 yarn server\" \"PORT=3020 yarn start\"",
+  "clean":      "rm -rf build dist node_modules",
+  "rebuild":    "yarn clean && yarn install && yarn build",
+  "prod":       "yarn rebuild && node server.js",
+  "serve-prod": "NODE_ENV=production node server.js"
+},
   "eslintConfig": {
     "extends": [
       "react-app",
