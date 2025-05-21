@@ -104,7 +104,7 @@ app.use(helmet({
       ],
       scriptSrc: [
         "'self'",
-//        "'unsafe-inline'", // Allow inline scripts for React
+        "'unsafe-inline'", // Allow inline scripts for React
         'https://github.githubassets.com'
       ],
       scriptSrcElem: [
