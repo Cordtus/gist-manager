@@ -1,5 +1,11 @@
 // App.js
 
+import './styles/theme.css';
+import './styles/index.css';
+import './styles/gistEditor.css';
+import './styles/markdownPreview.css';
+import './styles/markdownExtras.css';
+
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
