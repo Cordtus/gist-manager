@@ -104,13 +104,14 @@ app.use(helmet({
       ],
       scriptSrc: [
         "'self'",
+//        "'unsafe-inline'", // Allow inline scripts for React
         'https://github.githubassets.com'
       ],
       scriptSrcElem: [
         "'self'",
         'https://github.githubassets.com'
       ],
-      styleSrc: ["'self'", "'unsafe-inline'"],  // keep if you have inline CSS
+      styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
       frameSrc: ["'none'"]
     }
@@ -127,9 +128,11 @@ app.use(morgan('combined', {
   }
 }));
 
-// GITHUB OAUTH ROUTES
+// API ROUTES FIRST - before static file serving
+app.use('/api/gists', gistRoutes);
+app.use('/api/shared-gists', sharedGistsRoutes);
 
-// login route - generate state
+// GITHUB OAUTH ROUTES
 app.get('/api/auth/github/login', (req, res) => {
   // Generate a secure random state
   const state = crypto.randomBytes(16).toString('hex');
@@ -312,18 +315,32 @@ app.get('/api/auth/status', (req, res) => {
   }
 });
 
-// API ROUTES
+// STATIC FILE SERVING - FIXED ORDER AND CONFIGURATION
+// Serve static files with proper MIME types
+app.use('/static', express.static(path.join(__dirname, 'build/static'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    }
+  }
+}));
+
+// Serve other static assets
+app.use(express.static(path.join(__dirname, 'build'), {
+  index: false // Don't serve index.html for static requests
+}));
 
 
-
-// SERVING STATIC FILES
-
-app.use(express.static(path.join(__dirname, 'build')));
-
-app.use('/api/gists', gistRoutes);
-app.use('/api/shared-gists', sharedGistsRoutes);
+// CATCH-ALL ROUTE - Must be LAST
 
 app.get('*', (req, res) => {
+  // Don't serve index.html for API routes or static assets
+  if (req.path.startsWith('/api/') || req.path.startsWith('/static/')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
