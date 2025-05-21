@@ -2,8 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './styles/index.css';
-import './styles/gisteditor.css';
-import './styles/markdown-preview.css';
+import './styles/gistEditor.css';
+import './styles/markdownPreview.css';
 import './styles/darkMode.css';
 
 // Log that app is initializing

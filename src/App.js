@@ -16,7 +16,7 @@ import ThemeColorSelector from './components/ThemeColorSelector';
 import ThemeSandbox from './components/ThemeSandbox';
 import './styles/index.css';
 import './styles/theme.css';
-import './styles/markdown-preview.css';
+import './styles/markdownPreview.css';
 
 const AppContent = () => {
   const auth = useAuth();

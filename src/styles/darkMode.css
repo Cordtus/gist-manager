@@ -18,6 +18,21 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
+/* Layout elements */
+.dark .sidebar {
+  background-color: #1a202c;
+  border-right-color: #4a5568;
+}
+
+.dark .main-content {
+  background-color: #2d3748;
+}
+
+.dark .header {
+  background-color: #1a202c;
+  border-bottom-color: #4a5568;
+}
+
 /* Text colors */
 .dark .text-gray-800 {
   color: #f7fafc;
@@ -33,6 +48,10 @@
 
 .dark .text-gray-500 {
   color: #a0aec0;
+}
+
+.dark .text-gray-400 {
+  color: #718096;
 }
 
 /* Border colors */
@@ -63,7 +82,17 @@
 
 .dark input::placeholder,
 .dark textarea::placeholder {
-  color: #a0aec0;
+  color: #718096;
+}
+
+.dark input[type="checkbox"] {
+  background-color: #2d3748;
+  border-color: #4a5568;
+}
+
+.dark input[type="checkbox"]:checked {
+  background-color: #6366f1;
+  border-color: #6366f1;
 }
 
 /* Button styles */
@@ -75,6 +104,21 @@
 
 .dark button.secondary:hover {
   background-color: #4a5568;
+}
+
+.dark button.primary {
+  background-color: #6366f1;
+  color: #f7fafc;
+}
+
+.dark button.primary:hover {
+  background-color: #4f46e5;
+}
+
+.dark button.primary:disabled {
+  background-color: rgba(99, 102, 241, 0.4);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: not-allowed;
 }
 
 /* Code editor and previewer */
@@ -91,8 +135,8 @@
 }
 
 .dark .markdown-preview code {
-  background-color: #4a5568;
-  color: #e2e8f0;
+  background-color: #374151;
+  color: #c4b5fd;
 }
 
 .dark .markdown-preview pre {
@@ -100,7 +144,7 @@
 }
 
 .dark .terminal-header {
-  background-color: #000;
+  background-color: #111827;
 }
 
 .dark .resize-handle {
@@ -125,25 +169,51 @@
 }
 
 .dark .toolbar-button:hover {
-  background-color: #4a5568;
+  background-color: #374151;
   border-color: #6366f1;
 }
 
-/* File header */
-.dark .file-header {
+.dark .toolbar-divider {
+  background-color: #4a5568;
+}
+
+/* Tabs */
+.dark .file-tabs {
   background-color: #2d3748;
   border-color: #4a5568;
 }
 
-.dark .file-name {
-  background-color: #1a202c;
-  border-color: #4a5568;
+.dark .tab {
   color: #e2e8f0;
+}
+
+.dark .tab:hover:not(.active) {
+  background-color: #374151;
+}
+
+.dark .tab.active {
+  background-color: #1a202c;
+  color: #6366f1;
+  border-color: #4a5568;
+  border-bottom-color: #1a202c;
+}
+
+/* Messages */
+.dark .message.error {
+  background-color: rgba(220, 38, 38, 0.2);
+  color: #fca5a5;
+  border-left-color: #ef4444;
+}
+
+.dark .message.success {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  border-left-color: #10b981;
 }
 
 /* Tables */
 .dark table th {
-  background-color: #2d3748;
+  background-color: #374151;
   border-color: #4a5568;
 }
 
@@ -159,16 +229,101 @@
   background-color: #374151;
 }
 
-/* Syntax highlighting overrides */
+/* Links */
+.dark a {
+  color: #60a5fa;
+}
+
+.dark a:hover {
+  color: #93c5fd;
+}
+
+/* Navigation */
+.dark .nav-link {
+  color: #e2e8f0;
+}
+
+.dark .nav-link:hover {
+  background-color: #374151;
+}
+
+.dark .nav-link.active {
+  background-color: #4a5568;
+  color: #e2e8f0;
+}
+
+/* Search and filter UI */
+.dark .search-input {
+  background-color: #2d3748;
+  border-color: #4a5568;
+  color: #e2e8f0;
+}
+
+.dark .filter-badge {
+  background-color: #4a5568;
+  color: #e2e8f0;
+}
+
+/* Syntax highlighting specific overrides */
 .dark .syntax-highlighter {
   background-color: #1a202c !important;
 }
 
-/* Links */
-.dark a {
-  color: #63b3ed;
+.dark pre code {
+  color: #e2e8f0 !important;
 }
 
-.dark a:hover {
-  color: #90cdf4;
+.dark .token.comment,
+.dark .token.prolog,
+.dark .token.doctype,
+.dark .token.cdata {
+  color: #8b9eb0 !important;
+}
+
+.dark .token.punctuation {
+  color: #cbd5e0 !important;
+}
+
+.dark .token.property,
+.dark .token.tag,
+.dark .token.boolean,
+.dark .token.number,
+.dark .token.constant,
+.dark .token.symbol,
+.dark .token.deleted {
+  color: #f87171 !important;
+}
+
+.dark .token.selector,
+.dark .token.attr-name,
+.dark .token.string,
+.dark .token.char,
+.dark .token.builtin,
+.dark .token.inserted {
+  color: #10b981 !important;
+}
+
+.dark .token.operator,
+.dark .token.entity,
+.dark .token.url,
+.dark .language-css .token.string,
+.dark .style .token.string {
+  color: #d1d5db !important;
+}
+
+.dark .token.atrule,
+.dark .token.attr-value,
+.dark .token.keyword {
+  color: #60a5fa !important;
+}
+
+.dark .token.function,
+.dark .token.class-name {
+  color: #f59e0b !important;
+}
+
+.dark .token.regex,
+.dark .token.important,
+.dark .token.variable {
+  color: #c084fc !important;
 }

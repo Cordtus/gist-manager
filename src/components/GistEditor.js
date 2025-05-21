@@ -1,4 +1,4 @@
-// GistEditor.js
+// src/components/GistEditor.js
 
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -8,20 +8,40 @@ import { useAuth } from '../contexts/AuthContext';
 import MarkdownPreview from './markdown/MarkdownPreview';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import '../styles/gisteditor.css';
-import '../styles/markdown-preview.css';
+import '../styles/gistEditor.css';
+import '../styles/markdownPreview.css';
+
+// Reusable components for toolbar
+const ToolbarGroup = ({ items }) => (
+  <div className="flex gap-1">
+    {items.map(item => (
+      <button
+        key={item.key}
+        type="button"
+        onClick={item.onClick}
+        className="toolbar-button"
+        title={item.title}
+      >
+        {item.icon}
+      </button>
+    ))}
+  </div>
+);
+
+const Divider = () => (
+  <div className="border-l border-gray-300 dark:border-gray-600 h-6 mx-1"></div>
+);
 
 const GistEditor = () => {
-  const [gist, setGist] = useState({ 
-    description: '', 
-    files: {
-      'newfile.md': { content: '' }
-    },
+  // State and refs
+  const [gist, setGist] = useState({
+    description: '',
+    files: { 'newfile.md': { content: '' } },
     public: false
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [previewMode, setPreviewMode] = useState(true); // Default to preview mode
+  const [previewMode, setPreviewMode] = useState(true);
   const [wrapText, setWrapText] = useState(true);
   const [success, setSuccess] = useState('');
   const [splitRatio, setSplitRatio] = useState(50);
@@ -29,229 +49,158 @@ const GistEditor = () => {
   const [isShared, setIsShared] = useState(false);
   const [sharingLoading, setSharingLoading] = useState(false);
   const [activeFile, setActiveFile] = useState(null);
-  
+
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const editorRef = useRef(null);
   const previewRef = useRef(null);
   const containerRef = useRef(null);
   const resizeHandleRef = useRef(null);
 
-  // Initialize or fetch gist
+  // Fetch or init
   useEffect(() => {
     if (id) {
       fetchGist(id);
       checkIfGistIsShared(id);
     } else {
-      // For new gists, set active file to the first file
       setActiveFile('newfile.md');
     }
   }, [id]);
 
-  // When gist changes, set active file to the first file if not already set
   useEffect(() => {
-    if (gist && Object.keys(gist.files).length > 0 && !activeFile) {
+    if (gist && Object.keys(gist.files).length && !activeFile) {
       setActiveFile(Object.keys(gist.files)[0]);
     }
   }, [gist, activeFile]);
 
-  // Setup resize event listeners
+  // Resize handling
   useEffect(() => {
-    const handleMouseMove = (e) => {
+    const onMouseMove = e => {
       if (!isResizing || !containerRef.current) return;
-      
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const newRatio = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-      
-      // Limit the minimum size of each panel (15% - 85%)
-      const limitedRatio = Math.min(Math.max(newRatio, 15), 85);
-      setSplitRatio(limitedRatio);
+      const { left, width } = containerRef.current.getBoundingClientRect();
+      const ratio = ((e.clientX - left) / width) * 100;
+      setSplitRatio(Math.min(Math.max(ratio, 15), 85));
     };
-    
-    const handleMouseUp = () => {
+    const onMouseUp = () => {
       setIsResizing(false);
-      document.body.style.cursor = 'default';
-      document.body.style.userSelect = 'auto';
-      
-      if (resizeHandleRef.current) {
-        resizeHandleRef.current.classList.remove('active');
-      }
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      resizeHandleRef.current?.classList.remove('active');
     };
-    
     if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
-      
-      if (resizeHandleRef.current) {
-        resizeHandleRef.current.classList.add('active');
-      }
+      resizeHandleRef.current?.classList.add('active');
     }
-    
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
     };
   }, [isResizing]);
 
-  const handleResizeStart = (e) => {
+  const handleResizeStart = e => {
     e.preventDefault();
     setIsResizing(true);
   };
 
-  const fetchGist = async (gistId) => {
+  // API calls
+  const fetchGist = async gistId => {
     try {
       setLoading(true);
       setError(null);
-      const gistData = await getGist(gistId);
-      setGist(gistData);
-      // Set active file to the first file
-      if (Object.keys(gistData.files).length > 0) {
-        setActiveFile(Object.keys(gistData.files)[0]);
-      }
-    } catch (error) {
-      console.error('Error fetching gist:', error);
+      const data = await getGist(gistId);
+      setGist(data);
+      setActiveFile(Object.keys(data.files)[0]);
+    } catch {
       setError('Failed to fetch gist. Please try again later.');
     } finally {
       setLoading(false);
     }
   };
 
-  const checkIfGistIsShared = async (gistId) => {
+  const checkIfGistIsShared = async gistId => {
     try {
-      const shared = await isGistShared(gistId);
-      setIsShared(shared);
-    } catch (error) {
-      console.error('Error checking if gist is shared:', error);
-    }
+      setIsShared(await isGistShared(gistId));
+    } catch {}
   };
 
-  const handleSubmit = async (e) => {
+  // Submit
+  const handleSubmit = async e => {
     e.preventDefault();
-    
-    // validate gist has files with content
     if (!Object.keys(gist.files).length) {
       setError('Your gist must contain at least one non-empty file!');
       return;
     }
-    
-    const hasEmptyFile = Object.values(gist.files).some(file => !file.content || file.content.trim() === '');
-    if (hasEmptyFile) {
+    if (Object.values(gist.files).some(f => !f.content.trim())) {
       setError('All files must be non-empty!');
       return;
     }
-    
     setLoading(true);
     setError(null);
     setSuccess('');
-    
     try {
       if (id) {
         await updateGist(id, gist);
         setSuccess('Gist updated successfully!');
-        setTimeout(() => setSuccess(''), 3000);
       } else {
-        const newGist = await createGist(gist);
+        const newG = await createGist(gist);
         setSuccess('Gist created successfully!');
-        // switch to editor for new gist
-        setTimeout(() => {
-          navigate(`/gist/${newGist.id}`);
-        }, 1500);
+        navigate(`/gist/${newG.id}`);
       }
-    } catch (error) {
-      console.error('Error saving gist:', error);
+      setTimeout(() => setSuccess(''), 3000);
+    } catch {
       setError('Failed to save. Please check browser console and create an issue if persistent.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDescriptionChange = (e) => {
-    setGist((prevGist) => ({
-      ...prevGist,
-      description: e.target.value,
-    }));
-  };
-
-  const handlePublicChange = (e) => {
-    setGist((prevGist) => ({
-      ...prevGist,
-      public: e.target.checked,
-    }));
-  };
+  // Handlers
+  const handleDescriptionChange = e =>
+    setGist(prev => ({ ...prev, description: e.target.value }));
+  const handlePublicChange = e =>
+    setGist(prev => ({ ...prev, public: e.target.checked }));
 
   const handleFileChange = useCallback((fileName, content) => {
-    setGist((prevGist) => ({
-      ...prevGist,
-      files: {
-        ...prevGist.files,
-        [fileName]: { content },
-      },
+    setGist(prev => ({
+      ...prev,
+      files: { ...prev.files, [fileName]: { content } }
     }));
   }, []);
 
   const addNewFile = () => {
-    // generate unique filename
-    let newFileName = 'newfile.md';
-    let counter = 1;
-    
-    while (gist.files[newFileName]) {
-      newFileName = `newfile_${counter}.md`;
-      counter++;
-    }
-    
-    setGist((prevGist) => ({
-      ...prevGist,
-      files: {
-        ...prevGist.files,
-        [newFileName]: { content: '' },
-      },
+    let name = 'newfile.md', i = 1;
+    while (gist.files[name]) name = `newfile_${i++}.md`;
+    setGist(prev => ({
+      ...prev,
+      files: { ...prev.files, [name]: { content: '' } }
     }));
-    
-    // Set active file to the new file
-    setActiveFile(newFileName);
+    setActiveFile(name);
   };
 
-  const removeFile = (fileName) => {
-    // don't allow removing the only file
+  const removeFile = fileName => {
     if (Object.keys(gist.files).length <= 1) {
       setError('Cannot remove the only file.');
       return;
     }
-    
-    // create copy of files
-    const updatedFiles = { ...gist.files };
-    
-    // remove file
-    delete updatedFiles[fileName];
-    
-    setGist((prevGist) => ({
-      ...prevGist,
-      files: updatedFiles,
-    }));
-    
-    // Set active file to another file if removing active file
+    const files = { ...gist.files };
+    delete files[fileName];
+    setGist(prev => ({ ...prev, files }));
     if (activeFile === fileName) {
-      setActiveFile(Object.keys(updatedFiles)[0]);
+      setActiveFile(Object.keys(files)[0]);
     }
   };
 
-  const handleShareGist = async (e) => {
-    if (!id) return; // Can't share unsaved gist
-    
-    const shouldBeShared = e.target.checked;
-    
+  const handleShareGist = async e => {
+    if (!id) return;
+    const share = e.target.checked;
+    setSharingLoading(true);
     try {
-      setSharingLoading(true);
-      
-      if (!shouldBeShared && isShared) {
-        await unshareGist(id);
-        setIsShared(false);
-        setSuccess('Gist removed from community sharing!');
-      } else if (shouldBeShared && !isShared) {
+      if (share && !isShared) {
         if (!gist.public) {
           setError('Only public gists can be shared with the community');
           setSharingLoading(false);
@@ -260,200 +209,318 @@ const GistEditor = () => {
         await shareGist(id, gist);
         setIsShared(true);
         setSuccess('Gist shared with the community!');
+      } else if (!share && isShared) {
+        await unshareGist(id);
+        setIsShared(false);
+        setSuccess('Gist removed from community sharing!');
       }
-      
       setTimeout(() => setSuccess(''), 3000);
-    } catch (error) {
-      console.error('Error sharing/unsharing gist:', error);
+    } catch {
       setError(`Failed to ${isShared ? 'unshare' : 'share'} gist. Please try again later.`);
     } finally {
       setSharingLoading(false);
     }
   };
 
-  const syncScroll = useCallback((e) => {
-    if (!previewMode) return;
+  const syncScroll = useCallback(
+    e => {
+      if (!previewMode) return;
+      const src = e.target;
+      const dst = src === editorRef.current ? previewRef.current : editorRef.current;
+      if (dst && !isResizing) {
+        window.requestAnimationFrame(() => {
+          const ratio = src.scrollTop / (src.scrollHeight - src.clientHeight || 1);
+          dst.scrollTop = ratio * (dst.scrollHeight - dst.clientHeight);
+        });
+      }
+    },
+    [previewMode, isResizing]
+  );
 
-    const source = e.target;
-    const target = source === editorRef.current ? previewRef.current : editorRef.current;
+  const toggleWrapText = () => setWrapText(w => !w);
 
-    if (source && target && !isResizing) {
-      // Use requestAnimationFrame for smooth scrolling
-      window.requestAnimationFrame(() => {
-        const ratio = source.scrollTop / (source.scrollHeight - source.clientHeight || 1);
-        target.scrollTop = ratio * (target.scrollHeight - target.clientHeight);
-      });
-    }
-  }, [previewMode, isResizing, editorRef, previewRef]);
+  const insertText = useCallback(
+    (before, after = '') => {
+      if (!editorRef.current || !activeFile) return;
+      const ta = editorRef.current;
+      const { selectionStart: s, selectionEnd: e, value } = ta;
+      const sel = value.slice(s, e);
+      const txt = before + sel + after;
+      const pos = sel ? s + before.length + sel.length + after.length : s + before.length;
+      handleFileChange(activeFile, value.slice(0, s) + txt + value.slice(e));
+      setTimeout(() => {
+        ta.focus();
+        ta.setSelectionRange(pos, pos);
+      }, 0);
+    },
+    [activeFile, handleFileChange]
+  );
 
-  const toggleWrapText = () => setWrapText(!wrapText);
-
-  // insert text at cursor
-  const insertText = useCallback((before, after = '') => {
-    if (!editorRef.current || !activeFile) return;
-    
-    const textarea = editorRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selection = textarea.value.substring(start, end);
-    const newText = before + selection + after;
-    
-    // calculate cursor position
-    const newCursorPos = selection ? start + before.length + selection.length + after.length : start + before.length;
-    
-    // update file content
-    handleFileChange(activeFile, 
-      textarea.value.substring(0, start) + newText + textarea.value.substring(end)
-    );
-    
-    // set cursor position after state update
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(newCursorPos, newCursorPos);
-    }, 0);
-  }, [activeFile, editorRef, handleFileChange]);
-
-  // toolbar click handlers
+  // Toolbar click handlers
   const handleBoldClick = useCallback(() => insertText('**', '**'), [insertText]);
   const handleItalicClick = useCallback(() => insertText('*', '*'), [insertText]);
   const handleStrikethroughClick = useCallback(() => insertText('~~', '~~'), [insertText]);
-  const handleHeadingClick = useCallback((level) => insertText(`${'#'.repeat(level)} `, '\n'), [insertText]);
+  const handleHeadingClick = useCallback(level => insertText('#'.repeat(level) + ' ', '\n'), [insertText]);
   const handleLinkClick = useCallback(() => {
-    const selection = editorRef.current?.value.substring(
-      editorRef.current.selectionStart, 
+    const sel = editorRef.current?.value.slice(
+      editorRef.current.selectionStart,
       editorRef.current.selectionEnd
-    ) || '';
-    
-    if (selection.trim()) {
-      insertText('[', '](https://)');
-    } else {
-      insertText('[Link text](https://)', '');
-    }
-  }, [insertText, editorRef]);
+    );
+    insertText(sel?.trim() ? '[' : '[Link text](', sel?.trim() ? '](https://)' : ')');
+  }, [insertText]);
   const handleImageClick = useCallback(() => insertText('![Alt text](', ')'), [insertText]);
   const handleCodeClick = useCallback(() => insertText('`', '`'), [insertText]);
   const handleCodeBlockClick = useCallback(() => {
-    const selection = editorRef.current?.value.substring(
-      editorRef.current.selectionStart, 
+    const sel = editorRef.current?.value.slice(
+      editorRef.current.selectionStart,
       editorRef.current.selectionEnd
-    ) || '';
-    
-    if (selection.trim()) {
-      insertText('```\n', '\n```');
-    } else {
-      insertText('```javascript\n', '\n```');
-    }
-  }, [insertText, editorRef]);
-  const handleBulletListClick = useCallback(() => insertText('- ', '\n- \n- '), [insertText]);
-  const handleNumberedListClick = useCallback(() => insertText('1. ', '\n2. \n3. '), [insertText]);
-  const handleTaskListClick = useCallback(() => insertText('- [ ] ', '\n- [ ] \n- [ ] '), [insertText]);
+    );
+    insertText(sel?.trim() ? '```' : '```javascript\n', sel?.trim() ? '```' : '\n```');
+  }, [insertText]);
+  const handleBulletListClick = useCallback(() => insertText('- ', '\n- '), [insertText]);
+  const handleNumberedListClick = useCallback(() => insertText('1. ', '\n2. '), [insertText]);
+  const handleTaskListClick = useCallback(() => insertText('- [ ] ', '\n- [ ] '), [insertText]);
   const handleQuoteClick = useCallback(() => insertText('> ', '\n'), [insertText]);
-  const handleTableClick = useCallback(() => insertText('| Header 1 | Header 2 | Header 3 |\n| --- | --- | --- |\n| Row 1 Col 1 | Row 1 Col 2 | Row 1 Col 3 |\n| Row 2 Col 1 | Row 2 Col 2 | Row 2 Col 3 |\n', ''), [insertText]);
+  const handleTableClick = useCallback(() => {
+    insertText(
+      '| Header 1 | Header 2 | Header 3 |\n| --- | --- | --- |\n| Row 1 | Row 1 | Row 1 |\n',
+      ''
+    );
+  }, [insertText]);
   const handleHorizontalRuleClick = useCallback(() => insertText('\n---\n', ''), [insertText]);
   const handleDetailsClick = useCallback(() => {
-    insertText('<details>\n<summary>Title/description</summary>\n\n```javascript\ncode here\n```\n\n</details>', '');
+    insertText('<details>\n<summary>Title/description</summary>\n\n```javascript\n\n```\n\n</details>', '');
   }, [insertText]);
 
-  // keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // Only handle if textarea is focused
-      if (document.activeElement !== editorRef.current) return;
-      
-      // Ctrl/Cmd + key combinations
-      if (e.metaKey || e.ctrlKey) {
-        switch (e.key) {
-          case 'b':
-            e.preventDefault();
-            handleBoldClick();
-            break;
-          case 'i':
-            e.preventDefault();
-            handleItalicClick();
-            break;
-          case 'k':
-            e.preventDefault();
-            handleLinkClick();
-            break;
-          case '\\':
-            e.preventDefault();
-            handleCodeClick();
-            break;
-          case '/':
-            e.preventDefault();
-            setPreviewMode(!previewMode);
-            break;
-          default:
-            break;
-        }
+  // Keyboard shortcuts
+useEffect(() => {
+  const handleKeyDown = e => {
+    if (document.activeElement !== editorRef.current) return;
+    if (e.metaKey || e.ctrlKey) {
+      switch (e.key) {
+        case 'b':
+          e.preventDefault();
+          handleBoldClick();
+          break;
+        case 'i':
+          e.preventDefault();
+          handleItalicClick();
+          break;
+        case 'k':
+          e.preventDefault();
+          handleLinkClick();
+          break;
+        case '\\':
+          e.preventDefault();
+          handleCodeClick();
+          break;
+        case '/':
+          e.preventDefault();
+          setPreviewMode(pm => !pm);
+          break;
+        default:
+          // no action for other keys
+          break;
       }
-    };
-    
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [handleBoldClick, handleCodeClick, handleItalicClick, handleLinkClick, previewMode]);
-
-  // check if file is markdown
-  const isMarkdownFile = (filename) => {
-    return filename?.endsWith('.md') || filename?.endsWith('.markdown') || filename?.endsWith('.mdx');
+    }
   };
 
-  // determine syntax highlighting
-  const getFileLanguage = (filename) => {
-    if (!filename) return 'text';
-    
-    const extension = filename.split('.').pop().toLowerCase();
-    
-    const languageMap = {
-      'js': 'javascript',
-      'jsx': 'jsx',
-      'ts': 'typescript',
-      'tsx': 'tsx',
-      'py': 'python',
-      'rb': 'ruby',
-      'java': 'java',
-      'c': 'c',
-      'cpp': 'cpp',
-      'cs': 'csharp',
-      'go': 'go',
-      'php': 'php',
-      'html': 'html',
-      'css': 'css',
-      'scss': 'scss',
-      'md': 'markdown',
-      'mdx': 'markdown',
-      'json': 'json',
-      'yml': 'yaml',
-      'yaml': 'yaml',
-      'sh': 'bash',
-      'bash': 'bash',
-      'bat': 'batch',
-      'ps1': 'powershell',
-      'sql': 'sql',
-      'txt': 'text'
-    };
-    
-    return languageMap[extension] || 'text';
+  document.addEventListener('keydown', handleKeyDown);
+  return () => document.removeEventListener('keydown', handleKeyDown);
+}, [handleBoldClick, handleItalicClick, handleLinkClick, handleCodeClick]);
+
+
+  // Helpers
+  const isMarkdownFile = fn =>
+    fn?.endsWith('.md') || fn?.endsWith('.markdown') || fn?.endsWith('.mdx');
+
+  const getFileLanguage = fn => {
+    if (!fn) return 'text';
+    const ext = fn.split('.').pop().toLowerCase();
+    return {
+      js: 'javascript', jsx: 'jsx', ts: 'typescript', tsx: 'tsx',
+      py: 'python', java: 'java', rb: 'ruby', go: 'go',
+      html: 'html', css: 'css', scss: 'scss',
+      md: 'markdown', mdx: 'markdown',
+      json: 'json', yaml: 'yaml', yml: 'yaml',
+      sh: 'bash', bash: 'bash', sql: 'sql', txt: 'text'
+    }[ext] || 'text';
   };
 
+  // Define toolbar items
+  const formattingButtons = [
+    {
+      key: 'bold',
+      title: 'Bold (Ctrl+B)',
+      icon: <span className="toolbar-icon bold">B</span>,
+      onClick: handleBoldClick
+    },
+    {
+      key: 'italic',
+      title: 'Italic (Ctrl+I)',
+      icon: <span className="toolbar-icon italic">I</span>,
+      onClick: handleItalicClick
+    },
+    {
+      key: 'strike',
+      title: 'Strikethrough',
+      icon: <span className="toolbar-icon strike">S</span>,
+      onClick: handleStrikethroughClick
+    }
+  ];
+
+  const headingButtons = [
+    {
+      key: 'h1',
+      title: 'Heading 1',
+      icon: 'H1',
+      onClick: () => handleHeadingClick(1)
+    },
+    {
+      key: 'h2',
+      title: 'Heading 2',
+      icon: 'H2',
+      onClick: () => handleHeadingClick(2)
+    },
+    {
+      key: 'h3',
+      title: 'Heading 3',
+      icon: 'H3',
+      onClick: () => handleHeadingClick(3)
+    }
+  ];
+
+  const linkButtons = [
+    {
+      key: 'link',
+      title: 'Insert Link (Ctrl+K)',
+      icon: (
+        <svg className="toolbar-icon" viewBox="0 0 24 24"><path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>
+      ),
+      onClick: handleLinkClick
+    },
+    {
+      key: 'image',
+      title: 'Insert Image',
+      icon: (
+        <svg className="toolbar-icon" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+      ),
+      onClick: handleImageClick
+    }
+  ];
+
+  const codeButtons = [
+    {
+      key: 'inline',
+      title: 'Inline Code (Ctrl+\\)',
+      icon: (
+        <svg className="toolbar-icon" viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+      ),
+      onClick: handleCodeClick
+    },
+    {
+      key: 'block',
+      title: 'Code Block',
+      icon: (
+        <svg className="toolbar-icon" viewBox="0 0 24 24"><path d="M20 3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 2v3H4V5h16zm0 5v3H4v-3h16zm0 5v3H4v-3h16z"/></svg>
+      ),
+      onClick: handleCodeBlockClick
+    }
+  ];
+
+  const listButtons = [
+    {
+      key: 'bullet',
+      title: 'Bullet List',
+      icon: (
+        <svg className="toolbar-icon" viewBox="0 0 24 24"><path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/></svg>
+      ),
+      onClick: handleBulletListClick
+    },
+    {
+      key: 'number',
+      title: 'Numbered List',
+      icon: (
+        <svg className="toolbar-icon" viewBox="0 0 24 24"><path d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/></svg>
+      ),
+      onClick: handleNumberedListClick
+    },
+    {
+      key: 'task',
+      title: 'Task List',
+      icon: (
+        <svg className="toolbar-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/><path d="M18 9l-1.4-1.4-5.6 5.6-2.6-2.6L7 12l4 4z"/></svg>
+      ),
+      onClick: handleTaskListClick
+    }
+  ];
+
+  const otherFormattingButtons = [
+    {
+      key: 'quote',
+      title: 'Blockquote',
+      icon: (
+        <svg className="toolbar-icon" viewBox="0 0 24 24"><path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+      ),
+      onClick: handleQuoteClick
+    },
+    {
+      key: 'table',
+      title: 'Table',
+      icon: (
+        <svg className="toolbar-icon" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16m-7 6h7"/></svg>
+      ),
+      onClick: handleTableClick
+    },
+    {
+      key: 'hr',
+      title: 'Horizontal Rule',
+      icon: (
+        <svg className="toolbar-icon" viewBox="0 0 24 24"><path d="M4 12h16"/></svg>
+      ),
+      onClick: handleHorizontalRuleClick
+    }
+  ];
+
+  const specialButtons = [
+    {
+      key: 'details',
+      title: 'Collapsible Details',
+      icon: (
+        <div className="flex items-center">
+          <svg className="toolbar-icon mr-1" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+          Details
+        </div>
+      ),
+      onClick: handleDetailsClick
+    }
+  ];
+
+  // Render
   if (!user) {
-    return <div className="p-6 bg-white shadow rounded-lg">Please log in to edit gists.</div>;
+    return (
+      <div className="p-6 bg-white shadow rounded-lg">
+        Please log in to edit gists.
+      </div>
+    );
   }
 
   if (loading && id) {
-    return <div className="p-6 bg-white shadow rounded-lg">Loading...</div>;
+    return (
+      <div className="p-6 bg-white shadow rounded-lg">
+        Loading...
+      </div>
+    );
   }
 
-  // Get current file content
   const currentFileContent = activeFile ? gist.files[activeFile]?.content || '' : '';
-
-  // custom styles for editor and preview based on splitRatio
   const editorStyle = previewMode ? { width: `${splitRatio}%` } : { width: '100%' };
   const previewStyle = { width: `${100 - splitRatio}%` };
 
   return (
     <form onSubmit={handleSubmit} className="gist-editor-form">
-      {/* Gist description and settings */}
+
+      {/* Description & Settings */}
       <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="mb-4">
           <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -465,10 +532,9 @@ const GistEditor = () => {
             value={gist.description}
             onChange={handleDescriptionChange}
             placeholder="Enter a description for your gist"
-            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500 dark:bg-gray-800 dark:text-gray-200"
+            className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500"
           />
         </div>
-        
         <div className="flex flex-wrap gap-4 items-center mb-4">
           <div className="flex items-center">
             <input
@@ -483,21 +549,17 @@ const GistEditor = () => {
             </label>
             <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">(Anyone can see this gist)</span>
           </div>
-          
-          {/* Status Badge */}
           {id && (
             <div className="flex items-center">
               <span className={`px-2 py-1 text-xs rounded-full ${
-                gist.public 
-                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
+                gist.public
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
                   : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
               }`}>
                 {gist.public ? 'Public' : 'Private'}
               </span>
             </div>
           )}
-          
-          {/* Add "Share with Community" checkbox when public is checked */}
           {id && gist.public && (
             <div className="flex items-center">
               <input
@@ -519,20 +581,15 @@ const GistEditor = () => {
         </div>
       </div>
 
-      {/* Success/Error messages */}
+      {/* Messages */}
       {error && (
-        <div className="p-4 bg-red-50 text-red-700 border-b border-red-100">
-          {error}
-        </div>
+        <div className="p-4 bg-red-50 text-red-700 border-b border-red-100">{error}</div>
       )}
-      
       {success && (
-        <div className="p-4 bg-green-50 text-green-700 border-b border-green-100">
-          {success}
-        </div>
+        <div className="p-4 bg-green-50 text-green-700 border-b border-green-100">{success}</div>
       )}
 
-      {/* Buttons area (Save/Mode/Wrap Text) */}
+      {/* Controls */}
       <div className={`buttons-container ${previewMode ? 'preview' : ''}`}>
         <button
           type="button"
@@ -540,21 +597,19 @@ const GistEditor = () => {
           className="button secondary flex items-center"
           title="Add a new file"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          <svg className="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
           </svg>
           Add File
         </button>
-        
         <button
           type="button"
-          onClick={() => setPreviewMode(!previewMode)}
+          onClick={() => setPreviewMode(pm => !pm)}
           className="button secondary"
           title={previewMode ? "Editor only mode (Ctrl+/)" : "Split preview mode (Ctrl+/)"}
         >
           {previewMode ? 'Editor Only' : 'Split Preview'}
         </button>
-        
         <button
           type="submit"
           className="button primary"
@@ -563,7 +618,6 @@ const GistEditor = () => {
         >
           {loading ? 'Saving...' : (id ? 'Update Gist' : 'Create Gist')}
         </button>
-        
         <div className="flex items-center ml-auto">
           <label className="wrap-text flex items-center dark:text-gray-300">
             <input
@@ -577,7 +631,7 @@ const GistEditor = () => {
         </div>
       </div>
 
-      {/* File tabs */}
+      {/* File Tabs */}
       <div className="border-b border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 px-4 py-2 overflow-x-auto">
         <div className="flex space-x-2">
           {Object.keys(gist.files).map(filename => (
@@ -595,10 +649,7 @@ const GistEditor = () => {
               {Object.keys(gist.files).length > 1 && (
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeFile(filename);
-                  }}
+                  onClick={e => { e.stopPropagation(); removeFile(filename); }}
                   className="ml-2 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
                   title="Remove this file"
                 >
@@ -612,114 +663,28 @@ const GistEditor = () => {
 
       {/* Toolbar */}
       <div className="toolbar">
-        <div className="flex flex-wrap gap-1">
-          {/* Text Formatting */}
-          <button type="button" onClick={handleBoldClick} className="toolbar-button" title="Bold (Ctrl+B)">
-            <span className="font-bold">B</span>
-          </button>
-          <button type="button" onClick={handleItalicClick} className="toolbar-button" title="Italic (Ctrl+I)">
-            <span className="italic">I</span>
-          </button>
-          <button type="button" onClick={handleStrikethroughClick} className="toolbar-button" title="Strikethrough">
-            <span className="line-through">S</span>
-          </button>
-          
-          <div className="border-l border-gray-300 dark:border-gray-600 h-6 mx-1"></div>
-          
-          {/* Headings */}
-          <button type="button" onClick={() => handleHeadingClick(1)} className="toolbar-button" title="Heading 1">H1</button>
-          <button type="button" onClick={() => handleHeadingClick(2)} className="toolbar-button" title="Heading 2">H2</button>
-          <button type="button" onClick={() => handleHeadingClick(3)} className="toolbar-button" title="Heading 3">H3</button>
-          
-          <div className="border-l border-gray-300 dark:border-gray-600 h-6 mx-1"></div>
-          
-          {/* Links and Media */}
-          <button type="button" onClick={handleLinkClick} className="toolbar-button" title="Insert Link (Ctrl+K)">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 015.656 0l4 4a4 4 0 01-5.656 5.656l-1.102-1.101" />
-            </svg>
-          </button>
-          <button type="button" onClick={handleImageClick} className="toolbar-button" title="Insert Image">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </button>
-          
-          <div className="border-l border-gray-300 dark:border-gray-600 h-6 mx-1"></div>
-          
-          {/* Code */}
-          <button type="button" onClick={handleCodeClick} className="toolbar-button" title="Inline Code (Ctrl+\)">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-            </svg>
-          </button>
-          <button type="button" onClick={handleCodeBlockClick} className="toolbar-button" title="Code Block">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </button>
-          
-          <div className="border-l border-gray-300 dark:border-gray-600 h-6 mx-1"></div>
-          
-          {/* Lists */}
-          <button type="button" onClick={handleBulletListClick} className="toolbar-button" title="Bullet List">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-            </svg>
-          </button>
-          <button type="button" onClick={handleNumberedListClick} className="toolbar-button" title="Numbered List">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-          </button>
-          <button type="button" onClick={handleTaskListClick} className="toolbar-button" title="Task List">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
-          </button>
-          
-          <div className="border-l border-gray-300 dark:border-gray-600 h-6 mx-1"></div>
-          
-          {/* Other formatting */}
-          <button type="button" onClick={handleQuoteClick} className="toolbar-button" title="Blockquote">
-<svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-            </svg>
-          </button>
-          <button type="button" onClick={handleTableClick} className="toolbar-button" title="Table">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-            </svg>
-          </button>
-          <button type="button" onClick={handleHorizontalRuleClick} className="toolbar-button" title="Horizontal Rule">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 12h16" />
-            </svg>
-          </button>
-          
-          <div className="border-l border-gray-300 dark:border-gray-600 h-6 mx-1"></div>
-          
-          {/* Special elements */}
-          <button type="button" onClick={handleDetailsClick} className="toolbar-button" title="Collapsible Details">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-            Details
-          </button>
-        </div>
+        <ToolbarGroup items={formattingButtons} />
+        <Divider />
+        <ToolbarGroup items={headingButtons} />
+        <Divider />
+        <ToolbarGroup items={linkButtons} />
+        <Divider />
+        <ToolbarGroup items={codeButtons} />
+        <Divider />
+        <ToolbarGroup items={listButtons} />
+        <Divider />
+        <ToolbarGroup items={otherFormattingButtons} />
+        <Divider />
+        <ToolbarGroup items={specialButtons} />
       </div>
 
-      {/* Editor and Preview */}
+      {/* Editor & Preview */}
       {activeFile && (
-        <div 
-          ref={containerRef}
-          className={`editor-container ${previewMode ? 'split-view' : ''}`}
-        >
+        <div ref={containerRef} className={`editor-container ${previewMode ? 'split-view' : ''}`}>
           <textarea
             ref={editorRef}
             value={currentFileContent}
-            onChange={(e) => handleFileChange(activeFile, e.target.value)}
+            onChange={e => handleFileChange(activeFile, e.target.value)}
             onScroll={syncScroll}
             className={`editor ${wrapText ? 'wrap' : 'no-wrap'}`}
             placeholder="Enter file content here..."
@@ -728,28 +693,18 @@ const GistEditor = () => {
           />
           {previewMode && (
             <>
-              <div 
+              <div
                 ref={resizeHandleRef}
                 className={`resize-handle ${isResizing ? 'active' : ''}`}
                 onMouseDown={handleResizeStart}
                 style={{ left: `${splitRatio}%` }}
                 aria-hidden="true"
-              ></div>
-              <div
-                ref={previewRef}
-                className="preview"
-                onScroll={syncScroll}
-                style={previewStyle}
-                aria-label="Preview pane"
-              >
+              />
+              <div ref={previewRef} className="preview" onScroll={syncScroll} style={previewStyle} aria-label="Preview pane">
                 {isMarkdownFile(activeFile) ? (
                   <MarkdownPreview content={currentFileContent} />
                 ) : (
-                  <SyntaxHighlighter
-                    language={getFileLanguage(activeFile)}
-                    style={tomorrow}
-                    className="syntax-highlighter"
-                  >
+                  <SyntaxHighlighter language={getFileLanguage(activeFile)} style={tomorrow} className="syntax-highlighter">
                     {currentFileContent}
                   </SyntaxHighlighter>
                 )}
@@ -759,7 +714,7 @@ const GistEditor = () => {
         </div>
       )}
 
-      {/* Keyboard shortcuts help */}
+      {/* Keyboard Shortcuts */}
       <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400">
         <details>
           <summary className="cursor-pointer">Keyboard Shortcuts</summary>
@@ -772,6 +727,7 @@ const GistEditor = () => {
           </div>
         </details>
       </div>
+
     </form>
   );
 };
