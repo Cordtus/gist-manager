@@ -1,5 +1,7 @@
 // App.js
-import React from 'react';
+import './styles/index.css';
+import './styles/theme.css';
+import './styles/markdownPreview.css';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -14,9 +16,6 @@ import SharedGistList from './components/SharedGistList';
 import SharedGistDetail from './components/SharedGistDetail';
 import ThemeColorSelector from './components/ThemeColorSelector';
 import ThemeSandbox from './components/ThemeSandbox';
-import './styles/index.css';
-import './styles/theme.css';
-import './styles/markdownPreview.css';
 
 const AppContent = () => {
   const auth = useAuth();

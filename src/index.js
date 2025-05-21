@@ -1,10 +1,12 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
+// index,js
 import './styles/index.css';
 import './styles/gistEditor.css';
 import './styles/markdownPreview.css';
 import './styles/darkMode.css';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+
 
 // Log that app is initializing
 console.log('Gist Manager app initializing...');

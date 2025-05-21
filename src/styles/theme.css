@@ -1,163 +1,52 @@
-/* styles/theme.css */
+/* theme.css */
+/* Define once at the very top of your imports */
 
-/* ================================
-   Light-mode variables (default)
-   ================================ */
 :root {
-  /* Primary brand colors */
-  --color-primary:   #2563eb;  /* calm blue */
-  --color-primary-light: #3b82f6;
-  --color-primary-dark:  #1e40af;
-  --color-primary-contrast: #ffffff;
+  /* == Base palettes == */
+  --bg-page: #ffffff;
+  --text-main: #1f2937;
+  --border: #e5e7eb;
 
-  /* UI palette */
-  --color-background:     #f9fafb;  /* very light gray */
-  --color-surface:        #ffffff;
-  --color-surface-variant:#e5e7eb;
-  --color-border:         #d1d5db;
+  --toolbar-bg: #f3f4f6;
+  --panel-bg: #f8fafc;
+  --panel-preview-bg: #ffffff;
 
-  /* Text */
-  --color-text-primary:   #1f2937;
-  --color-text-secondary: #4b5563;
-  --color-text-tertiary:  #6b7280;
-  --color-text-disabled:  #9ca3af;
+  --btn-primary-bg: #4f46e5;
+  --btn-primary-hover: #4338ca;
+  --btn-primary-text: #ffffff;
+  --btn-primary-disabled: #c7d2fe;
 
-  /* Editor bg’s */
-  --color-editor-bg:   #ffffff;
-  --color-preview-bg:  #f3f4f6;
-  --color-code-bg:     #f1f5f9;
-  --color-code-text:   #111827;
-  --color-inline-code-bg: #e5e7eb;
+  --btn-secondary-bg: #ffffff;
+  --btn-secondary-border: #4f46e5;
+  --btn-secondary-text: #4f46e5;
 
-  /* Shadows */
-  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md:  0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg:  0 10px 15px rgba(0, 0, 0, 0.1);
+  --accent: #6366f1;
 
-  /* Spacing & radius */
-  --space-1: 4px;   --space-2: 8px;  --space-3: 12px; --space-4: 16px;
-  --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px;
+  --resize-bg: #e5e7eb;
+  --resize-hover: #6366f1;
 }
 
-/* ================================
-   Dark-mode overrides
-   ================================ */
+/* Dark mode overrides on <body class="dark"> */
 .dark {
-  --color-primary:    #0ea5e9; /* neon cyan */
-  --color-primary-light: #38bdf8;
-  --color-primary-dark:  #0284c7;
+  --bg-page: #1a202c;
+  --text-main: #e2e8f0;
+  --border: #4a5568;
 
-  --color-background:     #000000; /* pure black */
-  --color-surface:        #111111;
-  --color-surface-variant:#1a1a1a;
-  --color-border:         #333333;
+  --toolbar-bg: #2d3748;
+  --panel-bg: #1a202c;
+  --panel-preview-bg: #2d3748;
 
-  --color-text-primary:   #f8fafc;
-  --color-text-secondary: #e2e8f0;
-  --color-text-tertiary:  #cbd5e1;
-  --color-text-disabled:  #718096;
+  --btn-primary-bg: #6366f1;
+  --btn-primary-hover: #4f46e5;
+  --btn-primary-text: #f7fafc;
+  --btn-primary-disabled: rgba(99,102,241,0.4);
 
-  --color-editor-bg:   #000000;
-  --color-preview-bg:  #111111;
-  --color-code-bg:     #000000;
-  --color-code-text:   #f8fafc;
-  --color-inline-code-bg: #1a1a1a;
+  --btn-secondary-bg: #1a202c;
+  --btn-secondary-border: #6366f1;
+  --btn-secondary-text: #e2e8f0;
 
-  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md:  0 4px 6px rgba(0, 0, 0, 0.5);
-  --shadow-lg:  0 10px 15px rgba(0, 0, 0, 0.5);
-}
+  --accent: #6366f1;
 
-/* ================================
-   Base element styles
-   ================================ */
-body {
-  margin: 0;
-  font-family: system-ui, sans-serif;
-  background-color: var(--color-background);
-  color: var(--color-text-primary);
-  line-height: 1.5;
+  --resize-bg: #4a5568;
+  --resize-hover: #6366f1;
 }
-a {
-  color: var(--color-primary);
-  text-decoration: none;
-}
-a:hover {
-  text-decoration: underline;
-}
-
-/* Inputs, selects, textareas */
-input, select, textarea {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-primary);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2);
-  transition: border-color 150ms, box-shadow 150ms;
-}
-input:focus, select:focus, textarea:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba( /* primary-contrast */ 255,255,255,0.2 );
-}
-
-/* Buttons */
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-2) var(--space-4);
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  background-color: var(--color-primary);
-  color: var(--color-primary-contrast);
-  transition: background-color 150ms;
-}
-.button:hover:not(:disabled) {
-  background-color: var(--color-primary-dark);
-}
-.button.secondary {
-  background-color: var(--color-surface);
-  color: var(--color-primary);
-  border: 1px solid var(--color-primary);
-}
-.button.secondary:hover {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary-contrast);
-}
-.button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Cards */
-.card {
-  background: var(--color-surface);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  padding: var(--space-4);
-}
-
-/* Code blocks and inline code */
-code {
-  background: var(--color-inline-code-bg);
-  border-radius: var(--radius-sm);
-  padding: 0.2em 0.4em;
-  font-family: monospace;
-  color: var(--color-code-text);
-}
-pre {
-  background: var(--color-code-bg);
-  border-radius: var(--radius-md);
-  padding: var(--space-4);
-  overflow-x: auto;
-}
-pre code {
-  background: transparent;
-  padding: 0;
-}
-
-/* Tables, badges, forms, etc., can continue below… */
