@@ -1,8 +1,10 @@
 // index,js
+import './styles/theme.css';
 import './styles/index.css';
 import './styles/gistEditor.css';
 import './styles/markdownPreview.css';
-import './styles/darkMode.css';
+import './styles/markdownExtras.css';
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
