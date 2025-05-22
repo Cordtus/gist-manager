@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* index.css — global resets and base typography */
 @import './theme.css';
 
