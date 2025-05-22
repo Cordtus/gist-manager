@@ -14,7 +14,7 @@ const MarkdownPreview = memo(({ content }) => {
         remarkPlugins={[remarkGfm]}
         components={{
           // Custom rendering for code blocks with syntax highlighting
-          code({ node, inline, className, children, ...props }) {
+          code({ node: _node, inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
             const language = match ? match[1] : 'text';
             

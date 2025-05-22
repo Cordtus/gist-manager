@@ -562,7 +562,6 @@ const GistEditor = () => {
                   ? 'bg-surface text-primary border border-default shadow-sm'
                   : 'text-default hover:bg-surface-hover'
               }`}
-              aria-selected={activeFile === filename}
             >
               {filename}
               {Object.keys(gist.files).length > 1 && (
