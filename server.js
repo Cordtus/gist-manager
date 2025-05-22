@@ -104,14 +104,13 @@ app.use(helmet({
       ],
       scriptSrc: [
         "'self'",
-        "'unsafe-inline'", // Allow inline scripts for React
         'https://github.githubassets.com'
       ],
       scriptSrcElem: [
         "'self'",
         'https://github.githubassets.com'
       ],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],  // keep if you have inline CSS
       imgSrc: ["'self'", "data:", "https:"],
       frameSrc: ["'none'"]
     }
@@ -128,11 +127,9 @@ app.use(morgan('combined', {
   }
 }));
 
-// API ROUTES FIRST - before static file serving
-app.use('/api/gists', gistRoutes);
-app.use('/api/shared-gists', sharedGistsRoutes);
-
 // GITHUB OAUTH ROUTES
+
+// login route - generate state
 app.get('/api/auth/github/login', (req, res) => {
   // Generate a secure random state
   const state = crypto.randomBytes(16).toString('hex');
