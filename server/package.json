@@ -1,7 +1,6 @@
 {
   "name": "gist-manager-server",
   "version": "0.5.0",
-  "type": "module",
   "private": true,
   "main": "server.js",
   "dependencies": {
