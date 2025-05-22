@@ -1,31 +1,19 @@
-// server/routes/sharedGists.js
+const express = require('express'));
+const sharedGistsController = require('../controllers/sharedGistsController.js'));
 
-import express from 'express';
-import * as sharedGistsController from '../controllers/sharedGistsController.js';
+const router = express.Router());
 
-const router = express.Router();
-
-// Authentication middleware
 const isAuthenticated = (req, res, next) => {
   if (!req.session.user || !req.session.githubToken) {
-    return res.status(401).json({ error: 'Authentication required' });
+    return res.status(401).json({ error: 'Authentication required' }));
   }
-  next();
-};
+  next());
+});
 
-// Get all shared gists (public endpoint - no auth required)
-router.get('/', sharedGistsController.getAllSharedGists);
+router.get('/', sharedGistsController.getAllSharedGists));
+router.post('/', isAuthenticated, sharedGistsController.shareGist));
+router.delete('/:gistId', isAuthenticated, sharedGistsController.unshareGist));
+router.get('/check/:gistId', sharedGistsController.isGistShared));
+router.get('/user', isAuthenticated, sharedGistsController.getUserSharedGists));
 
-// Share a gist (requires authentication)
-router.post('/', isAuthenticated, sharedGistsController.shareGist);
-
-// Unshare a gist (requires authentication)
-router.delete('/:gistId', isAuthenticated, sharedGistsController.unshareGist);
-
-// Check if a gist is shared (no auth required)
-router.get('/check/:gistId', sharedGistsController.isGistShared);
-
-// Get a user's shared gists (requires authentication)
-router.get('/user', isAuthenticated, sharedGistsController.getUserSharedGists);
-
-export default router;
+module.exports = router);

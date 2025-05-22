@@ -1,23 +1,12 @@
-// server/routes/gists.js
+const express = require('express'));
+const gistController = require('../controllers/gistController.js'));
 
-import express from 'express';
-import * as gistController from '../controllers/gistController.js';
+const router = express.Router());
 
-const router = express.Router();
+router.get('/', gistController.getGists));
+router.post('/', gistController.createGist));
+router.get('/:id', gistController.getGist));
+router.patch('/:id', gistController.updateGist));
+router.delete('/:id', gistController.deleteGist));
 
-// Get all gists for authenticated user
-router.get('/', gistController.getGists);
-
-// Create a new gist
-router.post('/', gistController.createGist);
-
-// Get a specific gist by ID
-router.get('/:id', gistController.getGist);
-
-// Update a gist
-router.patch('/:id', gistController.updateGist);
-
-// Delete a gist
-router.delete('/:id', gistController.deleteGist);
-
-export default router;
+module.exports = router);
