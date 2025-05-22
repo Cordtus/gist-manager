@@ -11,15 +11,15 @@ const crypto = require('crypto');
 const fs = require('fs').promises;
 
 // Import API routes
-const gistRoutes = require('./server/routes/gists.js');
-const sharedGistsRoutes = require('./server/routes/sharedGists.js');
+const gistRoutes = require('./routes/gists.js');
+const sharedGistsRoutes = require('./routes/sharedGists.js');
 
 const app = express();
 const port = process.env.PORT || 5000;
 
 // ensure data dir exists
 const ensureDataDirectory = async () => {
-  const dataDir = path.join(__dirname, 'data');
+  const dataDir = path.join(__dirname, '../data');
   const sharedGistsDir = path.join(dataDir, 'shared-gists');
   
   try {
