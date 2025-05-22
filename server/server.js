@@ -1,24 +1,18 @@
-// server.js - ESM VERSION
-
-import 'dotenv/config';
-import express from 'express';
-import axios from 'axios';
-import cors from 'cors';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import winston from 'winston';
-import session from 'express-session';
-import crypto from 'crypto';
-import { promises as fs } from 'fs';
+require('dotenv').config();
+const express = require('express');
+const axios = require('axios');
+const cors = require('cors');
+const path = require('path');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const winston = require('winston');
+const session = require('express-session');
+const crypto = require('crypto');
+const fs = require('fs').promises;
 
 // Import API routes
-import gistRoutes from './server/routes/gists.js';
-import sharedGistsRoutes from './server/routes/sharedGists.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const gistRoutes = require('./server/routes/gists.js');
+const sharedGistsRoutes = require('./server/routes/sharedGists.js');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -38,7 +32,7 @@ const ensureDataDirectory = async () => {
 };
 
 // init data dir
-await ensureDataDirectory();
+ensureDataDirectory();
 
 // Enable trust proxy
 app.set('trust proxy', true);
@@ -84,7 +78,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Session configuration with secure secret
+// Session configuration
 const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 app.use(session({
   secret: sessionSecret,
@@ -134,8 +128,6 @@ app.use(morgan('combined', {
 }));
 
 // GITHUB OAUTH ROUTES
-
-// login route - generate state
 app.get('/api/auth/github/login', (req, res) => {
   const state = crypto.randomBytes(16).toString('hex');
   req.session.oauthState = state;
@@ -153,7 +145,6 @@ app.get('/api/auth/github/login', (req, res) => {
   res.json({ url: `https://github.com/login/oauth/authorize?${params.toString()}` });
 });
 
-// GitHub OAuth callback route
 app.post('/api/auth/github', async (req, res) => {
   try {
     const { code, state } = req.body;
@@ -167,7 +158,6 @@ app.post('/api/auth/github', async (req, res) => {
     logger.info(`  - State from client: ${state}`);
     logger.info(`  - State from session: ${req.session.oauthState}`);
     
-    // validate state (in prod only)
     if (process.env.NODE_ENV !== 'development') {
       if (!req.session.oauthState || state !== req.session.oauthState) {
         logger.error('[OAuth] State validation failed');
@@ -176,10 +166,6 @@ app.post('/api/auth/github', async (req, res) => {
           message: 'Authentication failed due to invalid state. This could be a CSRF attempt or session expiration.'
         });
       }
-    } else if (!req.session.oauthState) {
-      logger.warn('[OAuth] No state found in session but proceeding (development mode)');
-    } else if (state !== req.session.oauthState) {
-      logger.warn(`[OAuth] State mismatch but proceeding (development mode): ${state} vs ${req.session.oauthState}`);
     }
 
     req.session.oauthState = null;
@@ -273,7 +259,6 @@ app.post('/api/auth/github', async (req, res) => {
   }
 });
 
-// Logout endpoint
 app.post('/api/auth/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -286,7 +271,6 @@ app.post('/api/auth/logout', (req, res) => {
   });
 });
 
-// verify auth
 app.get('/api/auth/status', (req, res) => {
   if (req.session.githubToken && req.session.user) {
     res.json({ 
@@ -312,7 +296,6 @@ app.use('/static', express.static(path.join(__dirname, 'build/static'), {
   }
 }));
 
-// Serve favicon and manifest
 app.get('/favicon.ico', (req, res) => {
   res.sendFile(path.join(__dirname, 'build/favicon.ico'));
 });
@@ -321,7 +304,6 @@ app.get('/manifest.json', (req, res) => {
   res.sendFile(path.join(__dirname, 'build/manifest.json'));
 });
 
-// Serve other static assets
 app.use(express.static(path.join(__dirname, 'build'), {
   index: false,
   maxAge: '1d'
@@ -331,7 +313,7 @@ app.use(express.static(path.join(__dirname, 'build'), {
 app.use('/api/gists', gistRoutes);
 app.use('/api/shared-gists', sharedGistsRoutes);
 
-// CATCH-ALL ROUTE - Must be LAST
+// CATCH-ALL ROUTE
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'API endpoint not found' });
@@ -350,7 +332,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// start server
 app.listen(port, () => {
   logger.info(`Server running on port ${port}`);
   console.log(`Server running on port ${port}`);
