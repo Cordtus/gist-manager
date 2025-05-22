@@ -1,16 +1,24 @@
-// server.js
+// server.js - ESM VERSION
 
-require('dotenv').config();
-const express = require('express');
-const axios = require('axios');
-const cors = require('cors');
-const path = require('path');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const winston = require('winston');
-const session = require('express-session');
-const crypto = require('crypto');
-const fs = require('fs').promises;
+import 'dotenv/config';
+import express from 'express';
+import axios from 'axios';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import winston from 'winston';
+import session from 'express-session';
+import crypto from 'crypto';
+import { promises as fs } from 'fs';
+
+// Import API routes
+import gistRoutes from './server/routes/gists.js';
+import sharedGistsRoutes from './server/routes/sharedGists.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -30,7 +38,7 @@ const ensureDataDirectory = async () => {
 };
 
 // init data dir
-ensureDataDirectory();
+await ensureDataDirectory();
 
 // Enable trust proxy
 app.set('trust proxy', true);
@@ -60,6 +68,7 @@ app.use(cors({
   origin: function(origin, callback) {
     const allowedOrigins = [
       'http://localhost:3000',
+      'http://localhost:3020',
       'https://gistmd.basementnodes.ca',
       process.env.FRONTEND_URL
     ].filter(Boolean);
@@ -71,7 +80,7 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
@@ -96,7 +105,7 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       connectSrc: [
         "'self'",
-        process.env.FRONTEND_URL || 'https://gistmd.basementnodes.ca',
+        process.env.FRONTEND_URL || 'http://localhost:3020',
         'https://api.github.com',
         'https://github.com'
       ],
@@ -108,7 +117,7 @@ app.use(helmet({
         "'self'",
         'https://github.githubassets.com'
       ],
-      styleSrc: ["'self'", "'unsafe-inline'"],  // keep if you have inline CSS
+      styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
       frameSrc: ["'none'"]
     }
@@ -116,7 +125,6 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
-
 
 // Logging middleware
 app.use(morgan('combined', {
@@ -129,18 +137,12 @@ app.use(morgan('combined', {
 
 // login route - generate state
 app.get('/api/auth/github/login', (req, res) => {
-  // Generate a secure random state
   const state = crypto.randomBytes(16).toString('hex');
-  
-  // store state in session
   req.session.oauthState = state;
-  
-  // Get requested scopes or use default
   const scopes = req.query.scopes || 'gist user';
   
   logger.info(`[OAuth] Generated state: ${state} and stored in session`);
 
-  // Build the GitHub OAuth URL with appropriate parameters
   const params = new URLSearchParams({
     client_id: process.env.GITHUB_CLIENT_ID,
     redirect_uri: process.env.REDIRECT_URI || `${req.protocol}://${req.get('host')}/callback`,
@@ -148,22 +150,19 @@ app.get('/api/auth/github/login', (req, res) => {
     state: state
   });
 
-  // Return the authorization URL to the client
   res.json({ url: `https://github.com/login/oauth/authorize?${params.toString()}` });
 });
 
-// GitHub OAuth callback route to exchange code for an access token
+// GitHub OAuth callback route
 app.post('/api/auth/github', async (req, res) => {
   try {
     const { code, state } = req.body;
 
-    // Ensure code is provided
     if (!code) {
       logger.error('[OAuth] No authorization code provided');
       return res.status(400).json({ error: 'Authorization code is required' });
     }
 
-    // Log request details for debugging
     logger.info(`[OAuth] Received code exchange request:`);
     logger.info(`  - State from client: ${state}`);
     logger.info(`  - State from session: ${req.session.oauthState}`);
@@ -183,16 +182,13 @@ app.post('/api/auth/github', async (req, res) => {
       logger.warn(`[OAuth] State mismatch but proceeding (development mode): ${state} vs ${req.session.oauthState}`);
     }
 
-    // clear state after each use
     req.session.oauthState = null;
     logger.info('[OAuth] State cleared from session');
 
-    // determine redirect URI
     const effectiveRedirectUri = 
       process.env.REDIRECT_URI || 
       `${req.protocol}://${req.get('host')}/callback`;
       
-    // exchange the auth code for token
     const tokenResponse = await axios.post(
       'https://github.com/login/oauth/access_token',
       {
@@ -204,7 +200,6 @@ app.post('/api/auth/github', async (req, res) => {
       { headers: { Accept: 'application/json' } }
     );
 
-    // check if received valid token
     const { access_token, error: githubError, error_description } = tokenResponse.data;
 
     if (githubError) {
@@ -220,10 +215,8 @@ app.post('/api/auth/github', async (req, res) => {
       return res.status(400).json({ error: 'No access token received from GitHub' });
     }
 
-    // store token in session
     req.session.githubToken = access_token;
 
-    // fetch user for verification
     try {
       const userResponse = await axios.get('https://api.github.com/user', {
         headers: { Authorization: `Bearer ${access_token}` },
@@ -231,14 +224,12 @@ app.post('/api/auth/github', async (req, res) => {
       const { login, name, id, avatar_url, bio, created_at, public_repos, public_gists, followers, following } = userResponse.data;
       logger.info(`[OAuth] Successfully authenticated user: ${login}`);
       
-      // Try to get user's email if the scope includes it
       let email = null;
       try {
         const emailResponse = await axios.get('https://api.github.com/user/emails', {
           headers: { Authorization: `Bearer ${access_token}` },
         });
         
-        // Find primary email
         const primaryEmail = emailResponse.data.find(email => email.primary);
         if (primaryEmail) {
           email = primaryEmail.email;
@@ -247,7 +238,6 @@ app.post('/api/auth/github', async (req, res) => {
         logger.warn('[OAuth] Could not fetch user email - email scope might be missing');
       }
       
-      // store user session info with more complete profile
       req.session.user = {
         id,
         login,
@@ -265,7 +255,6 @@ app.post('/api/auth/github', async (req, res) => {
       logger.warn('[OAuth] Could not fetch user data, but token was received:', userError.message);
     }
 
-    // return access token to client
     logger.info('[OAuth] Authentication successful, returning token');
     res.json({ access_token });
       
@@ -286,7 +275,6 @@ app.post('/api/auth/github', async (req, res) => {
 
 // Logout endpoint
 app.post('/api/auth/logout', (req, res) => {
-  // Clear session
   req.session.destroy((err) => {
     if (err) {
       logger.error('[OAuth] Error destroying session:', err);
@@ -310,42 +298,52 @@ app.get('/api/auth/status', (req, res) => {
   }
 });
 
-// STATIC FILE SERVING - FIXED ORDER AND CONFIGURATION
-// Serve static files with proper MIME types
+// STATIC FILE SERVING
 app.use('/static', express.static(path.join(__dirname, 'build/static'), {
-  setHeaders: (res, path) => {
-    if (path.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css');
-    } else if (path.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript');
+  maxAge: '1y',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    } else if (filePath.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (filePath.endsWith('.map')) {
+      res.setHeader('Content-Type', 'application/json');
     }
   }
 }));
 
+// Serve favicon and manifest
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build/favicon.ico'));
+});
+
+app.get('/manifest.json', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build/manifest.json'));
+});
+
 // Serve other static assets
 app.use(express.static(path.join(__dirname, 'build'), {
-  index: false // Don't serve index.html for static requests
+  index: false,
+  maxAge: '1d'
 }));
 
+// API ROUTES
+app.use('/api/gists', gistRoutes);
+app.use('/api/shared-gists', sharedGistsRoutes);
 
 // CATCH-ALL ROUTE - Must be LAST
-
 app.get('*', (req, res) => {
-  // Don't serve index.html for API routes or static assets
-  if (req.path.startsWith('/api/') || req.path.startsWith('/static/')) {
-    return res.status(404).json({ error: 'Not found' });
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
   }
   
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 // ERROR HANDLING
-
-// global error handler
 app.use((err, req, res, next) => {
   logger.error('Server error:', err);
   
-  // send error response
   res.status(err.status || 500).json({
     error: 'An unexpected error occurred',
     message: process.env.NODE_ENV === 'development' ? err.message : undefined

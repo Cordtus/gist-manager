@@ -1,8 +1,9 @@
 // server/routes/sharedGists.js
 
-const express = require('express');
+import express from 'express';
+import * as sharedGistsController from '../controllers/sharedGistsController.js';
+
 const router = express.Router();
-const sharedGistsController = require('../controllers/sharedGistsController');
 
 // Authentication middleware
 const isAuthenticated = (req, res, next) => {
@@ -27,4 +28,4 @@ router.get('/check/:gistId', sharedGistsController.isGistShared);
 // Get a user's shared gists (requires authentication)
 router.get('/user', isAuthenticated, sharedGistsController.getUserSharedGists);
 
-module.exports = router;
+export default router;

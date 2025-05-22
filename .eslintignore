@@ -1,0 +1,27 @@
+# Build outputs
+build/
+dist/
+coverage/
+
+# Dependencies
+node_modules/
+
+# Server files (Node.js ESM)
+server.js
+server/
+
+# Config files
+*.config.js
+craco.config.js
+tailwind.config.js
+postcss.config.js
+
+# Data and logs
+data/
+*.log
+
+# Environment files
+.env*
+
+# Other files that don't need linting
+public/
