@@ -1,4 +1,5 @@
-// src/components/GistEditor.js
+// GistEditor.js - Enhanced split-panel Markdown editor
+
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { createGist, updateGist, getGist } from '../services/api/gists';
@@ -11,36 +12,181 @@ import '../styles/gistEditor.css';
 import '../styles/markdownPreview.css';
 
 /**
- * Reusable component for grouping toolbar buttons
+ * Enhanced Toolbar Component with all Markdown controls
  */
-const ToolbarGroup = ({ items }) => (
-  <div className="toolbar-group">
-    {items.map(item => (
-      <button
-        key={item.key}
-        type="button"
-        onClick={item.onClick}
-        className="toolbar-button"
-        title={item.title}
-      >
-        {item.icon}
-      </button>
-    ))}
-  </div>
-);
+const MarkdownToolbar = ({ onInsert, activeFile }) => {
+  const toolbar = [
+    {
+      group: 'Text Formatting',
+      items: [
+        {
+          key: 'bold',
+          icon: <strong>B</strong>,
+          title: 'Bold (Ctrl+B)',
+          action: () => onInsert('**', '**'),
+          shortcut: 'Ctrl+B'
+        },
+        {
+          key: 'italic',
+          icon: <em>I</em>,
+          title: 'Italic (Ctrl+I)',
+          action: () => onInsert('*', '*'),
+          shortcut: 'Ctrl+I'
+        },
+        {
+          key: 'strikethrough',
+          icon: <span style={{ textDecoration: 'line-through' }}>S</span>,
+          title: 'Strikethrough',
+          action: () => onInsert('~~', '~~')
+        },
+        {
+          key: 'code',
+          icon: <code>{`<>`}</code>,
+          title: 'Inline Code (Ctrl+`)',
+          action: () => onInsert('`', '`'),
+          shortcut: 'Ctrl+`'
+        }
+      ]
+    },
+    {
+      group: 'Headings',
+      items: [
+        { key: 'h1', icon: 'H1', title: 'Heading 1', action: () => onInsert('# ', '\n') },
+        { key: 'h2', icon: 'H2', title: 'Heading 2', action: () => onInsert('## ', '\n') },
+        { key: 'h3', icon: 'H3', title: 'Heading 3', action: () => onInsert('### ', '\n') }
+      ]
+    },
+    {
+      group: 'Links & Media',
+      items: [
+        {
+          key: 'link',
+          icon: '🔗',
+          title: 'Link (Ctrl+K)',
+          action: () => onInsert('[', '](https://)'),
+          shortcut: 'Ctrl+K'
+        },
+        {
+          key: 'image',
+          icon: '🖼️',
+          title: 'Image',
+          action: () => onInsert('![', '](https://)')
+        }
+      ]
+    },
+    {
+      group: 'Lists',
+      items: [
+        {
+          key: 'ul',
+          icon: '•',
+          title: 'Bullet List',
+          action: () => onInsert('- ', '\n- ')
+        },
+        {
+          key: 'ol',
+          icon: '1.',
+          title: 'Numbered List',
+          action: () => onInsert('1. ', '\n2. ')
+        },
+        {
+          key: 'task',
+          icon: '☑',
+          title: 'Task List',
+          action: () => onInsert('- [ ] ', '\n- [ ] ')
+        }
+      ]
+    },
+    {
+      group: 'Blocks',
+      items: [
+        {
+          key: 'quote',
+          icon: '❝',
+          title: 'Blockquote',
+          action: () => onInsert('> ', '\n')
+        },
+        {
+          key: 'codeblock',
+          icon: '{ }',
+          title: 'Code Block',
+          action: () => onInsert('```', '```')
+        },
+        {
+          key: 'table',
+          icon: '⊞',
+          title: 'Table',
+          action: () =>
+            onInsert(
+              '| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |',
+              ''
+            )
+        },
+        {
+          key: 'hr',
+          icon: '─',
+          title: 'Horizontal Rule',
+          action: () => onInsert('\n---\n', '')
+        }
+      ]
+    },
+    {
+      group: 'Custom',
+      items: [
+        {
+          key: 'details',
+          icon: '▶️',
+          title: 'Collapsible Details Block',
+          action: () =>
+            onInsert(
+              '<details>\n<summary>Click to expand</summary>\n\n```',
+              '```\n\n</details>'
+            )
+        }
+      ]
+    }
+  ];
+
+  return (
+    <div className="toolbar">
+      {toolbar.map((group, idx) => (
+        <React.Fragment key={group.group}>
+          <div className="toolbar-group">
+            {group.items.map(item => (
+              <button
+                key={item.key}
+                type="button"
+                onClick={item.action}
+                className="toolbar-button"
+                title={`${item.title}${item.shortcut ? ` (${item.shortcut})` : ''}`}
+                disabled={!activeFile}
+              >
+                {item.icon}
+              </button>
+            ))}
+          </div>
+          {idx < toolbar.length - 1 && <div className="toolbar-divider" />}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
+
 
 /**
- * Visual divider for toolbar sections
+ * Main GistEditor Component with Enhanced Split Panel
  */
-const Divider = () => <div className="toolbar-divider" />;
-
 const GistEditor = () => {
   // State and refs
-  const [gist, setGist] = useState({ description: '', files: { 'newfile.md': { content: '' } }, public: false });
+  const [gist, setGist] = useState({ 
+    description: '', 
+    files: { 'newfile.md': { content: '' } }, 
+    public: false 
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState('');
-  const [previewMode, setPreviewMode] = useState(true);
+  const [previewMode, setPreviewMode] = useState('split'); // 'editor', 'split', 'preview'
   const [wrapText, setWrapText] = useState(true);
   const [splitRatio, setSplitRatio] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
@@ -80,14 +226,13 @@ const GistEditor = () => {
       if (!isResizing || !containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const ratio = ((e.clientX - rect.left) / rect.width) * 100;
-      setSplitRatio(Math.min(Math.max(ratio, 15), 85));
+      setSplitRatio(Math.min(Math.max(ratio, 20), 80));
     };
     
     const handleMouseUp = () => {
       setIsResizing(false);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
-      resizeHandleRef.current?.classList.remove('active');
     };
     
     if (isResizing) {
@@ -95,7 +240,6 @@ const GistEditor = () => {
       document.addEventListener('mouseup', handleMouseUp);
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
-      resizeHandleRef.current?.classList.add('active');
     }
     
     return () => {
@@ -131,7 +275,6 @@ const GistEditor = () => {
       setIsShared(shared);
     } catch (err) {
       console.error(err);
-      // Silent error - doesn't affect core functionality
     }
   };
 
@@ -224,9 +367,9 @@ const GistEditor = () => {
     }
   };
 
-  // Synchronize scrolling between editor and preview
+  // Synchronized scrolling between editor and preview
   const syncScroll = useCallback(e => {
-    if (!previewMode) return;
+    if (previewMode !== 'split') return;
     const src = e.target;
     const dst = src === editorRef.current ? previewRef.current : editorRef.current;
     if (dst && !isResizing) {
@@ -236,8 +379,6 @@ const GistEditor = () => {
       });
     }
   }, [previewMode, isResizing]);
-
-  const toggleWrapText = () => setWrapText(w => !w);
 
   // Text insertion helper for toolbar actions
   const insertText = useCallback((before, after = '') => {
@@ -251,224 +392,57 @@ const GistEditor = () => {
     setTimeout(() => { ta.focus(); ta.setSelectionRange(newPos, newPos); }, 0);
   }, [activeFile, handleFileChange]);
 
-  // Toolbar actions
-  const handleBoldClick = useCallback(() => insertText('**','**'), [insertText]);
-  const handleItalicClick = useCallback(() => insertText('*','*'), [insertText]);
-  const handleStrikethroughClick = useCallback(() => insertText('~~','~~'), [insertText]);
-  const handleHeadingClick = useCallback(level => insertText('#'.repeat(level) + ' ','\n'), [insertText]);
-  const handleLinkClick = useCallback(() => {
-    const sel = editorRef.current?.value.slice(editorRef.current.selectionStart, editorRef.current.selectionEnd) || '';
-    insertText(sel.trim() ? '[' : '[Link text](', sel.trim() ? '](https://)' : ')');
-  }, [insertText]);
-  const handleImageClick = useCallback(() => insertText('![Alt text](',')'), [insertText]);
-  const handleCodeClick = useCallback(() => insertText('`','`'), [insertText]);
-  const handleCodeBlockClick = useCallback(() => insertText('```\n','\n```'), [insertText]);
-  const handleBulletListClick = useCallback(() => insertText('- ','\n- '), [insertText]);
-  const handleNumberedListClick = useCallback(() => insertText('1. ','\n2. '), [insertText]);
-  const handleTaskListClick = useCallback(() => insertText('- [ ] ','\n- [ ] '), [insertText]);
-  const handleQuoteClick = useCallback(() => insertText('> ','\n'), [insertText]);
-  const handleTableClick = useCallback(() => insertText('| Header 1 | Header 2 | Header 3 |\n| --- | --- | --- |\n| Row 1 Col 1 | Row 1 Col 2 | Row 1 Col 3 |\n| Row 2 Col 1 | Row 2 Col 2 | Row 2 Col 3 |',''), [insertText]);
-  const handleHorizontalRuleClick = useCallback(() => insertText('\n---\n',''), [insertText]);
-  const handleDetailsClick = useCallback(() => insertText('<details>\n<summary>Title</summary>\n','\n</details>'), [insertText]);
-
   // Keyboard shortcuts
   useEffect(() => {
     const onKeyDown = e => {
       if (document.activeElement !== editorRef.current) return;
       if (e.metaKey || e.ctrlKey) {
         switch (e.key) {
-          case 'b': e.preventDefault(); handleBoldClick(); break;
-          case 'i': e.preventDefault(); handleItalicClick(); break;
-          case 'k': e.preventDefault(); handleLinkClick(); break;
-          case '\\': e.preventDefault(); handleCodeClick(); break;
-          case '/': e.preventDefault(); setPreviewMode(pm => !pm); break;
+          case 'b': e.preventDefault(); insertText('**', '**'); break;
+          case 'i': e.preventDefault(); insertText('*', '*'); break;
+          case 'k': e.preventDefault(); insertText('[', '](https://)'); break;
+          case '`': e.preventDefault(); insertText('`', '`'); break;
+          case '/': e.preventDefault(); 
+            setPreviewMode(pm => pm === 'split' ? 'editor' : 'split'); 
+            break;
           default: break;
         }
       }
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [handleBoldClick, handleItalicClick, handleLinkClick, handleCodeClick]);
+  }, [insertText]);
 
   // Helpers
   const isMarkdownFile = fn => fn?.match(/\.(md|markdown|mdx)$/i);
   const getFileLanguage = fn => {
     const ext = fn.split('.').pop().toLowerCase();
-    const map = { js:'javascript', jsx:'jsx', ts:'typescript', tsx:'tsx', py:'python', rb:'ruby', java:'java', go:'go', html:'html', css:'css', scss:'scss', json:'json', yaml:'yaml', yml:'yaml', sh:'bash', txt:'text' };
+    const map = { 
+      js:'javascript', jsx:'jsx', ts:'typescript', tsx:'tsx', py:'python', 
+      rb:'ruby', java:'java', go:'go', html:'html', css:'css', scss:'scss', 
+      json:'json', yaml:'yaml', yml:'yaml', sh:'bash', txt:'text' 
+    };
     return map[ext] || 'text';
   };
 
-  // Toolbar button arrays
-  const formattingButtons = [
-    { 
-      key: 'bold', 
-      title: 'Bold (Ctrl+B)', 
-      icon: <span className="toolbar-icon bold">B</span>, 
-      onClick: handleBoldClick 
-    },
-    { 
-      key: 'italic', 
-      title: 'Italic (Ctrl+I)', 
-      icon: <span className="toolbar-icon italic">I</span>, 
-      onClick: handleItalicClick 
-    },
-    { 
-      key: 'strike', 
-      title: 'Strikethrough', 
-      icon: <span className="toolbar-icon strike">S</span>, 
-      onClick: handleStrikethroughClick 
-    }
-  ];
+  if (!user) return (
+    <div className="p-6 bg-surface rounded shadow-md text-center">
+      Please log in to edit gists.
+    </div>
+  );
   
-  const headingButtons = [
-    { key: 'h1', title: 'Heading 1', icon: 'H1', onClick: () => handleHeadingClick(1) },
-    { key: 'h2', title: 'Heading 2', icon: 'H2', onClick: () => handleHeadingClick(2) },
-    { key: 'h3', title: 'Heading 3', icon: 'H3', onClick: () => handleHeadingClick(3) }
-  ];
-  
-  const linkButtons = [
-    { 
-      key: 'link', 
-      title: 'Insert Link (Ctrl+K)', 
-      icon: (
-        <svg className="toolbar-icon" viewBox="0 0 24 24">
-          <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
-        </svg>
-      ),
-      onClick: handleLinkClick 
-    },
-    { 
-      key: 'image', 
-      title: 'Insert Image', 
-      icon: (
-        <svg className="toolbar-icon" viewBox="0 0 24 24">
-          <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
-        </svg>
-      ), 
-      onClick: handleImageClick 
-    }
-  ];
-  
-  const codeButtons = [
-    { 
-      key: 'inline', 
-      title: 'Inline Code (Ctrl+\\)', 
-      icon: (
-        <svg className="toolbar-icon" viewBox="0 0 24 24">
-          <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
-        </svg>
-      ), 
-      onClick: handleCodeClick 
-    },
-    { 
-      key: 'block', 
-      title: 'Code Block', 
-      icon: (
-        <svg className="toolbar-icon" viewBox="0 0 24 24">
-          <path d="M20 3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H4V5h16v14z"/>
-        </svg>
-      ), 
-      onClick: handleCodeBlockClick 
-    }
-  ];
-  
-  const listButtons = [
-    { 
-      key: 'bullet', 
-      title: 'Bullet List', 
-      icon: (
-        <svg className="toolbar-icon" viewBox="0 0 24 24">
-          <path d="M4 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm0-6c-.83 0-1.5.67-1.5 1.5S3.17 7.5 4 7.5 5.5 6.83 5.5 6 4.83 4.5 4 4.5zm0 12c-.83 0-1.5.68-1.5 1.5s.68 1.5 1.5 1.5 1.5-.68 1.5-1.5-.67-1.5-1.5-1.5zM7 19h14v-2H7v2zm0-6h14v-2H7v2zm0-8v2h14V5H7z"/>
-        </svg>
-      ), 
-      onClick: handleBulletListClick 
-    },
-    { 
-      key: 'number', 
-      title: 'Numbered List', 
-      icon: (
-        <svg className="toolbar-icon" viewBox="0 0 24 24">
-          <path d="M2 17h2v.5H3v1h1v.5H2v1h3v-4H2v1zm1-9h1V4H2v1h1v3zm-1 3h1.8L2 13.1v.9h3v-1H3.2L5 10.9V10H2v1zm5-6v2h14V5H7zm0 14h14v-2H7v2zm0-6h14v-2H7v2z"/>
-        </svg>
-      ), 
-      onClick: handleNumberedListClick 
-    },
-    { 
-      key: 'task', 
-      title: 'Task List', 
-      icon: (
-        <svg className="toolbar-icon" viewBox="0 0 24 24">
-          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
-          <path d="M18 9l-1.4-1.4-5.6 5.6-2.6-2.6L7 12l4 4z"/>
-        </svg>
-      ), 
-      onClick: handleTaskListClick 
-    }
-  ];
-  
-  const otherFormattingButtons = [
-    { 
-      key: 'quote', 
-      title: 'Blockquote', 
-      icon: (
-        <svg className="toolbar-icon" viewBox="0 0 24 24">
-          <path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
-        </svg>
-      ), 
-      onClick: handleQuoteClick 
-    },
-    { 
-      key: 'table', 
-      title: 'Table', 
-      icon: (
-        <svg className="toolbar-icon" viewBox="0 0 24 24">
-          <path d="M4 6h16M4 12h16m-7 6h7"/>
-        </svg>
-      ), 
-      onClick: handleTableClick 
-    },
-    { 
-      key: 'hr', 
-      title: 'Horizontal Rule', 
-      icon: (
-        <svg className="toolbar-icon" viewBox="0 0 24 24">
-          <path d="M4 12h16"/>
-        </svg>
-      ), 
-      onClick: handleHorizontalRuleClick 
-    }
-  ];
-  
-  const specialButtons = [
-    { 
-      key: 'details', 
-      title: 'Collapsible Details', 
-      icon: (
-        <div className="flex items-center">
-          <svg className="toolbar-icon mr-1" viewBox="0 0 24 24">
-            <path d="M9 5l7 7-7 7"/>
-          </svg>
-          Details
-        </div>
-      ), 
-      onClick: handleDetailsClick 
-    }
-  ];
-
-  // Render
-  if (!user) return <div className="p-6 bg-surface rounded shadow-md text-center">Please log in to edit gists.</div>;
-  if (loading && id) return <div className="p-6 bg-surface rounded shadow-md text-center">Loading…</div>;
+  if (loading && id) return (
+    <div className="p-6 bg-surface rounded shadow-md text-center">Loading…</div>
+  );
 
   const currentFileContent = activeFile ? gist.files[activeFile]?.content || '' : '';
-  const editorStyle = previewMode ? { width: `${splitRatio}%` } : { width: '100%' };
-  const previewStyle = { width: `${100 - splitRatio}%` };
 
   return (
     <form onSubmit={handleSubmit} className="gist-editor-form">
       {/* Description & Settings */}
-      <div className="p-4 border-b border-default">
+      <div className="p-4 border-b border-default bg-surface">
         <div className="mb-4">
-          <label htmlFor="description" className="block text-sm font-medium mb-1">
+          <label htmlFor="description" className="block text-sm font-medium mb-1 text-primary">
             Description [optional]
           </label>
           <input
@@ -477,10 +451,10 @@ const GistEditor = () => {
             value={gist.description}
             onChange={handleDescriptionChange}
             placeholder="Enter a description for your gist"
-            className="w-full p-2 border border-default rounded focus:ring-2 focus:ring-primary"
+            className="w-full p-2 border border-default rounded bg-surface text-primary focus:ring-2 focus:ring-primary"
           />
         </div>
-        <div className="flex flex-wrap gap-4 items-center mb-4">
+        <div className="flex flex-wrap gap-4 items-center">
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -489,10 +463,9 @@ const GistEditor = () => {
               onChange={handlePublicChange}
               className="h-4 w-4 text-primary border-default rounded"
             />
-            <label htmlFor="public" className="ml-2 block text-sm">
+            <label htmlFor="public" className="ml-2 block text-sm text-primary">
               Public gist
             </label>
-            <span className="ml-2 text-xs text-secondary">(Anyone can see this gist)</span>
           </div>
           {id && (
             <div className="flex items-center">
@@ -515,10 +488,10 @@ const GistEditor = () => {
                 className="h-4 w-4 text-primary border-default rounded"
                 disabled={sharingLoading}
               />
-              <label htmlFor="share-community" className="ml-2 block text-sm">
+              <label htmlFor="share-community" className="ml-2 block text-sm text-primary">
                 Share with Community
               </label>
-              <span className="ml-2 text-xs text-secondary">
+              <span className="ml-2 text-xs text-default">
                 (Make this gist visible in Community Gists)
               </span>
             </div>
@@ -535,7 +508,7 @@ const GistEditor = () => {
       )}
 
       {/* Controls */}
-      <div className={`buttons-container ${previewMode ? 'preview' : ''}`}>
+      <div className={`buttons-container ${previewMode === 'split' ? 'preview' : ''}`}>
         <button
           type="button"
           onClick={addNewFile}
@@ -549,11 +522,11 @@ const GistEditor = () => {
         </button>
         <button
           type="button"
-          onClick={() => setPreviewMode(pm => !pm)}
+          onClick={() => setPreviewMode(pm => pm === 'split' ? 'editor' : 'split')}
           className="button secondary"
-          title={previewMode ? "Editor only mode (Ctrl+/)" : "Split preview mode (Ctrl+/)"}
+          title={previewMode === 'split' ? 'Editor only mode (Ctrl+/)' : 'Split preview mode (Ctrl+/)'}
         >
-          {previewMode ? 'Editor Only' : 'Split Preview'}
+          {previewMode === 'split' ? 'Editor Only' : 'Split Preview'}
         </button>
         <button
           type="submit"
@@ -563,15 +536,15 @@ const GistEditor = () => {
         >
           {loading ? 'Saving...' : (id ? 'Update Gist' : 'Create Gist')}
         </button>
-        <div className="flex items-center ml-auto">
+        <div className="ml-auto flex items-center">
           <label className="wrap-text flex items-center">
             <input
               type="checkbox"
               checked={wrapText}
-              onChange={toggleWrapText}
+              onChange={() => setWrapText(w => !w)}
               className="mr-2"
             />
-            <span className="text-sm">Wrap Text</span>
+            <span className="text-sm text-primary">Wrap Text</span>
           </label>
         </div>
       </div>
@@ -589,7 +562,7 @@ const GistEditor = () => {
                   ? 'bg-surface text-primary border border-default shadow-sm'
                   : 'text-default hover:bg-surface-hover'
               }`}
-              aria-current={activeFile === filename ? 'true' : undefined}
+              aria-selected={activeFile === filename}
             >
               {filename}
               {Object.keys(gist.files).length > 1 && (
@@ -597,7 +570,7 @@ const GistEditor = () => {
                   type="button"
                   onClick={e => { e.stopPropagation(); removeFile(filename); }}
                   className="ml-2 text-secondary hover:text-danger"
-                  title="Remove this file"
+                  title={`Remove file ${filename}`}
                   aria-label={`Remove file ${filename}`}
                 >
                   ×
@@ -609,36 +582,22 @@ const GistEditor = () => {
       </div>
 
       {/* Toolbar */}
-      <div className="toolbar">
-        <ToolbarGroup items={formattingButtons} />
-        <Divider />
-        <ToolbarGroup items={headingButtons} />
-        <Divider />
-        <ToolbarGroup items={linkButtons} />
-        <Divider />
-        <ToolbarGroup items={codeButtons} />
-        <Divider />
-        <ToolbarGroup items={listButtons} />
-        <Divider />
-        <ToolbarGroup items={otherFormattingButtons} />
-        <Divider />
-        <ToolbarGroup items={specialButtons} />
-      </div>
+      <MarkdownToolbar onInsert={insertText} activeFile={activeFile} />
 
       {/* Editor & Preview */}
       {activeFile && (
-        <div ref={containerRef} className={`editor-container ${previewMode ? 'split-view' : ''}`}>
+        <div ref={containerRef} className={`editor-container ${previewMode === 'split' ? 'split-view' : ''}`}>
           <textarea
             ref={editorRef}
             value={currentFileContent}
             onChange={e => handleFileChange(activeFile, e.target.value)}
             onScroll={syncScroll}
             className={`editor ${wrapText ? 'wrap' : 'no-wrap'}`}
-            style={editorStyle}
+            style={previewMode === 'split' ? { width: `${splitRatio}%` } : { width: '100%' }}
             placeholder="Enter file content here..."
             aria-label={`Editor for ${activeFile}`}
           />
-          {previewMode && (
+          {previewMode === 'split' && (
             <>
               <div
                 ref={resizeHandleRef}
@@ -647,11 +606,11 @@ const GistEditor = () => {
                 style={{ left: `${splitRatio}%` }}
                 aria-hidden="true"
               />
-              <div 
-                ref={previewRef} 
-                className="preview" 
-                onScroll={syncScroll} 
-                style={previewStyle} 
+              <div
+                ref={previewRef}
+                className="preview"
+                onScroll={syncScroll}
+                style={{ width: `${100 - splitRatio}%` }}
                 aria-label="Preview pane"
               >
                 {isMarkdownFile(activeFile)
@@ -667,14 +626,14 @@ const GistEditor = () => {
       )}
 
       {/* Keyboard Shortcuts */}
-      <div className="p-3 border-t border-default bg-surface-secondary text-xs text-secondary">
+      <div className="p-3 border-t border-default bg-surface-secondary text-xs text-default">
         <details>
           <summary className="cursor-pointer">Keyboard Shortcuts</summary>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
             <div><strong>Ctrl+B</strong>: Bold</div>
             <div><strong>Ctrl+I</strong>: Italic</div>
             <div><strong>Ctrl+K</strong>: Link</div>
-            <div><strong>Ctrl+\</strong>: Inline Code</div>
+            <div><strong>Ctrl+`</strong>: Inline Code</div>
             <div><strong>Ctrl+/</strong>: Toggle Preview</div>
           </div>
         </details>

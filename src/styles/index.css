@@ -21,6 +21,11 @@ html, body, #root {
   line-height: 1.5;
 }
 
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+}
+
 a {
   color: var(--color-primary);
   text-decoration: none;
@@ -36,9 +41,50 @@ button {
   background: none;
 }
 
+input, textarea, select {
+  font-family: inherit;
+  color: var(--color-text-primary);
+  background-color: var(--color-surface);
+}
+
 /* Utility helpers */
-.text-secondary { color: var(--color-text-secondary); }
-.bg-surface    { background: var(--color-surface); }
-.shadow-sm     { box-shadow: var(--shadow-sm); }
-.shadow-md     { box-shadow: var(--shadow-md); }
-.shadow-lg     { box-shadow: var(--shadow-lg); }
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+
+/* Override Tailwind with CSS variables */
+@layer base {
+  :root {
+    --tw-bg-opacity: 1;
+    --tw-text-opacity: 1;
+  }
+}
+
+/* Fix specific Tailwind conflicts */
+.bg-white {
+  background-color: var(--color-surface) !important;
+}
+
+.bg-gray-50 {
+  background-color: var(--color-surface-variant) !important;
+}
+
+.text-gray-700 {
+  color: var(--color-text-primary) !important;
+}
+
+.text-gray-600 {
+  color: var(--color-text-secondary) !important;
+}
+
+.border-gray-200 {
+  border-color: var(--color-border) !important;
+}
+
+.bg-indigo-600 {
+  background-color: var(--color-primary) !important;
+}
+
+.text-indigo-600 {
+  color: var(--color-primary) !important;
+}

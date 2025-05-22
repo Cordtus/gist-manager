@@ -6,6 +6,7 @@ import './styles/gistEditor.css';
 import './styles/markdownPreview.css';
 import './styles/markdownExtras.css';
 
+import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -33,10 +34,10 @@ const AppContent = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen dark:bg-dark-bg-primary">
+      <div className="flex items-center justify-center h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-700 dark:text-gray-300">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-secondary">Loading...</p>
         </div>
       </div>
     );
@@ -46,7 +47,9 @@ const AppContent = () => {
     <Layout>
       <Routes>
         <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/callback" element={<Callback />} />
+        <Route path="/my-gists" element={<GistList />} />
         <Route path="/gists" element={<GistList />} />
         <Route path="/gist/:id?" element={<GistEditor />} />
         <Route path="/convert" element={<FileConverter />} />
