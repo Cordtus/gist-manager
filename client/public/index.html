@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <title>Gist Manager</title>
+
+    <!-- your third-party scripts can live here -->
+    <script
+      crossorigin
+      defer
+      src="https://github.githubassets.com/assets/wp-runtime-fb531550a936.js"
+    ></script>
+    <script
+      crossorigin
+      defer
+      src="https://github.githubassets.com/assets/vendors-node_modules_oddbird_popover-polyfill_dist_popover-fn_js-a8c266e5f126.js"
+    ></script>
+    <!-- end third-party scripts -->
+
+    <!--
+      ** DO NOT ** hard-code any CRA bundle names.
+      CRA’s HtmlWebpackPlugin will insert the correct
+      <link rel="stylesheet" href="/static/css/main.<hash>.css">
+      and
+      <script src="/static/js/main.<hash>.js">
+      for you.
+    -->
+  </head>
+  <body data-turbo-suppress-warning style="word-wrap:break-word">
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!-- CRA will inject its <script src="static/js/main.<hash>.js"> here for you. -->
+  </body>
+</html>

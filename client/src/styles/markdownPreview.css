@@ -1,0 +1,455 @@
+/* markdownPreview.css - Enhanced markdown preview styles */
+@import './theme.css';
+
+.markdown-preview {
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  font-family: var(--font-sans);
+  max-width: none;
+  padding: 0;
+}
+
+/* Enhanced headings with anchor links */
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3,
+.markdown-preview h4,
+.markdown-preview h5,
+.markdown-preview h6 {
+  position: relative;
+  margin: 1.5rem 0 1rem 0;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  scroll-margin-top: 2rem;
+}
+
+.markdown-preview h1 { font-size: 2rem; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; }
+.markdown-preview h2 { font-size: 1.75rem; border-bottom: 1px solid var(--color-border); padding-bottom: 0.3rem; }
+.markdown-preview h3 { font-size: 1.5rem; }
+.markdown-preview h4 { font-size: 1.25rem; }
+.markdown-preview h5 { font-size: 1rem; }
+.markdown-preview h6 { font-size: 0.875rem; color: var(--color-text-secondary); }
+
+/* Heading anchor links */
+.heading-anchor {
+  position: relative;
+}
+
+.anchor-link {
+  position: absolute;
+  left: -1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: normal;
+  font-size: 0.8em;
+}
+
+.heading-anchor:hover .anchor-link {
+  opacity: 1;
+}
+
+/* Paragraphs and basic text */
+.markdown-preview p {
+  margin: 1rem 0;
+  line-height: 1.7;
+}
+
+.markdown-preview strong {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.markdown-preview em {
+  font-style: italic;
+}
+
+.markdown-preview del {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* Links */
+.markdown-preview a {
+  color: var(--color-primary);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.markdown-preview a:hover {
+  border-bottom-color: var(--color-primary);
+}
+
+.markdown-preview a:visited {
+  color: var(--color-primary-dark);
+}
+
+/* Lists */
+.markdown-preview ul,
+.markdown-preview ol {
+  margin: 1rem 0;
+  padding-left: 2rem;
+}
+
+.markdown-preview ul ul,
+.markdown-preview ol ul,
+.markdown-preview ul ol,
+.markdown-preview ol ol {
+  margin: 0.25rem 0;
+}
+
+.markdown-preview li {
+  margin: 0.5rem 0;
+  line-height: 1.6;
+}
+
+.markdown-preview li p {
+  margin: 0.25rem 0;
+}
+
+/* Task lists */
+.markdown-preview .md-checkbox {
+  margin-right: 0.5rem;
+  margin-top: 0.1rem;
+  accent-color: var(--color-primary);
+}
+
+/* Code */
+.markdown-preview code {
+  background: var(--color-surface-variant);
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  border: 1px solid var(--color-border);
+}
+
+.markdown-preview pre {
+  background: var(--color-surface-variant);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  border: 1px solid var(--color-border);
+  position: relative;
+}
+
+.markdown-preview pre code {
+  background: none;
+  padding: 0;
+  border: none;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+}
+
+/* Enhanced code blocks with terminal styling */
+.terminal-wrapper {
+  margin: 1.5rem 0;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: #1a1a1a;
+}
+
+.terminal-header {
+  background: #2d2d2d;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-bottom: 1px solid #404040;
+}
+
+.terminal-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.terminal-red { background: #ff5f56; }
+.terminal-yellow { background: #ffbd2e; }
+.terminal-green { background: #27ca3f; }
+
+.terminal-language {
+  margin-left: auto;
+  color: #a0a0a0;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+}
+
+.terminal-code {
+  margin: 0 !important;
+  background: #1a1a1a !important;
+  padding: 1rem !important;
+}
+
+.terminal-plain {
+  background: var(--color-surface-variant) !important;
+  color: var(--color-text-primary) !important;
+  margin: 0 !important;
+  padding: 1rem !important;
+}
+
+/* Tables */
+.markdown-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.markdown-preview .table-wrapper {
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border);
+}
+
+.markdown-preview .fancy-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  border: none;
+}
+
+.markdown-preview th,
+.markdown-preview td {
+  border: 1px solid var(--color-border);
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.markdown-preview th {
+  background: var(--color-surface-variant);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.markdown-preview tbody tr:nth-child(even) {
+  background: var(--color-surface-variant);
+}
+
+.markdown-preview tbody tr:hover {
+  background: var(--color-surface-secondary);
+}
+
+/* Blockquotes */
+.markdown-preview blockquote {
+  border-left: 4px solid var(--color-primary);
+  padding: 1rem 1.5rem;
+  margin: 1.5rem 0;
+  background: var(--color-surface-variant);
+  border-radius: 0 0.375rem 0.375rem 0;
+  color: var(--color-text-secondary);
+  position: relative;
+}
+
+.markdown-preview .fancy-blockquote {
+  border-left: 4px solid var(--color-primary);
+  padding: 1rem 1.5rem;
+  margin: 1.5rem 0;
+  background: var(--color-surface-variant);
+  border-radius: 0 0.375rem 0.375rem 0;
+  position: relative;
+}
+
+.markdown-preview .fancy-blockquote::before {
+  content: '"';
+  position: absolute;
+  top: -0.5rem;
+  left: 1rem;
+  font-size: 3rem;
+  color: var(--color-primary);
+  opacity: 0.3;
+  font-family: serif;
+}
+
+/* Enhanced horizontal rules */
+.markdown-preview hr {
+  border: none;
+  height: 2px;
+  background: linear-gradient(to right, transparent, var(--color-border), transparent);
+  margin: 2rem 0;
+}
+
+.markdown-preview .hr-fancy {
+  border: none;
+  height: 1px;
+  background: var(--color-border);
+  margin: 2rem 0;
+  position: relative;
+}
+
+.markdown-preview .hr-fancy::before {
+  content: '❋';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--color-surface);
+  padding: 0 1rem;
+  color: var(--color-text-secondary);
+}
+
+/* Images */
+.markdown-preview img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+  margin: 1.5rem 0;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+}
+
+/* Collapsible details/summary */
+.markdown-preview details {
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+  overflow: hidden;
+}
+
+.markdown-preview .collapsible-section {
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+  overflow: hidden;
+}
+
+.markdown-preview summary {
+  padding: 1rem;
+  background: var(--color-surface-variant);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.markdown-preview .collapsible-header {
+  padding: 1rem;
+  background: var(--color-surface-variant);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.markdown-preview summary:hover,
+.markdown-preview .collapsible-header:hover {
+  background: var(--color-surface-secondary);
+}
+
+.markdown-preview summary::marker {
+  content: '';
+}
+
+.markdown-preview .collapsible-arrow {
+  transition: transform 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.markdown-preview details[open] .collapsible-arrow {
+  transform: rotate(90deg);
+}
+
+.markdown-preview details > *:not(summary) {
+  padding: 1rem;
+  background: var(--color-surface);
+}
+
+/* Keyboard shortcuts and badges */
+.markdown-preview kbd {
+  background: var(--color-surface-variant);
+  border: 1px solid var(--color-border);
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  box-shadow: inset 0 -1px 0 var(--color-border);
+}
+
+/* Mathematical expressions (if supported) */
+.markdown-preview .math {
+  overflow-x: auto;
+}
+
+.markdown-preview .math-display {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+/* Footnotes */
+.markdown-preview .footnote-ref {
+  vertical-align: super;
+  font-size: 0.8em;
+}
+
+.markdown-preview .footnotes {
+  border-top: 1px solid var(--color-border);
+  margin-top: 2rem;
+  padding-top: 1rem;
+  font-size: 0.9em;
+}
+
+/* Print styles */
+@media print {
+  .markdown-preview {
+    color: black;
+    background: white;
+  }
+  
+  .markdown-preview a {
+    color: black;
+    text-decoration: underline;
+  }
+  
+  .markdown-preview pre,
+  .markdown-preview code {
+    background: #f5f5f5;
+    border: 1px solid #ddd;
+  }
+}
+
+/* Dark mode specific adjustments */
+.dark .markdown-preview {
+  /* Additional dark mode styles if needed */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .markdown-preview {
+    font-size: 0.9rem;
+    padding: 0.5rem;
+  }
+  
+  .markdown-preview h1 { font-size: 1.75rem; }
+  .markdown-preview h2 { font-size: 1.5rem; }
+  .markdown-preview h3 { font-size: 1.25rem; }
+  
+  .markdown-preview table {
+    font-size: 0.875rem;
+  }
+  
+  .markdown-preview pre {
+    padding: 0.75rem;
+    margin: 1rem 0;
+  }
+  
+  .anchor-link {
+    display: none;
+  }
+}
