@@ -455,59 +455,50 @@ const GistEditor = () => {
   return (
     <form onSubmit={handleSubmit} className="gist-editor-form">
       {/* Description & Settings */}
-      <div className="p-4 border-b border-default bg-surface">
-        <div className="mb-4">
-          <label htmlFor="description" className="block text-sm font-medium mb-1 text-primary">
-            Description [optional]
+      <div className="form-header">
+        <div className="flex flex-col gap-3">
+          <label htmlFor="description" className="text-sm font-medium text-primary">
+            Description (optional)
           </label>
           <input
             type="text"
             id="description"
             value={gist.description}
             onChange={handleDescriptionChange}
-            placeholder="Enter a description for your gist"
-            className="w-full p-2 border border-default rounded bg-surface text-primary focus:ring-2 focus:ring-primary"
+            placeholder="Enter a description for your gist..."
           />
         </div>
         <div className="flex flex-wrap gap-4 items-center">
-          <div className="flex items-center">
+          <div className="flex items-center gap-2">
             <input
               type="checkbox"
               id="public"
               checked={gist.public}
               onChange={handlePublicChange}
-              className="h-4 w-4 text-primary border-default rounded"
             />
-            <label htmlFor="public" className="ml-2 block text-sm text-primary">
+            <label htmlFor="public">
               Public gist
             </label>
           </div>
           {id && (
-            <div className="flex items-center">
-              <span className={`px-2 py-1 text-xs rounded-full ${
-                gist.public
-                  ? 'bg-success-subtle text-success'
-                  : 'bg-secondary-subtle text-secondary'
-              }`}>
-                {gist.public ? 'Public' : 'Private'}
-              </span>
-            </div>
+            <span className={`status-badge ${gist.public ? 'public' : 'private'}`}>
+              {gist.public ? 'Public' : 'Private'}
+            </span>
           )}
           {id && gist.public && (
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
               <input
                 type="checkbox"
                 id="share-community"
                 checked={isShared}
                 onChange={handleShareGist}
-                className="h-4 w-4 text-primary border-default rounded"
                 disabled={sharingLoading}
               />
-              <label htmlFor="share-community" className="ml-2 block text-sm text-primary">
+              <label htmlFor="share-community">
                 Share with Community
               </label>
-              <span className="ml-2 text-xs text-default">
-                (Make this gist visible in Community Gists)
+              <span className="text-xs text-secondary">
+                (Visible in Community Gists)
               </span>
             </div>
           )}
@@ -516,21 +507,21 @@ const GistEditor = () => {
 
       {/* Messages */}
       {error && (
-        <div className="p-4 bg-danger-subtle text-danger border-b border-danger-subtle">{error}</div>
+        <div className="message-bar error">{error}</div>
       )}
       {success && (
-        <div className="p-4 bg-success-subtle text-success border-b border-success-subtle">{success}</div>
+        <div className="message-bar success">{success}</div>
       )}
 
       {/* Controls */}
-      <div className={`buttons-container ${previewMode === 'split' ? 'preview' : ''}`}>
+      <div className="buttons-container">
         <button
           type="button"
           onClick={addNewFile}
-          className="button secondary flex items-center"
+          className="button secondary"
           title="Add a new file"
         >
-          <svg className="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
           </svg>
           Add File
@@ -551,39 +542,34 @@ const GistEditor = () => {
         >
           {loading ? 'Saving...' : (id ? 'Update Gist' : 'Create Gist')}
         </button>
-        <div className="ml-auto flex items-center">
-          <label className="wrap-text flex items-center">
+        <div className="ml-auto">
+          <label className="wrap-text">
             <input
               type="checkbox"
               checked={wrapText}
               onChange={() => setWrapText(w => !w)}
-              className="mr-2"
             />
-            <span className="text-sm text-primary">Wrap Text</span>
+            <span>Wrap Text</span>
           </label>
         </div>
       </div>
 
       {/* File Tabs */}
-      <div className="border-b border-default bg-surface-secondary px-4 py-2 overflow-x-auto">
-        <div className="flex space-x-2">
+      <div className="file-tabs">
+        <div className="tabs-container">
           {Object.keys(gist.files).map(filename => (
             <button
               key={filename}
               type="button"
               onClick={() => setActiveFile(filename)}
-              className={`px-3 py-2 text-sm rounded-md whitespace-nowrap transition ${
-                activeFile === filename
-                  ? 'bg-surface text-primary border border-default shadow-sm'
-                  : 'text-default hover:bg-surface-hover'
-              }`}
+              className={`tab ${activeFile === filename ? 'active' : ''}`}
             >
               {filename}
               {Object.keys(gist.files).length > 1 && (
                 <button
                   type="button"
                   onClick={e => { e.stopPropagation(); removeFile(filename); }}
-                  className="ml-2 text-secondary hover:text-danger"
+                  className="tab-close"
                   title={`Remove file ${filename}`}
                   aria-label={`Remove file ${filename}`}
                 >
@@ -649,10 +635,10 @@ const GistEditor = () => {
       )}
 
       {/* Keyboard Shortcuts */}
-      <div className="p-3 border-t border-default bg-surface-secondary text-xs text-default">
+      <div className="shortcuts-section">
         <details>
-          <summary className="cursor-pointer">Keyboard Shortcuts</summary>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
+          <summary>Keyboard Shortcuts</summary>
+          <div className="shortcuts-grid">
             <div><strong>Ctrl+B</strong>: Bold</div>
             <div><strong>Ctrl+I</strong>: Italic</div>
             <div><strong>Ctrl+K</strong>: Link</div>

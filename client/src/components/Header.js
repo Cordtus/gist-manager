@@ -21,23 +21,23 @@ const Header = () => {
   const { theme, toggleTheme }       = useTheme();
 
   return (
-    <header className="flex items-center justify-between px-6 h-16 bg-surface shadow-md">
-      <Link to="/" className="text-xl font-bold text-primary">
+    <header className="flex items-center justify-between px-6 h-16 bg-surface border-b border-default shadow-sm">
+      <Link to="/" className="text-xl font-bold text-primary hover:text-primary-light transition-colors">
         Gist Manager
       </Link>
       <div className="flex items-center gap-4">
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-full bg-surface-variant hover:bg-surface transition-colors"
+          className="p-2 rounded-lg bg-surface-variant hover:bg-surface-hover transition-all duration-200 text-primary"
           aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
         </button>
         {user
-          ? <span className="text-secondary">{user.name || user.login}</span>
+          ? <span className="text-primary font-medium">{user.name || user.login}</span>
           : <button
               onClick={initiateGithubLogin}
-              className="text-secondary hover:text-primary"
+              className="button secondary"
             >
               Login with GitHub
             </button>

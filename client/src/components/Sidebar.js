@@ -45,18 +45,18 @@ const ThemeIcon = () => (
 );
 
 const Sidebar = () => (
-  <nav className="w-64 bg-surface-variant shadow-lg overflow-auto">
+  <nav className="w-64 bg-surface border-r border-default shadow-lg overflow-auto">
     <div className="p-4">
-      <h2 className="text-lg font-semibold text-primary mb-4">Gist Manager</h2>
-      <ul className="flex flex-col gap-2">
+      <h2 className="text-lg font-semibold text-primary mb-4">Navigation</h2>
+      <ul className="flex flex-col gap-1">
         <li>
           <NavLink
             to="/dashboard"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded transition-colors ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
                 isActive 
-                  ? 'bg-surface shadow-sm text-primary font-medium' 
-                  : 'text-secondary hover:bg-surface hover:text-primary'
+                  ? 'bg-primary text-white shadow-md font-medium' 
+                  : 'text-secondary hover:bg-surface-variant hover:text-primary'
               }`
             }
           >
@@ -68,10 +68,10 @@ const Sidebar = () => (
           <NavLink
             to="/my-gists"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded transition-colors ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
                 isActive 
-                  ? 'bg-surface shadow-sm text-primary font-medium' 
-                  : 'text-secondary hover:bg-surface hover:text-primary'
+                  ? 'bg-primary text-white shadow-md font-medium' 
+                  : 'text-secondary hover:bg-surface-variant hover:text-primary'
               }`
             }
           >
@@ -83,10 +83,10 @@ const Sidebar = () => (
           <NavLink
             to="/gist"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded transition-colors ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
                 isActive 
-                  ? 'bg-surface shadow-sm text-primary font-medium' 
-                  : 'text-secondary hover:bg-surface hover:text-primary'
+                  ? 'bg-primary text-white shadow-md font-medium' 
+                  : 'text-secondary hover:bg-surface-variant hover:text-primary'
               }`
             }
           >
@@ -98,10 +98,10 @@ const Sidebar = () => (
           <NavLink
             to="/shared"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded transition-colors ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
                 isActive 
-                  ? 'bg-surface shadow-sm text-primary font-medium' 
-                  : 'text-secondary hover:bg-surface hover:text-primary'
+                  ? 'bg-primary text-white shadow-md font-medium' 
+                  : 'text-secondary hover:bg-surface-variant hover:text-primary'
               }`
             }
           >
@@ -113,10 +113,10 @@ const Sidebar = () => (
           <NavLink
             to="/convert"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded transition-colors ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
                 isActive 
-                  ? 'bg-surface shadow-sm text-primary font-medium' 
-                  : 'text-secondary hover:bg-surface hover:text-primary'
+                  ? 'bg-primary text-white shadow-md font-medium' 
+                  : 'text-secondary hover:bg-surface-variant hover:text-primary'
               }`
             }
           >
@@ -128,10 +128,10 @@ const Sidebar = () => (
           <NavLink
             to="/profile"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded transition-colors ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
                 isActive 
-                  ? 'bg-surface shadow-sm text-primary font-medium' 
-                  : 'text-secondary hover:bg-surface hover:text-primary'
+                  ? 'bg-primary text-white shadow-md font-medium' 
+                  : 'text-secondary hover:bg-surface-variant hover:text-primary'
               }`
             }
           >
@@ -142,16 +142,16 @@ const Sidebar = () => (
         
         {/* Development Tools */}
         <li className="pt-4 mt-4 border-t border-default">
-          <span className="text-xs text-secondary font-medium px-3 py-1">Development</span>
+          <span className="text-xs text-secondary font-medium px-3 py-1 uppercase tracking-wide">Development</span>
         </li>
         <li>
           <NavLink
             to="/theme-sandbox"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2 rounded transition-colors ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
                 isActive 
-                  ? 'bg-surface shadow-sm text-primary font-medium' 
-                  : 'text-secondary hover:bg-surface hover:text-primary'
+                  ? 'bg-primary text-white shadow-md font-medium' 
+                  : 'text-secondary hover:bg-surface-variant hover:text-primary'
               }`
             }
           >

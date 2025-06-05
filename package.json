@@ -1,0 +1,27 @@
+{
+  "name": "gist-manager",
+  "version": "0.5.0",
+  "private": true,
+  "packageManager": "yarn@1.22.19",
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "install:all": "yarn install",
+    "postinstall": "echo 'Dependencies installed successfully'",
+    "dev": "concurrently \"yarn workspace gist-manager-server start\" \"yarn workspace gist-manager-client start\"",
+    "build": "yarn workspace gist-manager-client build",
+    "build:prod": "yarn build && yarn workspace gist-manager-client run postbuild",
+    "serve:prod": "yarn workspace gist-manager-server run serve-prod",
+    "start:server": "yarn workspace gist-manager-server start",
+    "start:client": "yarn workspace gist-manager-client start",
+    "start": "yarn dev",
+    "clean": "yarn workspace gist-manager-client run clean && rm -rf node_modules */node_modules",
+    "test": "yarn workspace gist-manager-client test",
+    "deploy": "yarn build:prod && yarn serve:prod"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
