@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { getGists, deleteGist } from '../services/api/gists';
+import { getGists, deleteGist, updateGist } from '../services/api/gists';
 import { useAuth } from '../contexts/AuthContext';
 import ConfirmationDialog from './ConfirmationDialog';
 import Spinner from './common/Spinner';
+import { generateGistPreview, getFileTypeInfo } from '../utils/describeGist';
 
 const GistList = () => {
   const [gists, setGists] = useState([]);
@@ -21,6 +22,8 @@ const GistList = () => {
   const [sortOption, setSortOption] = useState('updated_at');
   const [sortDirection, setSortDirection] = useState('desc');
   const [isAdvancedSearch, setIsAdvancedSearch] = useState(false);
+  const [editingGist, setEditingGist] = useState(null);
+  const [editingDescription, setEditingDescription] = useState('');
   const hasDataFetchedRef = useRef(false);
   const searchTimeoutRef = useRef(null);
   const [filterOptions, setFilterOptions] = useState({
@@ -295,16 +298,54 @@ useEffect(() => {
     await fetchGists();
   };
 
-  // get gist preview
-  const getGistPreview = (gist) => {
-    // Get first file content preview
-    const firstFile = Object.values(gist.files)[0];
-    if (!firstFile || !firstFile.content) return 'No content available';
-    
-    // get first line up to 50 char
-    const content = firstFile.content;
-    const firstLine = content.split('\n')[0].trim();
-    return firstLine.length > 50 ? `${firstLine.substring(0, 50)}...` : firstLine;
+  // Handle inline editing
+  const handleEditDescription = (gist, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingGist(gist.id);
+    setEditingDescription(gist.description || '');
+  };
+
+  const handleSaveDescription = async (gist, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    try {
+      const updatedGist = { ...gist, description: editingDescription };
+      await updateGist(gist.id, updatedGist);
+      
+      // Update local state
+      setGists(prevGists => 
+        prevGists.map(g => g.id === gist.id ? { ...g, description: editingDescription } : g)
+      );
+      setFilteredGists(prevGists => 
+        prevGists.map(g => g.id === gist.id ? { ...g, description: editingDescription } : g)
+      );
+      
+      setEditingGist(null);
+      setEditingDescription('');
+    } catch (error) {
+      console.error('Error updating description:', error);
+      setError('Failed to update description. Please try again.');
+    }
+  };
+
+  const handleCancelEdit = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setEditingGist(null);
+    setEditingDescription('');
+  };
+
+  const handleKeyPress = (e, gist) => {
+    if (e.key === 'Enter') {
+      handleSaveDescription(gist, e);
+    } else if (e.key === 'Escape') {
+      handleCancelEdit(e);
+    }
   };
 
   // Pagination
@@ -543,69 +584,141 @@ useEffect(() => {
         
         {currentGists.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {currentGists.map(gist => (
-              <div key={gist.id} className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200 border border-gray-200 dark:border-gray-700">
-                <Link to={`/gist/${gist.id}`} className="block h-full">
+            {currentGists.map(gist => {
+              const preview = generateGistPreview(gist, 120);
+              const isEditing = editingGist === gist.id;
+              
+              return (
+                <div key={gist.id} className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200 border border-gray-200 dark:border-gray-700">
                   <div className="p-4 flex flex-col h-full">
-                    {/* Badge for public/private status */}
-                    <div className="flex justify-between items-start mb-2">
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        gist.public 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
-                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                      }`}>
-                        {gist.public ? 'Public' : 'Private'}
-                      </span>
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        Object.keys(gist.files).length > 1 
-                          ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' 
-                          : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-                      }`}>
-                        {Object.keys(gist.files).length} {Object.keys(gist.files).length === 1 ? 'file' : 'files'}
+                    {/* Header with badges and primary language */}
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          gist.public 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
+                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                        }`}>
+                          {gist.public ? 'Public' : 'Private'}
+                        </span>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          preview.fileCount > 1 
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' 
+                            : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
+                        }`}>
+                          {preview.fileCount} {preview.fileCount === 1 ? 'file' : 'files'}
+                        </span>
+                      </div>
+                      <span className="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300">
+                        {preview.primaryLanguage}
                       </span>
                     </div>
                     
-                    {/* Gist title */}
-                    <h3 className="text-lg font-medium text-indigo-600 dark:text-indigo-400 truncate mb-2">
-                      {gist.description || 'Untitled Gist'}
-                    </h3>
-                    
-                    {/* Gist preview */}
-                    <p className="text-gray-600 dark:text-gray-300 italic text-sm mb-3 flex-grow">
-                      {getGistPreview(gist)}
-                    </p>
-                    
-                    {/* File tags */}
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {Object.keys(gist.files).slice(0, 3).map(filename => (
-                        <span key={filename} className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded dark:text-gray-300">
-                          {filename}
-                        </span>
-                      ))}
-                      {Object.keys(gist.files).length > 3 && (
-                        <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded dark:text-gray-300">
-                          +{Object.keys(gist.files).length - 3} more
-                        </span>
+                    {/* Gist title/description - with inline editing */}
+                    <div className="mb-3">
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={editingDescription}
+                            onChange={(e) => setEditingDescription(e.target.value)}
+                            onKeyDown={(e) => handleKeyPress(e, gist)}
+                            onBlur={() => handleSaveDescription(gist)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500"
+                            placeholder="Enter a description..."
+                            autoFocus
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={(e) => handleSaveDescription(gist, e)}
+                              className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="group flex items-start justify-between">
+                          <Link to={`/gist/${gist.id}`} className="flex-1">
+                            <h3 className="text-lg font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors">
+                              {gist.description || 'Untitled Gist'}
+                              {!preview.hasDescription && (
+                                <span className="text-xs text-gray-400 ml-2">(auto-generated)</span>
+                              )}
+                            </h3>
+                          </Link>
+                          <button
+                            onClick={(e) => handleEditDescription(gist, e)}
+                            className="opacity-0 group-hover:opacity-100 ml-2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-all"
+                            title="Edit description"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                        </div>
                       )}
                     </div>
+                    
+                    {/* Enhanced preview */}
+                    <Link to={`/gist/${gist.id}`} className="flex-1 block">
+                      <div className="mb-3">
+                        <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
+                          {preview.preview}
+                        </p>
+                      </div>
+                      
+                      {/* File type indicators with icons */}
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {preview.fileTypes.slice(0, 4).map((fileType, index) => {
+                          const filename = Object.keys(gist.files)[index];
+                          return (
+                            <span key={filename} className="inline-flex items-center text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded dark:text-gray-300">
+                              <span className="mr-1">{fileType.icon}</span>
+                              {filename}
+                            </span>
+                          );
+                        })}
+                        {preview.fileCount > 4 && (
+                          <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded dark:text-gray-300">
+                            +{preview.fileCount - 4} more
+                          </span>
+                        )}
+                      </div>
+                    </Link>
                     
                     {/* Footer with date and actions */}
                     <div className="mt-auto flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-700">
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         Updated: {new Date(gist.updated_at).toLocaleDateString()}
                       </p>
-                      <button
-                        onClick={(e) => handleDeleteClick(gist, e)}
-                        className="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
-                        aria-label="Delete gist"
-                      >
-                        Delete
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e) => handleEditDescription(gist, e)}
+                          className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
+                          title="Edit description"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={(e) => handleDeleteClick(gist, e)}
+                          className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
+                          aria-label="Delete gist"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </Link>
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="py-8 px-6 text-center text-gray-500 dark:text-gray-400">

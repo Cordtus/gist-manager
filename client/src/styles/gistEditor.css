@@ -28,6 +28,8 @@
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
   flex-wrap: wrap;
+  min-height: 60px; /* Consistent height regardless of mode */
+  max-height: 60px; /* Prevent expansion */
 }
 
 .button {
@@ -175,7 +177,7 @@
   position: relative;
   display: flex;
   flex: 1;
-  min-height: 0; /* Allow flex shrinking */
+  min-height: 200px; /* Allow flex shrinking */
   overflow: hidden;
 }
 
@@ -191,11 +193,11 @@
   background: var(--color-surface);
   color: var(--color-text-primary);
   outline: none;
-  resize: none;
+  resize: vertical; /* Allow vertical resize */
   font-size: 0.875rem;
   line-height: 1.5;
   flex: 1;
-  min-height: 0;
+  min-height: 200px; /* Minimum height for usability */
 }
 
 .editor.wrap {
@@ -219,7 +221,8 @@
   overflow-y: auto;
   background: var(--color-surface);
   flex: 1;
-  min-height: 0;
+  min-height: 200px; /* Match editor minimum height */
+  resize: vertical; /* Allow vertical resize */
 }
 
 /* Resizable divider */
@@ -248,6 +251,36 @@
   transform: translate(-50%, -50%);
   width: 12px;
   height: 40px;
+  background: transparent;
+}
+
+/* Vertical resize handle */
+.vertical-resize-handle {
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  cursor: row-resize;
+  background: transparent;
+  transition: background 0.2s ease;
+  z-index: 10;
+}
+
+.vertical-resize-handle:hover,
+.vertical-resize-handle.active {
+  background: var(--color-primary);
+  opacity: 0.7;
+}
+
+.vertical-resize-handle::before {
+  content: '';
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  width: 40px;
+  height: 12px;
   background: transparent;
 }
 

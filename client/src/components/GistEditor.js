@@ -190,6 +190,8 @@ const GistEditor = () => {
   const [wrapText, setWrapText] = useState(true);
   const [splitRatio, setSplitRatio] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
+  const [isVerticalResizing, setIsVerticalResizing] = useState(false);
+  const [editorHeight, setEditorHeight] = useState(400);
   const [isShared, setIsShared] = useState(false);
   const [sharingLoading, setSharingLoading] = useState(false);
   const [activeFile, setActiveFile] = useState(null);
@@ -223,22 +225,30 @@ const GistEditor = () => {
   // Resize handlers
   useEffect(() => {
     const handleMouseMove = e => {
-      if (!isResizing || !containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const ratio = ((e.clientX - rect.left) / rect.width) * 100;
-      setSplitRatio(Math.min(Math.max(ratio, 20), 80));
+      if (isResizing && containerRef.current) {
+        // Horizontal resize
+        const rect = containerRef.current.getBoundingClientRect();
+        const ratio = ((e.clientX - rect.left) / rect.width) * 100;
+        setSplitRatio(Math.min(Math.max(ratio, 20), 80));
+      } else if (isVerticalResizing && containerRef.current) {
+        // Vertical resize
+        const rect = containerRef.current.getBoundingClientRect();
+        const newHeight = e.clientY - rect.top;
+        setEditorHeight(Math.max(200, Math.min(newHeight, 800))); // Between 200px and 800px
+      }
     };
     
     const handleMouseUp = () => {
       setIsResizing(false);
+      setIsVerticalResizing(false);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
     
-    if (isResizing) {
+    if (isResizing || isVerticalResizing) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'col-resize';
+      document.body.style.cursor = isResizing ? 'col-resize' : 'row-resize';
       document.body.style.userSelect = 'none';
     }
     
@@ -246,11 +256,16 @@ const GistEditor = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizing]);
+  }, [isResizing, isVerticalResizing]);
 
   const handleResizeStart = e => { 
     e.preventDefault(); 
     setIsResizing(true); 
+  };
+
+  const handleVerticalResizeStart = e => {
+    e.preventDefault();
+    setIsVerticalResizing(true);
   };
 
   // API calls
@@ -592,7 +607,10 @@ const GistEditor = () => {
             onChange={e => handleFileChange(activeFile, e.target.value)}
             onScroll={syncScroll}
             className={`editor ${wrapText ? 'wrap' : 'no-wrap'}`}
-            style={previewMode === 'split' ? { width: `${splitRatio}%` } : { width: '100%' }}
+            style={previewMode === 'split' 
+              ? { width: `${splitRatio}%`, height: `${editorHeight}px` } 
+              : { width: '100%', height: `${editorHeight}px` }
+            }
             placeholder="Enter file content here..."
             aria-label={`Editor for ${activeFile}`}
           />
@@ -609,7 +627,7 @@ const GistEditor = () => {
                 ref={previewRef}
                 className="preview"
                 onScroll={syncScroll}
-                style={{ width: `${100 - splitRatio}%` }}
+                style={{ width: `${100 - splitRatio}%`, height: `${editorHeight}px` }}
                 aria-label="Preview pane"
               >
                 {isMarkdownFile(activeFile)
@@ -621,6 +639,12 @@ const GistEditor = () => {
               </div>
             </>
           )}
+          {/* Vertical resize handle */}
+          <div
+            className={`vertical-resize-handle ${isVerticalResizing ? 'active' : ''}`}
+            onMouseDown={handleVerticalResizeStart}
+            aria-hidden="true"
+          />
         </div>
       )}
 
