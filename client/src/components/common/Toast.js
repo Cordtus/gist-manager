@@ -25,27 +25,19 @@ const Toast = ({ message, type = 'info', onClose, duration = 5000 }) => {
 
   const types = {
     success: {
-      bg: 'bg-green-50 dark:bg-green-900/20',
-      border: 'border-green-200 dark:border-green-800',
-      text: 'text-green-800 dark:text-green-200',
+      className: 'alert success',
       icon: <FiCheckCircle className="w-5 h-5" />
     },
     error: {
-      bg: 'bg-red-50 dark:bg-red-900/20',
-      border: 'border-red-200 dark:border-red-800',
-      text: 'text-red-800 dark:text-red-200',
+      className: 'alert danger',
       icon: <FiXCircle className="w-5 h-5" />
     },
     warning: {
-      bg: 'bg-yellow-50 dark:bg-yellow-900/20',
-      border: 'border-yellow-200 dark:border-yellow-800',
-      text: 'text-yellow-800 dark:text-yellow-200',
+      className: 'alert warning',
       icon: <FiAlertCircle className="w-5 h-5" />
     },
     info: {
-      bg: 'bg-blue-50 dark:bg-blue-900/20',
-      border: 'border-blue-200 dark:border-blue-800',
-      text: 'text-blue-800 dark:text-blue-200',
+      className: 'alert info',
       icon: <FiInfo className="w-5 h-5" />
     }
   };
@@ -58,13 +50,13 @@ const Toast = ({ message, type = 'info', onClose, duration = 5000 }) => {
         isExiting ? 'opacity-0 translate-x-full' : 'opacity-100 translate-x-0'
       }`}
     >
-      <div className={`${style.bg} ${style.border} ${style.text} border rounded-lg p-4 shadow-lg`}>
+      <div className={`${style.className} shadow-lg`}>
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0">{style.icon}</div>
           <div className="flex-1 text-sm font-medium">{message}</div>
           <button
             onClick={handleClose}
-            className={`flex-shrink-0 ${style.text} hover:opacity-70 transition-opacity`}
+            className="flex-shrink-0 hover:opacity-70 transition-opacity"
           >
             <FiX className="w-4 h-4" />
           </button>

@@ -52,7 +52,7 @@ const Callback = () => {
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center p-6">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <div className="alert danger mb-4">
           <p className="font-bold">Authentication Error</p>
           <p>{error}</p>
         </div>
@@ -60,14 +60,14 @@ const Callback = () => {
         <div className="flex space-x-4">
           <button 
             onClick={() => navigate('/')}
-            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+            className="button secondary"
           >
             Return to Homepage
           </button>
           
           <button 
             onClick={() => window.location.href = '/'}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+            className="button primary"
           >
             Try Again
           </button>
@@ -82,7 +82,7 @@ const Callback = () => {
       <p className="mt-4 text-lg font-medium">
         {isProcessing ? 'Processing GitHub authentication...' : 'Redirecting...'}
       </p>
-      <p className="mt-2 text-sm text-gray-600">
+      <p className="mt-2 text-sm text-secondary">
         Please wait while we complete the GitHub authentication process.
       </p>
     </div>

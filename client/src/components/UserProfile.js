@@ -57,7 +57,7 @@ export const UserProfile = () => {
   const { user, error } = auth;
   
   if (error) return (
-    <div className="bg-red-50 p-4 rounded-md text-red-700">
+    <div className="alert danger">
       <p className="font-bold">Error</p>
       <p>{error}</p>
     </div>
@@ -66,35 +66,35 @@ export const UserProfile = () => {
   if (!user) return null;
 
   return (
-    <div className="bg-white rounded-lg shadow overflow-hidden">
+    <div className="card overflow-hidden">
       {isLoading && (
-        <div className="p-4 bg-gray-50 text-center text-gray-500">
+        <div className="p-4 bg-surface-secondary text-center text-secondary">
           Loading user profile data...
         </div>
       )}
       <div className="md:flex">
         {/* Profile Image Column */}
-        <div className="md:w-1/3 bg-indigo-50 p-6 flex flex-col items-center justify-center">
+        <div className="md:w-1/3 bg-surface-secondary p-6 flex flex-col items-center justify-center">
           {user.avatar_url ? (
             <img 
               src={user.avatar_url} 
               alt={`${user.login}'s avatar`}
-              className="w-32 h-32 rounded-full border-4 border-white shadow-md"
+              className="w-32 h-32 rounded-full border-4 border-default shadow-md"
             />
           ) : (
-            <div className="w-32 h-32 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-600 text-4xl font-bold">
+            <div className="w-32 h-32 rounded-full bg-primary flex items-center justify-center text-white text-4xl font-bold">
               {(user.login || '?').charAt(0).toUpperCase()}
             </div>
           )}
           
-          <h2 className="mt-4 text-xl font-bold text-gray-800">{user.login}</h2>
+          <h2 className="mt-4 text-xl font-bold text-primary">{user.login}</h2>
           
           {user.name && user.name !== user.login && (
-            <p className="text-gray-600">{user.name}</p>
+            <p className="text-secondary">{user.name}</p>
           )}
           
           {user.bio && (
-            <p className="mt-2 text-center text-gray-600 text-sm">{user.bio}</p>
+            <p className="mt-2 text-center text-secondary text-sm">{user.bio}</p>
           )}
           
           {user.html_url && (

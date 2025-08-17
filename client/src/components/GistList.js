@@ -359,7 +359,7 @@ useEffect(() => {
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   if (!user) {
-    return <div className="p-6 bg-white rounded-lg shadow">Please log in to view your gists.</div>;
+    return <div className="card p-6">Please log in to view your gists.</div>;
   }
 
   if (loading && gists.length === 0) {
@@ -368,11 +368,11 @@ useEffect(() => {
 
   if (error && gists.length === 0) {
     return (
-      <div className="p-4 bg-red-50 text-red-500 rounded-lg">
+      <div className="alert danger">
         {error}
         <button 
           onClick={refreshGists}
-          className="ml-4 px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+          className="ml-4 button danger small"
         >
           Retry
         </button>
@@ -390,7 +390,7 @@ useEffect(() => {
   return (
     <div className="space-y-6">
       {/* Search and Filters */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="card p-6">
         {/* Search Bar */}
         <div className="flex flex-col md:flex-row gap-4 mb-4">
           <div className="flex-1">
@@ -400,15 +400,15 @@ useEffect(() => {
                 placeholder="Search gists by title, filename, or content..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="w-full p-3 border rounded-lg pl-10 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500 outline-none"
+                className="w-full p-3 border border-default rounded-lg pl-10 focus:ring-2 focus:ring-primary outline-none"
               />
-              <FiSearch className="h-5 w-5 absolute left-3 top-3.5 text-gray-400" />
+              <FiSearch className="h-5 w-5 absolute left-3 top-3.5 text-muted" />
             </div>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setIsAdvancedSearch(!isAdvancedSearch)}
-              className="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2 transition-colors duration-200"
+              className="btn btn-secondary"
             >
               <FiFilter className="h-5 w-5" />
               <span>{isAdvancedSearch ? 'Hide Filters' : 'Show Filters'}</span>
@@ -416,7 +416,7 @@ useEffect(() => {
             
             <button
               onClick={refreshGists}
-              className="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center"
+              className="btn btn-ghost"
               title="Refresh gists"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -428,15 +428,15 @@ useEffect(() => {
 
         {/* Advanced Filters */}
         {isAdvancedSearch && (
-          <div className="bg-gray-50 p-4 rounded-lg mb-4 animate-fadeIn">
+          <div className="bg-surface-secondary p-4 rounded-lg mb-4 animate-fadeIn">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">File Type</label>
+                <label className="block text-sm font-medium text-primary mb-1">File Type</label>
                 <select
                   name="fileType"
                   value={filterOptions.fileType}
                   onChange={handleFilterChange}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500"
+                  className="w-full p-2 border border-default rounded focus:ring-2 focus:ring-primary"
                 >
                   <option value="">Any file type</option>
                   {fileTypeOptions.map(type => (
@@ -446,57 +446,57 @@ useEffect(() => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Min Files</label>
+                <label className="block text-sm font-medium text-primary mb-1">Min Files</label>
                 <input
                   type="number"
                   name="minFiles"
                   value={filterOptions.minFiles}
                   onChange={handleFilterChange}
                   placeholder="Min files"
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500"
+                  className="w-full p-2 border border-default rounded focus:ring-2 focus:ring-primary"
                   min="1"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Max Files</label>
+                <label className="block text-sm font-medium text-primary mb-1">Max Files</label>
                 <input
                   type="number"
                   name="maxFiles"
                   value={filterOptions.maxFiles}
                   onChange={handleFilterChange}
                   placeholder="Max files"
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500"
+                  className="w-full p-2 border border-default rounded focus:ring-2 focus:ring-primary"
                   min="1"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+                <label className="block text-sm font-medium text-primary mb-1">From Date</label>
                 <input
                   type="date"
                   name="dateFrom"
                   value={filterOptions.dateFrom}
                   onChange={handleFilterChange}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500"
+                  className="w-full p-2 border border-default rounded focus:ring-2 focus:ring-primary"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+                <label className="block text-sm font-medium text-primary mb-1">To Date</label>
                 <input
                   type="date"
                   name="dateTo"
                   value={filterOptions.dateTo}
                   onChange={handleFilterChange}
-                  className="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500"
+                  className="w-full p-2 border border-default rounded focus:ring-2 focus:ring-primary"
                 />
               </div>
               
               <div className="flex items-end">
                 <button
                   onClick={resetFilters}
-                  className="w-full p-2 border border-gray-300 rounded text-sm hover:bg-gray-100"
+                  className="w-full p-2 button secondary text-sm"
                 >
                   Reset Filters
                 </button>
@@ -509,11 +509,7 @@ useEffect(() => {
         <div className="flex flex-wrap gap-2">
           <button 
             onClick={() => handleSortChange('created_at')} 
-            className={`px-3 py-2 text-sm rounded-md transition ${
-              sortOption === 'created_at' 
-                ? 'bg-indigo-100 text-indigo-700' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`btn ${sortOption === 'created_at' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
           >
             Created Date
             {sortOption === 'created_at' && (
@@ -523,11 +519,7 @@ useEffect(() => {
           
           <button 
             onClick={() => handleSortChange('updated_at')} 
-            className={`px-3 py-2 text-sm rounded-md transition ${
-              sortOption === 'updated_at' 
-                ? 'bg-indigo-100 text-indigo-700' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`btn ${sortOption === 'updated_at' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
           >
             Updated Date
             {sortOption === 'updated_at' && (
@@ -537,11 +529,7 @@ useEffect(() => {
           
           <button 
             onClick={() => handleSortChange('description')} 
-            className={`px-3 py-2 text-sm rounded-md transition ${
-              sortOption === 'description' 
-                ? 'bg-indigo-100 text-indigo-700' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`btn ${sortOption === 'description' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
           >
             Alphabetical
             {sortOption === 'description' && (
@@ -551,11 +539,7 @@ useEffect(() => {
           
           <button 
             onClick={() => handleSortChange('files_count')} 
-            className={`px-3 py-2 text-sm rounded-md transition ${
-              sortOption === 'files_count' 
-                ? 'bg-indigo-100 text-indigo-700' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`btn ${sortOption === 'files_count' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
           >
             File Count
             {sortOption === 'files_count' && (
@@ -565,16 +549,16 @@ useEffect(() => {
         </div>
         
         {/* Search Results Stats */}
-        <div className="mt-4 text-sm text-gray-600">
+        <div className="mt-4 text-sm text-secondary">
           Showing {filteredGists.length} of {gists.length} gists
           {searchTerm && <span> matching "{searchTerm}"</span>}
         </div>
       </div>
 
 {/* Gists List */}
-      <div className="bg-white dark:bg-dark-bg-primary shadow rounded-lg overflow-hidden p-6">
+      <div className="card overflow-hidden p-6">
         {loading && gists.length > 0 && (
-          <div className="py-4 text-center text-gray-500 dark:text-gray-400">
+          <div className="py-4 text-center text-secondary">
             <Spinner />
             <p className="mt-2">Updating gists...</p>
           </div>
@@ -587,27 +571,19 @@ useEffect(() => {
               const isEditing = editingGist === gist.id;
               
               return (
-                <div key={gist.id} className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700 card-hover fade-in">
+                <div key={gist.id} className="card overflow-hidden hover:shadow-lg transition-all duration-300 border border-default card-hover fade-in">
                   <div className="p-4 flex flex-col h-full">
                     {/* Header with badges and primary language */}
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center gap-2">
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          gist.public 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                        }`}>
+                        <span className={`badge ${gist.public ? 'success' : 'secondary'}`}>
                           {gist.public ? 'Public' : 'Private'}
                         </span>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          preview.fileCount > 1 
-                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' 
-                            : 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-                        }`}>
+                        <span className={`badge ${preview.fileCount > 1 ? 'primary' : 'accent'}`}>
                           {preview.fileCount} {preview.fileCount === 1 ? 'file' : 'files'}
                         </span>
                       </div>
-                      <span className="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300">
+                      <span className="badge primary">
                         {preview.primaryLanguage}
                       </span>
                     </div>
@@ -622,20 +598,20 @@ useEffect(() => {
                             onChange={(e) => setEditingDescription(e.target.value)}
                             onKeyDown={(e) => handleKeyPress(e, gist)}
                             onBlur={() => handleSaveDescription(gist)}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500"
+                            className="w-full px-2 py-1 text-sm border border-default rounded focus:ring-2 focus:ring-primary"
                             placeholder="Enter a description..."
                             autoFocus
                           />
                           <div className="flex gap-2">
                             <button
                               onClick={(e) => handleSaveDescription(gist, e)}
-                              className="text-xs px-2 py-1 bg-green-100 text-green-800 rounded hover:bg-green-200"
+                              className="button success small"
                             >
                               Save
                             </button>
                             <button
                               onClick={handleCancelEdit}
-                              className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                              className="button secondary small"
                             >
                               Cancel
                             </button>
@@ -644,10 +620,10 @@ useEffect(() => {
                       ) : (
                         <div className="group flex items-start justify-between">
                           <Link to={`/gist/${gist.id}`} className="flex-1">
-                            <h3 className="text-lg font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors">
+                            <h3 className="text-lg font-medium text-primary hover:text-primary-dark transition-colors">
                               {gist.description || preview.generatedTitle || 'Untitled Gist'}
                               {!preview.hasDescription && preview.generatedTitle && (
-                                <span className="text-xs text-gray-400 ml-2">(auto-generated)</span>
+                                <span className="text-xs text-muted ml-2">(auto-generated)</span>
                               )}
                             </h3>
                           </Link>
