@@ -128,11 +128,11 @@ const SharedGistList = () => {
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 text-red-500 rounded-md">
+      <div className="alert danger">
         {error}
         <button 
           onClick={fetchSharedGists}
-          className="ml-4 px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+          className="ml-4 button danger small"
         >
           Retry
         </button>
@@ -142,7 +142,7 @@ const SharedGistList = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="card p-6">
         <h2 className="text-xl font-bold mb-4">Community Shared Gists</h2>
         
         {/* Search and filters */}
@@ -153,9 +153,9 @@ const SharedGistList = () => {
               placeholder="Search shared gists by title, username, or filename..."
               value={searchTerm}
               onChange={handleSearchChange}
-              className="w-full p-3 border rounded-lg pl-10 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500 outline-none"
+              className="w-full p-3 border border-default rounded-lg pl-10 focus:ring-2 focus:ring-primary outline-none"
             />
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-3 top-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-3 top-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
@@ -165,11 +165,7 @@ const SharedGistList = () => {
         <div className="flex flex-wrap gap-2 mb-4">
           <button 
             onClick={() => handleSortChange('updatedAt')} 
-            className={`px-3 py-2 text-sm rounded-md transition ${
-              sortOption === 'updatedAt' 
-                ? 'bg-indigo-100 text-indigo-700' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`button ${sortOption === 'updatedAt' ? 'primary' : 'secondary'} btn-sm`}
           >
             Last Updated
             {sortOption === 'updatedAt' && (
@@ -179,11 +175,7 @@ const SharedGistList = () => {
           
           <button 
             onClick={() => handleSortChange('sharedAt')} 
-            className={`px-3 py-2 text-sm rounded-md transition ${
-              sortOption === 'sharedAt' 
-                ? 'bg-indigo-100 text-indigo-700' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`button ${sortOption === 'sharedAt' ? 'primary' : 'secondary'} btn-sm`}
           >
             Date Shared
             {sortOption === 'sharedAt' && (
@@ -193,11 +185,7 @@ const SharedGistList = () => {
           
           <button 
             onClick={() => handleSortChange('description')} 
-            className={`px-3 py-2 text-sm rounded-md transition ${
-              sortOption === 'description' 
-                ? 'bg-indigo-100 text-indigo-700' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`button ${sortOption === 'description' ? 'primary' : 'secondary'} btn-sm`}
           >
             Description
             {sortOption === 'description' && (
@@ -207,11 +195,7 @@ const SharedGistList = () => {
           
           <button 
             onClick={() => handleSortChange('username')} 
-            className={`px-3 py-2 text-sm rounded-md transition ${
-              sortOption === 'username' 
-                ? 'bg-indigo-100 text-indigo-700' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`button ${sortOption === 'username' ? 'primary' : 'secondary'} btn-sm`}
           >
             Username
             {sortOption === 'username' && (
@@ -221,11 +205,7 @@ const SharedGistList = () => {
           
           <button 
             onClick={() => handleSortChange('filesCount')} 
-            className={`px-3 py-2 text-sm rounded-md transition ${
-              sortOption === 'filesCount' 
-                ? 'bg-indigo-100 text-indigo-700' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
+            className={`button ${sortOption === 'filesCount' ? 'primary' : 'secondary'} btn-sm`}
           >
             File Count
             {sortOption === 'filesCount' && (
@@ -235,55 +215,51 @@ const SharedGistList = () => {
         </div>
         
         {/* Results count */}
-        <div className="text-sm text-gray-500 mb-4">
+        <div className="text-sm text-secondary mb-4">
           Showing {filteredGists.length} shared gists
           {searchTerm && <span> matching "{searchTerm}"</span>}
         </div>
       </div>
       
       {/* Shared Gists List */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="card overflow-hidden">
         {filteredGists.length > 0 ? (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-border">
             {filteredGists.map(gist => {
               const preview = generateGistPreview(gist);
               return (
-              <div key={gist.sharedId} className="p-6 hover:bg-gray-50 transition-colors duration-150">
+              <div key={gist.sharedId} className="p-6 hover:bg-surface-hover transition-colors duration-150">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-medium text-indigo-600 truncate">
+                  <h3 className="text-lg font-medium text-primary truncate">
                     {gist.description || preview.generatedTitle || 'Untitled Gist'}
                   </h3>
                   <div className="flex items-center space-x-2">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      Object.keys(gist.files).length > 1 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
+                    <span className={`badge ${Object.keys(gist.files).length > 1 ? 'success' : 'primary'}`}>
                       {Object.keys(gist.files).length} {Object.keys(gist.files).length === 1 ? 'file' : 'files'}
                     </span>
                   </div>
                 </div>
                 
-                <p className="text-gray-600 italic text-sm mb-2">
+                <p className="text-secondary italic text-sm mb-2">
                   {preview.preview}
                 </p>
                 
                 <div className="flex flex-wrap gap-2 mb-2">
                   {Object.keys(gist.files).slice(0, 3).map(filename => (
-                    <span key={filename} className="text-xs bg-gray-100 px-2 py-1 rounded">
+                    <span key={filename} className="badge">
                       {filename}
                     </span>
                   ))}
                   {Object.keys(gist.files).length > 3 && (
-                    <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                    <span className="badge">
                       +{Object.keys(gist.files).length - 3} more
                     </span>
                   )}
                 </div>
                 
-                <div className="flex justify-between items-center text-xs text-gray-500 mt-3">
+                <div className="flex justify-between items-center text-xs text-muted mt-3">
                   <div>
-                    <span className="font-medium text-gray-700">Shared by:</span> {gist.username}
+                    <span className="font-medium text-primary">Shared by:</span> {gist.username}
                   </div>
                   <div>
                     <span>Shared: {formatDate(gist.sharedAt)}</span>

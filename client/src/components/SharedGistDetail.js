@@ -125,28 +125,28 @@ const SharedGistDetail = () => {
     switch (extension) {
       case 'js':
       case 'jsx':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'badge warning';
       case 'ts':
       case 'tsx':
-        return 'bg-blue-100 text-blue-800';
+        return 'badge primary';
       case 'py':
-        return 'bg-green-100 text-green-800';
+        return 'badge success';
       case 'rb':
-        return 'bg-red-100 text-red-800';
+        return 'badge danger';
       case 'java':
-        return 'bg-orange-100 text-orange-800';
+        return 'badge accent';
       case 'html':
-        return 'bg-red-100 text-red-800';
+        return 'badge danger';
       case 'css':
       case 'scss':
-        return 'bg-purple-100 text-purple-800';
+        return 'badge accent';
       case 'md':
       case 'mdx':
-        return 'bg-indigo-100 text-indigo-800';
+        return 'badge primary';
       case 'json':
-        return 'bg-teal-100 text-teal-800';
+        return 'badge success';
       default:
-        return 'bg-surface-variant text-primary';
+        return 'badge secondary';
     }
   };
 
@@ -156,13 +156,13 @@ const SharedGistDetail = () => {
 
   if (error) {
     return (
-      <div className="p-6 bg-white shadow rounded-lg">
-        <div className="p-4 bg-red-50 text-red-500 rounded-md mb-4">
+      <div className="card p-6">
+        <div className="alert danger mb-4">
           {error}
         </div>
         <button 
           onClick={() => navigate('/shared')}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+          className="button primary"
         >
           Back to Shared Gists
         </button>
@@ -172,11 +172,11 @@ const SharedGistDetail = () => {
 
   if (!gist) {
     return (
-      <div className="p-6 bg-white shadow rounded-lg">
+      <div className="card p-6">
         <p className="mb-4">Gist not found or has been removed.</p>
         <button 
           onClick={() => navigate('/shared')}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+          className="button primary"
         >
           Back to Shared Gists
         </button>
@@ -190,7 +190,7 @@ const SharedGistDetail = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white shadow rounded-lg p-6">
+      <div className="card p-6">
         <div className="flex justify-between items-start">
           <div>
             <h2 className="text-2xl font-bold text-primary mb-2">
@@ -208,13 +208,13 @@ const SharedGistDetail = () => {
               href={`https://gist.github.com/${gist.username}/${gist.id}`} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="px-4 py-2 bg-surface-variant text-primary rounded-md hover:bg-surface-hover"
+              className="button secondary"
             >
               View on GitHub
             </a>
             <Link
               to="/shared"
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+              className="button primary"
             >
               Back to Shared Gists
             </Link>
@@ -223,7 +223,7 @@ const SharedGistDetail = () => {
       </div>
       
       {/* File tabs and content */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="card overflow-hidden">
         {/* File tabs */}
         <div className="border-b border-default bg-surface-variant px-4 py-2 overflow-x-auto">
           <div className="flex space-x-2">
@@ -231,11 +231,7 @@ const SharedGistDetail = () => {
               <button
                 key={filename}
                 onClick={() => setActiveFile(filename)}
-                className={`px-3 py-2 text-sm rounded-md whitespace-nowrap ${
-                  activeFile === filename
-                    ? 'bg-surface text-primary border border-default shadow-sm'
-                    : 'text-secondary hover:bg-surface-hover'
-                }`}
+                className={`button ${activeFile === filename ? 'primary' : 'secondary'} btn-sm whitespace-nowrap`}
               >
                 {filename}
               </button>
@@ -247,7 +243,7 @@ const SharedGistDetail = () => {
         {activeFile && (
           <div className="flex items-center justify-between p-4 bg-surface-variant border-b border-default">
             <div className="flex items-center">
-              <span className={`px-2 py-1 text-xs rounded-full ${getFileBadgeStyle(activeFile)}`}>
+              <span className={getFileBadgeStyle(activeFile)}>
                 {getFileType(activeFile)}
               </span>
               <span className="ml-2 text-sm text-secondary">

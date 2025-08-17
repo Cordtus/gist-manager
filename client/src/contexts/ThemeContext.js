@@ -28,10 +28,14 @@ export const ThemeProvider = ({ children }) => {
     window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   );
 
-  // Add or remove dark class on body
+  // Add or remove dark class on body and set data-theme attribute
   useEffect(() => {
     const root = window.document.documentElement;
     
+    // Set data-theme attribute for modern theme CSS
+    root.setAttribute('data-theme', theme);
+    
+    // Also set classes for backward compatibility
     if (theme === 'dark') {
       root.classList.add('dark');
       root.classList.remove('light');
@@ -92,6 +96,7 @@ export const ThemeProvider = ({ children }) => {
   return (
     <ThemeContext.Provider value={{ 
       theme, 
+      setTheme, // Direct setter for compatibility
       toggleTheme, 
       setThemeMode,
       systemPreference

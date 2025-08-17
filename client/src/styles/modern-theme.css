@@ -1,5 +1,12 @@
 /* Modern Theme System with CSS Variables and Animations */
 
+/* Override existing styles with modern theme */
+body {
+  background-color: var(--color-bg) !important;
+  color: var(--color-text-primary) !important;
+  font-family: var(--font-sans) !important;
+}
+
 :root {
   /* Modern color palette - inspired by VS Code and GitHub */
   --color-bg: #0d1117;
