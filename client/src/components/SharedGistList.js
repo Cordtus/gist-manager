@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { getAllSharedGists } from '../services/api/sharedGists';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from './common/Spinner';
+import { generateGistPreview } from '../utils/describeGist';
 
 const SharedGistList = () => {
   const [sharedGists, setSharedGists] = useState([]);
@@ -120,17 +121,6 @@ const SharedGistList = () => {
     });
   };
 
-  // Get a preview of the gist content
-  const getGistPreview = (gist) => {
-    // Get first file content preview
-    const firstFile = Object.values(gist.files)[0];
-    if (!firstFile || !firstFile.content) return 'No content available';
-    
-    // Get first line or first 50 characters
-    const content = firstFile.content;
-    const firstLine = content.split('\n')[0].trim();
-    return firstLine.length > 50 ? `${firstLine.substring(0, 50)}...` : firstLine;
-  };
 
   if (loading) {
     return <Spinner />;
@@ -255,11 +245,13 @@ const SharedGistList = () => {
       <div className="bg-white shadow rounded-lg overflow-hidden">
         {filteredGists.length > 0 ? (
           <div className="divide-y divide-gray-200">
-            {filteredGists.map(gist => (
+            {filteredGists.map(gist => {
+              const preview = generateGistPreview(gist);
+              return (
               <div key={gist.sharedId} className="p-6 hover:bg-gray-50 transition-colors duration-150">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-medium text-indigo-600 truncate">
-                    {gist.description || 'Untitled Gist'}
+                    {gist.description || preview.generatedTitle || 'Untitled Gist'}
                   </h3>
                   <div className="flex items-center space-x-2">
                     <span className={`px-2 py-1 text-xs rounded-full ${
@@ -273,7 +265,7 @@ const SharedGistList = () => {
                 </div>
                 
                 <p className="text-gray-600 italic text-sm mb-2">
-                  {getGistPreview(gist)}
+                  {preview.preview}
                 </p>
                 
                 <div className="flex flex-wrap gap-2 mb-2">
@@ -317,7 +309,8 @@ const SharedGistList = () => {
                   </Link>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="py-8 px-6 text-center text-gray-500">
