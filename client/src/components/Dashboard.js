@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { getGists } from '../services/api/gists';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from './common/Spinner';
+import { generateGistPreview } from '../utils/describeGist';
 
 const Dashboard = () => {
   const [gists, setGists] = useState([]);
@@ -23,7 +24,7 @@ const Dashboard = () => {
     try {
       setLoading(true);
       setError(null);
-      const gistsData = await getGists(token);
+      const gistsData = await getGists(token, setError, user?.id);
       
       // Calculate metrics from gists data
       const totalGists = gistsData.length;
@@ -64,7 +65,7 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, user]);
 
   useEffect(() => {
     if (user && token) {
@@ -74,16 +75,6 @@ const Dashboard = () => {
     }
   }, [user, token, fetchGists]);
 
-  const getGistPreview = (gist) => {
-    // Get first file content preview
-    const firstFile = Object.values(gist.files)[0];
-    if (!firstFile || !firstFile.content) return 'No content available';
-    
-    // Get first line or first 50 characters
-    const content = firstFile.content;
-    const firstLine = content.split('<br />')[0].trim();
-    return firstLine.length > 50 ? `${firstLine.substring(0, 50)}...` : firstLine;
-  };
 
   if (!user) {
     return (
@@ -111,19 +102,19 @@ const Dashboard = () => {
         </div>
   
         {/* Features grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 fade-in">
+          <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-all duration-300 card-hover">
             <div className="text-indigo-600 text-xl mb-2">✏️ Better Editing</div>
             <p className="text-gray-600">Create and edit with a live Markdown preview.</p>
           </div>
   
-          <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
+          <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-all duration-300 card-hover">
             <div className="text-indigo-600 text-xl mb-2">🔍 Smart Search</div>
             <p className="text-gray-600">Find past work without clicking through 50 pages one-by-one
               <br /> with basic search and filtering.</p>
           </div>
   
-          <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
+          <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-all duration-300 card-hover">
             <div className="text-indigo-600 text-xl mb-2">🔄 File Conversion</div>
             <p className="text-gray-600">
               Convert text and code snippets:
@@ -132,7 +123,7 @@ const Dashboard = () => {
             </p>
           </div>
   
-          <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-shadow">
+          <div className="bg-white p-6 rounded-lg shadow hover:shadow-md transition-all duration-300 card-hover">
             <div className="text-indigo-600 text-xl mb-2">👥 Community Sharing</div>
             <p className="text-gray-600">Share gists and discover content from others.</p>
           </div>
@@ -226,28 +217,31 @@ const Dashboard = () => {
         <h2 className="text-xl font-bold p-6 pb-4 text-gray-800 border-b">Recent Gists</h2>
         {Array.isArray(gists) && gists.length > 0 ? (
           <ul className="divide-y divide-gray-200">
-            {gists.map(gist => (
-              <li key={gist.id}>
-                <Link to={`/gist/${gist.id}`} className="block p-6 hover:bg-gray-50 transition duration-150">
-                  <p className="text-lg font-medium text-indigo-600 truncate">
-                    {gist.description || 'Untitled Gist'}
-                  </p>
-                  <p className="mt-1 text-gray-600 italic text-sm">
-                    {getGistPreview(gist)}
-                  </p>
-                  <div className="mt-2 flex justify-between items-center">
-                    <div className="flex items-center">
-                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                        {Object.keys(gist.files).length} {Object.keys(gist.files).length === 1 ? 'file' : 'files'}
-                      </span>
-                      <span className="ml-2 text-sm text-gray-500">
-                        Updated: {new Date(gist.updated_at).toLocaleDateString()}
-                      </span>
+            {gists.map(gist => {
+              const preview = generateGistPreview(gist);
+              return (
+                <li key={gist.id}>
+                  <Link to={`/gist/${gist.id}`} className="block p-6 hover:bg-gray-50 transition duration-150">
+                    <p className="text-lg font-medium text-indigo-600 truncate">
+                      {gist.description || preview.generatedTitle || 'Untitled Gist'}
+                    </p>
+                    <p className="mt-1 text-gray-600 italic text-sm">
+                      {preview.preview}
+                    </p>
+                    <div className="mt-2 flex justify-between items-center">
+                      <div className="flex items-center">
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                          {Object.keys(gist.files).length} {Object.keys(gist.files).length === 1 ? 'file' : 'files'}
+                        </span>
+                        <span className="ml-2 text-sm text-gray-500">
+                          Updated: {new Date(gist.updated_at).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
-                  </div>
                 </Link>
               </li>
-            ))}
+              );
+            })}
           </ul>
         ) : (
           <div className="p-6 text-center text-gray-500">

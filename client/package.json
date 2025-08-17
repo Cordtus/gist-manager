@@ -9,7 +9,6 @@
     "@types/node": "^22.9.0",
     "autoprefixer": "^10.4.20",
     "axios": "^1.7.7",
-    "marked": "^14.1.2",
     "postcss": "^8.4.49",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -39,7 +38,7 @@
     "rules": {
       "import/no-anonymous-default-export": "off",
       "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }],
-      "no-console": "off"
+      "no-console": ["warn", { "allow": ["error", "warn"] }]
     }
   },
   "browserslist": {

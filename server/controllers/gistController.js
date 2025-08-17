@@ -24,7 +24,11 @@ if (process.env.NODE_ENV !== 'production') {
 const cache = new NodeCache({ stdTTL: 300 }); // Cache for 5 minutes
 
 // Helper function to hash tokens for cache keys
-const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+// SECURITY: Include user info in hash to prevent cache collision
+const hashToken = (token, userId = '') => {
+  const data = userId ? `${token}_${userId}` : token;
+  return crypto.createHash('sha256').update(data).digest('hex');
+};
 
 // Create a reusable Axios instance for GitHub API requests
 const githubApi = axios.create({
@@ -76,7 +80,9 @@ exports.getGists = async (req, res) => {
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    const tokenHash = hashToken(token);
+    // Include user info if available from session
+    const userId = req.session.user?.id || '';
+    const tokenHash = hashToken(token, userId);
     const cacheKey = `gists-${tokenHash}`;
     
     const cachedGists = cache.get(cacheKey);
@@ -126,8 +132,9 @@ exports.createGist = async (req, res) => {
 
     const response = await githubApi.post('/gists', req.body, addAuthHeader(token));
 
-    // Invalidate cache using hashed token
-    const tokenHash = hashToken(token);
+    // Invalidate cache using hashed token with user ID
+    const userId = req.session.user?.id || '';
+    const tokenHash = hashToken(token, userId);
     cache.del(`gists-${tokenHash}`);
     
     res.json(response.data);
@@ -157,8 +164,9 @@ exports.updateGist = async (req, res) => {
 
     const response = await githubApi.patch(`/gists/${id}`, req.body, addAuthHeader(token));
 
-    // Invalidate cache using hashed token
-    const tokenHash = hashToken(token);
+    // Invalidate cache using hashed token with user ID
+    const userId = req.session.user?.id || '';
+    const tokenHash = hashToken(token, userId);
     cache.del(`gists-${tokenHash}`);
     
     res.json(response.data);
@@ -188,8 +196,9 @@ exports.deleteGist = async (req, res) => {
     
     await githubApi.delete(`/gists/${id}`, addAuthHeader(token));
 
-    // Invalidate cache using hashed token
-    const tokenHash = hashToken(token);
+    // Invalidate cache using hashed token with user ID
+    const userId = req.session.user?.id || '';
+    const tokenHash = hashToken(token, userId);
     cache.del(`gists-${tokenHash}`);
 
     res.status(204).send();

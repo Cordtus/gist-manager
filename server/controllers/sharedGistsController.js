@@ -1,6 +1,6 @@
 // server/controllers/sharedGistsController.js
 
-const { fs } = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 const winston = require('winston');
 const crypto = require('crypto');

@@ -87,53 +87,8 @@
   margin-left: auto;
 }
 
-/* Button styles */
-.button {
-  padding: 0.6rem 1.2rem;
-  border-radius: var(--radius-md);
-  font-weight: 500;
-  transition: all 0.2s ease;
-  border: none;
-  cursor: pointer;
-  font-size: 0.875rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  white-space: nowrap;
-  outline: none;
-}
-
-.button:focus {
-  box-shadow: 0 0 0 2px var(--color-primary);
-}
-
-.button.primary {
-  background: var(--color-primary);
-  color: white;
-}
-
-.button.primary:hover:not(:disabled) {
-  background: var(--color-primary-light);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
-.button.primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.button.secondary {
-  background: var(--color-surface-variant);
-  border: 1px solid var(--color-border);
-  color: var(--color-text-primary);
-}
-
-.button.secondary:hover:not(:disabled) {
-  background: var(--color-surface-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
-}
+/* Button styles - Use theme.css for .button classes */
+/* Editor-specific button styling handled via toolbar-button class */
 
 /* File tabs */
 .file-tabs {
@@ -262,9 +217,6 @@
   background: var(--color-surface);
 }
 
-.editor-container.split-view {
-  /* Split view specific styles */
-}
 
 /* Editor textarea */
 .editor {
@@ -385,9 +337,9 @@
 
 /* Syntax highlighter */
 .syntax-highlighter {
-  margin: 0 !important;
-  background: var(--color-surface) !important;
-  border-radius: 0 !important;
+  margin: 0;
+  background: var(--color-surface);
+  border-radius: 0;
 }
 
 /* Wrap text control */
@@ -513,7 +465,7 @@ label {
 
   .editor-container.split-view .editor,
   .editor-container.split-view .preview {
-    width: 100% !important;
+    width: 100%;
     min-height: 200px;
   }
 

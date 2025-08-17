@@ -6,6 +6,9 @@ import { setAuthToken } from '../services/api/github';
 import authService from '../services/api/auth';
 import { logInfo, logError, trackError, ErrorCategory } from '../utils/logger';
 
+// API base URL configuration
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+
 // Create AuthContext
 const AuthContext = createContext();
 
@@ -22,7 +25,7 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(async () => {
     try {
       // Call server-side logout endpoint
-      await axios.post('/api/auth/logout', {}, { withCredentials: true });
+      await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, { withCredentials: true });
       
       // Reset client-side state
       setUser(null);
@@ -31,6 +34,15 @@ export const AuthProvider = ({ children }) => {
       
       // Clear token from API service
       setAuthToken(null);
+      
+      // SECURITY: Dispatch logout event to clear caches
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('auth:logout'));
+      }
+      
+      // Clear any stored tokens from localStorage
+      localStorage.removeItem('github_token');
+      localStorage.removeItem('gist_manager_session');
       
       logInfo('User logged out successfully');
     } catch (error) {
@@ -79,7 +91,7 @@ export const AuthProvider = ({ children }) => {
         }
         
         // Otherwise check server-side session
-        const { data } = await axios.get('/api/auth/status', { withCredentials: true });
+        const { data } = await axios.get(`${API_BASE_URL}/api/auth/status`, { withCredentials: true });
         
         if (data.authenticated && data.user) {
           setUser(data.user);
@@ -117,7 +129,7 @@ export const AuthProvider = ({ children }) => {
   const initiateGithubLogin = useCallback(async () => {
     try {
       // Get auth URL from server (which handles state)
-      const response = await axios.get('/api/auth/github/login', { 
+      const response = await axios.get(`${API_BASE_URL}/api/auth/github/login`, { 
         params: {
           scopes: 'gist user user:email'  // Add user:email scope for email access
         },
@@ -143,7 +155,7 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       
       // Exchange code for token (server validates state)
-      const response = await axios.post('/api/auth/github', 
+      const response = await axios.post(`${API_BASE_URL}/api/auth/github`, 
         { code, state }, 
         { withCredentials: true }
       );

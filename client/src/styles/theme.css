@@ -86,24 +86,24 @@
 }
 
 /* Utility classes using CSS variables */
-.text-primary { color: var(--color-text-primary) !important; }
-.text-secondary { color: var(--color-text-secondary) !important; }
-.text-accent { color: var(--color-accent) !important; }
-.text-success { color: var(--color-success) !important; }
-.text-error { color: var(--color-error) !important; }
-.text-danger { color: var(--color-danger) !important; }
-.text-default { color: var(--color-default) !important; }
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-accent { color: var(--color-accent); }
+.text-success { color: var(--color-success); }
+.text-error { color: var(--color-error); }
+.text-danger { color: var(--color-danger); }
+.text-default { color: var(--color-default); }
 
-.bg-background { background-color: var(--color-bg) !important; }
-.bg-surface { background-color: var(--color-surface) !important; }
-.bg-surface-variant { background-color: var(--color-surface-variant) !important; }
-.bg-surface-secondary { background-color: var(--color-surface-secondary) !important; }
-.bg-surface-hover { background-color: var(--color-surface-hover) !important; }
-.bg-primary { background-color: var(--color-primary) !important; }
-.bg-success-subtle { background-color: var(--color-success-subtle) !important; }
-.bg-danger-subtle { background-color: var(--color-danger-subtle) !important; }
+.bg-background { background-color: var(--color-bg); }
+.bg-surface { background-color: var(--color-surface); }
+.bg-surface-variant { background-color: var(--color-surface-variant); }
+.bg-surface-secondary { background-color: var(--color-surface-secondary); }
+.bg-surface-hover { background-color: var(--color-surface-hover); }
+.bg-primary { background-color: var(--color-primary); }
+.bg-success-subtle { background-color: var(--color-success-subtle); }
+.bg-danger-subtle { background-color: var(--color-danger-subtle); }
 
-.border-default { border-color: var(--color-border) !important; }
+.border-default { border-color: var(--color-border); }
 
 /* Enhanced Button styles */
 .button {
@@ -167,9 +167,9 @@
 
 /* Form Elements */
 input, textarea, select {
-  background-color: var(--color-surface) !important;
-  color: var(--color-text-primary) !important;
-  border: 1px solid var(--color-border) !important;
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: 0.5rem;
   font-family: var(--font-sans);
@@ -177,6 +177,6 @@ input, textarea, select {
 
 input:focus, textarea:focus, select:focus {
   outline: none;
-  border-color: var(--color-primary) !important;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(90, 103, 216, 0.2);
 }

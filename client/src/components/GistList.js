@@ -6,7 +6,8 @@ import { getGists, deleteGist, updateGist } from '../services/api/gists';
 import { useAuth } from '../contexts/AuthContext';
 import ConfirmationDialog from './ConfirmationDialog';
 import Spinner from './common/Spinner';
-import { generateGistPreview, getFileTypeInfo } from '../utils/describeGist';
+import { generateGistPreview } from '../utils/describeGist';
+import { FiFileText, FiPlus, FiSearch, FiFilter } from 'react-icons/fi';
 
 const GistList = () => {
   const [gists, setGists] = useState([]);
@@ -33,7 +34,7 @@ const GistList = () => {
     dateFrom: '',
     dateTo: ''
   });
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   // Build search index for efficient searching
   const buildSearchIndex = useCallback((gistsData) => {
@@ -173,7 +174,6 @@ const GistList = () => {
 // Fetch gists from API
 const fetchGists = useCallback(async () => {
   if (hasDataFetchedRef.current) {
-    console.log('Gists already fetched, skipping fetch');
     return;
   }
 
@@ -181,7 +181,7 @@ const fetchGists = useCallback(async () => {
     setLoading(true);
     setError(null);
 
-    const gistsData = await getGists();
+    const gistsData = await getGists(token, setError, user?.id);
     if (Array.isArray(gistsData)) {
       setGists(gistsData);
       buildSearchIndex(gistsData);
@@ -196,6 +196,8 @@ const fetchGists = useCallback(async () => {
     setLoading(false);
   }
 }, [
+  token,
+  user,
   buildSearchIndex,
   applyFiltersAndSort,
   searchTerm,
@@ -263,7 +265,7 @@ useEffect(() => {
   const confirmDelete = async () => {
     if (gistToDelete) {
       try {
-        await deleteGist(gistToDelete.id);
+        await deleteGist(gistToDelete.id, token, setError, user?.id);
         setGists(gists.filter(g => g.id !== gistToDelete.id));
         setFilteredGists(filteredGists.filter(g => g.id !== gistToDelete.id));
       } catch (error) {
@@ -313,7 +315,7 @@ useEffect(() => {
     }
     try {
       const updatedGist = { ...gist, description: editingDescription };
-      await updateGist(gist.id, updatedGist);
+      await updateGist(gist.id, updatedGist, token, setError, user?.id);
       
       // Update local state
       setGists(prevGists => 
@@ -400,20 +402,16 @@ useEffect(() => {
                 onChange={handleSearchChange}
                 className="w-full p-3 border rounded-lg pl-10 focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500 outline-none"
               />
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-3 top-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <FiSearch className="h-5 w-5 absolute left-3 top-3.5 text-gray-400" />
             </div>
           </div>
           <div className="flex gap-2">
             <button
               onClick={() => setIsAdvancedSearch(!isAdvancedSearch)}
-              className="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-center"
+              className="px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2 transition-colors duration-200"
             >
-              <span>{isAdvancedSearch ? 'Simple Search' : 'Advanced Search'}</span>
-              <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ml-2 transform ${isAdvancedSearch ? 'rotate-180' : ''} transition-transform`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+              <FiFilter className="h-5 w-5" />
+              <span>{isAdvancedSearch ? 'Hide Filters' : 'Show Filters'}</span>
             </button>
             
             <button
@@ -589,7 +587,7 @@ useEffect(() => {
               const isEditing = editingGist === gist.id;
               
               return (
-                <div key={gist.id} className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200 border border-gray-200 dark:border-gray-700">
+                <div key={gist.id} className="bg-white dark:bg-dark-bg-secondary rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-200 dark:border-gray-700 card-hover fade-in">
                   <div className="p-4 flex flex-col h-full">
                     {/* Header with badges and primary language */}
                     <div className="flex justify-between items-start mb-3">
@@ -647,8 +645,8 @@ useEffect(() => {
                         <div className="group flex items-start justify-between">
                           <Link to={`/gist/${gist.id}`} className="flex-1">
                             <h3 className="text-lg font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors">
-                              {gist.description || 'Untitled Gist'}
-                              {!preview.hasDescription && (
+                              {gist.description || preview.generatedTitle || 'Untitled Gist'}
+                              {!preview.hasDescription && preview.generatedTitle && (
                                 <span className="text-xs text-gray-400 ml-2">(auto-generated)</span>
                               )}
                             </h3>
@@ -721,16 +719,28 @@ useEffect(() => {
             })}
           </div>
         ) : (
-          <div className="py-8 px-6 text-center text-gray-500 dark:text-gray-400">
+          <div className="py-12 px-6 text-center fade-in">
             {loading ? (
               <Spinner />
             ) : (
-              <>
-                <p>No gists found{searchTerm ? ` matching "${searchTerm}"` : ''}.</p>
-                <Link to="/gist" className="inline-block mt-4 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
-                  Create a new gist
+              <div className="max-w-sm mx-auto">
+                <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FiFileText className="w-10 h-10 text-gray-400 dark:text-gray-600" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  {searchTerm ? 'No matches found' : 'No gists yet'}
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">
+                  {searchTerm ? `No gists found matching "${searchTerm}"` : 'Get started by creating your first gist'}
+                </p>
+                <Link 
+                  to="/gist" 
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 no-underline"
+                >
+                  <FiPlus className="w-4 h-4" />
+                  Create new gist
                 </Link>
-              </>
+              </div>
             )}
           </div>
         )}

@@ -146,7 +146,7 @@ const SharedGistDetail = () => {
       case 'json':
         return 'bg-teal-100 text-teal-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-surface-variant text-primary';
     }
   };
 
@@ -193,13 +193,13 @@ const SharedGistDetail = () => {
       <div className="bg-white shadow rounded-lg p-6">
         <div className="flex justify-between items-start">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            <h2 className="text-2xl font-bold text-primary mb-2">
               {gist.description || 'Untitled Gist'}
             </h2>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-secondary">
               Shared by <strong>{gist.username}</strong> on {formatDate(gist.sharedAt)}
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-secondary">
               Last updated: {formatDate(gist.updatedAt)}
             </p>
           </div>
@@ -208,7 +208,7 @@ const SharedGistDetail = () => {
               href={`https://gist.github.com/${gist.username}/${gist.id}`} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
+              className="px-4 py-2 bg-surface-variant text-primary rounded-md hover:bg-surface-hover"
             >
               View on GitHub
             </a>
@@ -225,7 +225,7 @@ const SharedGistDetail = () => {
       {/* File tabs and content */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
         {/* File tabs */}
-        <div className="border-b border-gray-200 bg-gray-50 px-4 py-2 overflow-x-auto">
+        <div className="border-b border-default bg-surface-variant px-4 py-2 overflow-x-auto">
           <div className="flex space-x-2">
             {Object.keys(gist.files).map(filename => (
               <button
@@ -233,8 +233,8 @@ const SharedGistDetail = () => {
                 onClick={() => setActiveFile(filename)}
                 className={`px-3 py-2 text-sm rounded-md whitespace-nowrap ${
                   activeFile === filename
-                    ? 'bg-white text-indigo-700 border border-gray-200 shadow-sm'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-surface text-primary border border-default shadow-sm'
+                    : 'text-secondary hover:bg-surface-hover'
                 }`}
               >
                 {filename}
@@ -245,12 +245,12 @@ const SharedGistDetail = () => {
         
         {/* File information */}
         {activeFile && (
-          <div className="flex items-center justify-between p-4 bg-gray-50 border-b border-gray-200">
+          <div className="flex items-center justify-between p-4 bg-surface-variant border-b border-default">
             <div className="flex items-center">
               <span className={`px-2 py-1 text-xs rounded-full ${getFileBadgeStyle(activeFile)}`}>
                 {getFileType(activeFile)}
               </span>
-              <span className="ml-2 text-sm text-gray-700">
+              <span className="ml-2 text-sm text-secondary">
                 {gist.files[activeFile].size || 'Unknown'} bytes
               </span>
             </div>
@@ -261,11 +261,11 @@ const SharedGistDetail = () => {
         {activeFile && (
           <div className="p-4">
             {isMarkdown ? (
-              <div className="markdown-preview bg-white rounded-lg p-6 border border-gray-200">
+              <div className="markdown-preview bg-surface rounded-lg p-6 border border-default">
                 <MarkdownPreview content={gist.files[activeFile].content} />
               </div>
             ) : (
-              <div className="bg-gray-900 text-gray-200 p-4 rounded-lg overflow-x-auto">
+              <div className="bg-surface-secondary text-primary p-4 rounded-lg overflow-x-auto">
                 <pre className="whitespace-pre-wrap font-mono text-sm">
                   {gist.files[activeFile].content}
                 </pre>

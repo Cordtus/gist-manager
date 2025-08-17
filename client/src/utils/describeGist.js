@@ -2,6 +2,8 @@
  * Utility functions for generating gist descriptions and previews
  */
 
+import { generateSmartTitle, generateContentPreview } from './gistTitleGenerator';
+
 /**
  * Infer a description from Markdown content
  * @param {string} content - The content to analyze
@@ -72,15 +74,17 @@ export const generateGistPreview = (gist, maxLength = 100) => {
   
   // Generate preview text
   let preview = '';
+  let generatedTitle = null;
   
   // If there's a description, use it first
   if (gist.description && gist.description.trim()) {
     preview = gist.description.trim();
   } else {
-    // Otherwise, try to infer from content
+    // Check if we have actual content (from individual gist fetch)
     const [firstFilename, firstFile] = files[0];
     
     if (firstFile && firstFile.content) {
+      // We have content - use it for preview
       const content = firstFile.content;
       
       // For markdown files, use our markdown inference
@@ -101,6 +105,10 @@ export const generateGistPreview = (gist, maxLength = 100) => {
           preview = lines[0].trim();
         }
       }
+    } else {
+      // No content available (list view) - generate smart preview
+      preview = generateContentPreview(gist.files);
+      generatedTitle = generateSmartTitle(gist.files);
     }
   }
   
@@ -114,7 +122,8 @@ export const generateGistPreview = (gist, maxLength = 100) => {
     fileCount,
     primaryLanguage,
     fileTypes,
-    hasDescription: !!(gist.description && gist.description.trim())
+    hasDescription: !!(gist.description && gist.description.trim()),
+    generatedTitle
   };
 };
 
@@ -205,6 +214,9 @@ export const getQuickActions = (gist) => {
       break;
     case 'Markdown':
       actions.push({ label: 'Convert to HTML', icon: '🔄', action: 'convert' });
+      break;
+    default:
+      // No language-specific actions
       break;
   }
   

@@ -30,12 +30,28 @@ body {
 a {
   color: var(--color-primary);
   text-decoration: none;
-  transition: color 0.2s ease;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
 a:hover {
   color: var(--color-primary-light);
-  text-decoration: underline;
+}
+
+/* Animated underline effect for links */
+a:not(.no-underline)::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-primary-light);
+  transition: width 0.3s ease;
+}
+
+a:not(.no-underline):hover::after {
+  width: 100%;
 }
 
 button {
@@ -44,6 +60,28 @@ button {
   border: none;
   background: none;
   color: inherit;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Ripple effect for buttons */
+button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+button:active::before {
+  width: 300px;
+  height: 300px;
 }
 
 input, textarea, select {
@@ -58,6 +96,56 @@ input, textarea, select {
 input::placeholder, textarea::placeholder {
   color: var(--color-text-secondary);
   opacity: 0.7;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Smooth transitions for cards and interactive elements */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
 }
 
 /* Utility helpers */
@@ -75,54 +163,11 @@ input::placeholder, textarea::placeholder {
   }
 }
 
-/* Fix specific Tailwind conflicts and ensure our theme takes precedence */
-.bg-white {
-  background-color: var(--color-surface) !important;
-}
-
-.bg-gray-50 {
-  background-color: var(--color-surface-variant) !important;
-}
-
-.bg-gray-100 {
-  background-color: var(--color-surface-secondary) !important;
-}
-
-.text-gray-700 {
-  color: var(--color-text-primary) !important;
-}
-
-.text-gray-600 {
-  color: var(--color-text-secondary) !important;
-}
-
-.text-gray-500 {
-  color: var(--color-default) !important;
-}
-
-.border-gray-200 {
-  border-color: var(--color-border) !important;
-}
-
-.border-gray-300 {
-  border-color: var(--color-border) !important;
-}
-
-.bg-indigo-600 {
-  background-color: var(--color-primary) !important;
-}
-
-.text-indigo-600 {
-  color: var(--color-primary) !important;
-}
-
-.bg-blue-500 {
-  background-color: var(--color-primary) !important;
-}
-
-.text-blue-500 {
-  color: var(--color-primary) !important;
-}
+/* 
+ * Note: Instead of overriding Tailwind classes with !important,
+ * components should use theme-aware classes defined in theme.css
+ * (e.g., bg-surface, text-primary, etc.) for proper theming.
+ */
 
 /* Ensure form elements follow our theme */
 input[type="checkbox"], input[type="radio"] {

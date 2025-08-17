@@ -3,15 +3,12 @@ import './styles/theme.css';
 import './styles/index.css';
 import './styles/gistEditor.css';
 import './styles/markdownPreview.css';
-import './styles/markdownExtras.css';
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
 
-// Log that app is initializing
-console.log('Gist Manager app initializing...');
 
 // Add error boundary for the entire app
 class ErrorBoundary extends React.Component {
@@ -68,5 +65,3 @@ root.render(
   </React.StrictMode>
 );
 
-// Log that app has mounted
-console.log('Gist Manager app mounted successfully');

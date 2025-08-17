@@ -1,12 +1,15 @@
 // services/fileService.js
 
-import { Marked } from 'marked';
 import TurndownService from 'turndown';
 import showdown from 'showdown';
 
-const marked = new Marked();
 const turndownService = new TurndownService();
-const showdownConverter = new showdown.Converter();
+const showdownConverter = new showdown.Converter({
+  tables: true,
+  tasklists: true,
+  strikethrough: true,
+  ghCodeBlocks: true
+});
 
 export const convertToMarkdown = async (content, fileExtension) => {
   switch (fileExtension) {
@@ -22,7 +25,7 @@ export const convertToMarkdown = async (content, fileExtension) => {
 export const convertFromMarkdown = async (content, fileExtension) => {
   switch (fileExtension) {
     case 'md':
-      return marked.parse(content);
+      return showdownConverter.makeHtml(content);
     case 'mdx':
       return showdownConverter.makeHtml(content);
     default:

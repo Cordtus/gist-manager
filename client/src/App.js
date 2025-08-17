@@ -4,12 +4,12 @@ import './styles/theme.css';
 import './styles/index.css';
 import './styles/gistEditor.css';
 import './styles/markdownPreview.css';
-import './styles/markdownExtras.css';
 
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { ToastProvider } from './contexts/ToastContext';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import Callback from './components/Callback';
@@ -66,9 +66,11 @@ const AppContent = () => {
 const App = () => (
   <ThemeProvider>
     <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
+      <ToastProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </ToastProvider>
     </AuthProvider>
   </ThemeProvider>
 );

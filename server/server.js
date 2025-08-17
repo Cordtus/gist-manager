@@ -25,7 +25,7 @@ const ensureDataDirectory = async () => {
   try {
     await fs.mkdir(dataDir, { recursive: true });
     await fs.mkdir(sharedGistsDir, { recursive: true });
-    console.log('Data directories initialized');
+    logger.info('Data directories initialized');
   } catch (error) {
     console.error('Error creating data directories:', error);
   }
@@ -334,5 +334,4 @@ app.use((err, req, res, next) => {
 
 app.listen(port, () => {
   logger.info(`Server running on port ${port}`);
-  console.log(`Server running on port ${port}`);
 });

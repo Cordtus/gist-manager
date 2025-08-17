@@ -5,6 +5,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { createGist, updateGist, getGist } from '../services/api/gists';
 import { isGistShared, shareGist, unshareGist } from '../services/api/sharedGists';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import MarkdownPreview from './markdown/MarkdownPreview';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -185,7 +186,6 @@ const GistEditor = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState('');
   const [previewMode, setPreviewMode] = useState('split'); // 'editor', 'split', 'preview'
   const [wrapText, setWrapText] = useState(true);
   const [splitRatio, setSplitRatio] = useState(50);
@@ -198,7 +198,8 @@ const GistEditor = () => {
 
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  const toast = useToast();
 
   const editorRef = useRef(null);
   const previewRef = useRef(null);
@@ -273,7 +274,7 @@ const GistEditor = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await getGist(gistId);
+      const data = await getGist(gistId, token, setError);
       setGist(data);
       setActiveFile(Object.keys(data.files)[0]);
     } catch (err) {
@@ -307,21 +308,19 @@ const GistEditor = () => {
     
     setLoading(true);
     setError(null);
-    setSuccess('');
     
     try {
       if (id) {
-        await updateGist(id, gist);
-        setSuccess('Gist updated successfully!');
+        await updateGist(id, gist, token, setError, user?.id);
+        toast.success('Gist updated successfully!');
       } else {
-        const newG = await createGist(gist);
-        setSuccess('Gist created successfully!');
+        const newG = await createGist(gist, token, setError, user?.id);
+        toast.success('Gist created successfully!');
         navigate(`/gist/${newG.id}`);
       }
-      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       console.error(err);
-      setError('Failed to save. Please check browser console and create an issue if persistent.');
+      toast.error('Failed to save gist. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -367,18 +366,17 @@ const GistEditor = () => {
         }
         await shareGist(id, gist);
         setIsShared(true);
-        setSuccess('Gist shared with the community!');
+        toast.success('Gist shared with the community!');
       } else if (!share && isShared) {
         await unshareGist(id);
         setIsShared(false);
-        setSuccess('Gist removed from community sharing!');
+        toast.success('Gist removed from community sharing!');
       }
     } catch (err) {
       console.error(err);
-      setError(`Failed to ${isShared ? 'unshare' : 'share'} gist. Please try again later.`);
+      toast.error(`Failed to ${isShared ? 'unshare' : 'share'} gist. Please try again later.`);
     } finally {
       setSharingLoading(false);
-      setTimeout(() => setSuccess(''), 3000);
     }
   };
 
@@ -508,9 +506,6 @@ const GistEditor = () => {
       {/* Messages */}
       {error && (
         <div className="message-bar error">{error}</div>
-      )}
-      {success && (
-        <div className="message-bar success">{success}</div>
       )}
 
       {/* Controls */}

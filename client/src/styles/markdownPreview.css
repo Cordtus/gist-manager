@@ -1,4 +1,4 @@
-/* markdownPreview.css - Enhanced markdown preview styles */
+/* markdownPreview.css - Consolidated markdown preview styles */
 @import './theme.css';
 
 .markdown-preview {
@@ -30,12 +30,14 @@
 .markdown-preview h5 { font-size: 1rem; }
 .markdown-preview h6 { font-size: 0.875rem; color: var(--color-text-secondary); }
 
-/* Heading anchor links */
-.heading-anchor {
-  position: relative;
-}
-
-.anchor-link {
+/* Heading anchor links - consolidated from markdownExtras */
+.markdown-preview h1[id]::before,
+.markdown-preview h2[id]::before,
+.markdown-preview h3[id]::before,
+.markdown-preview h4[id]::before,
+.markdown-preview h5[id]::before,
+.markdown-preview h6[id]::before {
+  content: '#';
   position: absolute;
   left: -1.5rem;
   top: 50%;
@@ -43,13 +45,17 @@
   opacity: 0;
   transition: opacity 0.2s ease;
   color: var(--color-primary);
-  text-decoration: none;
   font-weight: normal;
   font-size: 0.8em;
 }
 
-.heading-anchor:hover .anchor-link {
-  opacity: 1;
+.markdown-preview h1[id]:hover::before,
+.markdown-preview h2[id]:hover::before,
+.markdown-preview h3[id]:hover::before,
+.markdown-preview h4[id]:hover::before,
+.markdown-preview h5[id]:hover::before,
+.markdown-preview h6[id]:hover::before {
+  opacity: 0.6;
 }
 
 /* Paragraphs and basic text */
@@ -111,10 +117,12 @@
   margin: 0.25rem 0;
 }
 
-/* Task lists */
+/* Task lists / Checkboxes */
+.markdown-preview input[type="checkbox"],
 .markdown-preview .md-checkbox {
   margin-right: 0.5rem;
   margin-top: 0.1rem;
+  vertical-align: middle;
   accent-color: var(--color-primary);
 }
 
@@ -146,54 +154,6 @@
   color: var(--color-text-primary);
 }
 
-/* Enhanced code blocks with terminal styling */
-.terminal-wrapper {
-  margin: 1.5rem 0;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  background: #1a1a1a;
-}
-
-.terminal-header {
-  background: #2d2d2d;
-  padding: 0.5rem 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  border-bottom: 1px solid #404040;
-}
-
-.terminal-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.terminal-red { background: #ff5f56; }
-.terminal-yellow { background: #ffbd2e; }
-.terminal-green { background: #27ca3f; }
-
-.terminal-language {
-  margin-left: auto;
-  color: #a0a0a0;
-  font-size: 0.75rem;
-  font-family: var(--font-mono);
-}
-
-.terminal-code {
-  margin: 0 !important;
-  background: #1a1a1a !important;
-  padding: 1rem !important;
-}
-
-.terminal-plain {
-  background: var(--color-surface-variant) !important;
-  color: var(--color-text-primary) !important;
-  margin: 0 !important;
-  padding: 1rem !important;
-}
-
 /* Tables */
 .markdown-preview table {
   width: 100%;
@@ -209,13 +169,6 @@
   margin: 1.5rem 0;
   border-radius: 0.5rem;
   border: 1px solid var(--color-border);
-}
-
-.markdown-preview .fancy-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 0;
-  border: none;
 }
 
 .markdown-preview th,
@@ -250,27 +203,7 @@
   position: relative;
 }
 
-.markdown-preview .fancy-blockquote {
-  border-left: 4px solid var(--color-primary);
-  padding: 1rem 1.5rem;
-  margin: 1.5rem 0;
-  background: var(--color-surface-variant);
-  border-radius: 0 0.375rem 0.375rem 0;
-  position: relative;
-}
-
-.markdown-preview .fancy-blockquote::before {
-  content: '"';
-  position: absolute;
-  top: -0.5rem;
-  left: 1rem;
-  font-size: 3rem;
-  color: var(--color-primary);
-  opacity: 0.3;
-  font-family: serif;
-}
-
-/* Enhanced horizontal rules */
+/* Horizontal rules */
 .markdown-preview hr {
   border: none;
   height: 2px;
@@ -278,29 +211,11 @@
   margin: 2rem 0;
 }
 
-.markdown-preview .hr-fancy {
-  border: none;
-  height: 1px;
-  background: var(--color-border);
-  margin: 2rem 0;
-  position: relative;
-}
-
-.markdown-preview .hr-fancy::before {
-  content: '❋';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: var(--color-surface);
-  padding: 0 1rem;
-  color: var(--color-text-secondary);
-}
-
 /* Images */
 .markdown-preview img {
   max-width: 100%;
   height: auto;
+  display: block;
   border-radius: 0.375rem;
   margin: 1.5rem 0;
   box-shadow: var(--shadow-md);
@@ -309,13 +224,6 @@
 
 /* Collapsible details/summary */
 .markdown-preview details {
-  border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
-  margin: 1.5rem 0;
-  overflow: hidden;
-}
-
-.markdown-preview .collapsible-section {
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   margin: 1.5rem 0;
@@ -335,21 +243,7 @@
   transition: background 0.2s ease;
 }
 
-.markdown-preview .collapsible-header {
-  padding: 1rem;
-  background: var(--color-surface-variant);
-  cursor: pointer;
-  user-select: none;
-  list-style: none;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-  transition: background 0.2s ease;
-}
-
-.markdown-preview summary:hover,
-.markdown-preview .collapsible-header:hover {
+.markdown-preview summary:hover {
   background: var(--color-surface-secondary);
 }
 
@@ -357,12 +251,15 @@
   content: '';
 }
 
-.markdown-preview .collapsible-arrow {
+.markdown-preview summary::before {
+  content: "▶";
+  display: inline-block;
+  margin-right: 0.5rem;
   transition: transform 0.2s ease;
   font-size: 0.875rem;
 }
 
-.markdown-preview details[open] .collapsible-arrow {
+.markdown-preview details[open] summary::before {
   transform: rotate(90deg);
 }
 
@@ -371,7 +268,7 @@
   background: var(--color-surface);
 }
 
-/* Keyboard shortcuts and badges */
+/* Keyboard shortcuts */
 .markdown-preview kbd {
   background: var(--color-surface-variant);
   border: 1px solid var(--color-border);
@@ -382,16 +279,6 @@
   box-shadow: inset 0 -1px 0 var(--color-border);
 }
 
-/* Mathematical expressions (if supported) */
-.markdown-preview .math {
-  overflow-x: auto;
-}
-
-.markdown-preview .math-display {
-  text-align: center;
-  margin: 1.5rem 0;
-}
-
 /* Footnotes */
 .markdown-preview .footnote-ref {
   vertical-align: super;
@@ -399,17 +286,43 @@
 }
 
 .markdown-preview .footnotes {
-  border-top: 1px solid var(--color-border);
   margin-top: 2rem;
   padding-top: 1rem;
-  font-size: 0.9em;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.875rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .markdown-preview {
+    font-size: 0.875rem;
+  }
+  
+  .markdown-preview h1 { font-size: 1.75rem; }
+  .markdown-preview h2 { font-size: 1.5rem; }
+  .markdown-preview h3 { font-size: 1.25rem; }
+  .markdown-preview h4 { font-size: 1.125rem; }
+  
+  .markdown-preview pre {
+    padding: 0.75rem;
+    font-size: 0.8rem;
+  }
+  
+  .markdown-preview table {
+    font-size: 0.8rem;
+  }
+  
+  .markdown-preview th,
+  .markdown-preview td {
+    padding: 0.5rem;
+  }
 }
 
 /* Print styles */
 @media print {
   .markdown-preview {
     color: black;
-    background: white;
+    font-size: 12pt;
   }
   
   .markdown-preview a {
@@ -419,37 +332,23 @@
   
   .markdown-preview pre,
   .markdown-preview code {
+    border: 1px solid #ccc;
     background: #f5f5f5;
-    border: 1px solid #ddd;
+  }
+  
+  .markdown-preview blockquote {
+    border-left-color: #333;
+    background: #f9f9f9;
   }
 }
 
-/* Dark mode specific adjustments */
-.dark .markdown-preview {
-  /* Additional dark mode styles if needed */
-}
+/* Dark mode adjustments - removed empty block */
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .markdown-preview {
-    font-size: 0.9rem;
-    padding: 0.5rem;
-  }
-  
-  .markdown-preview h1 { font-size: 1.75rem; }
-  .markdown-preview h2 { font-size: 1.5rem; }
-  .markdown-preview h3 { font-size: 1.25rem; }
-  
-  .markdown-preview table {
-    font-size: 0.875rem;
-  }
-  
-  .markdown-preview pre {
-    padding: 0.75rem;
-    margin: 1rem 0;
-  }
-  
-  .anchor-link {
-    display: none;
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .markdown-preview summary::before,
+  .markdown-preview a,
+  .markdown-preview summary {
+    transition: none;
   }
 }
