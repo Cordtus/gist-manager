@@ -7,10 +7,10 @@ import authService from '../services/api/auth';
 import { logInfo, logError, trackError, ErrorCategory } from '../utils/logger';
 
 // API base URL configuration
-// Use relative URLs if REACT_APP_BACKEND_URL is not set (for production with proxy)
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL !== undefined 
-  ? process.env.REACT_APP_BACKEND_URL 
-  : 'http://localhost:5000';
+// Use relative URLs if REACT_APP_BACKEND_URL is empty (for production with proxy)
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL === undefined || process.env.REACT_APP_BACKEND_URL === 'undefined'
+  ? '' // Use relative URLs in production
+  : process.env.REACT_APP_BACKEND_URL || '';
 
 // Create AuthContext
 const AuthContext = createContext();

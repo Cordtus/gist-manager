@@ -2,10 +2,10 @@
 import axios from 'axios';
 import { logInfo, logError, logWarning } from '../../utils/logger';
 
-// Use relative URLs if REACT_APP_BACKEND_URL is not set (for production with proxy)
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL !== undefined 
-  ? process.env.REACT_APP_BACKEND_URL 
-  : 'http://localhost:5000';
+// Use relative URLs if REACT_APP_BACKEND_URL is empty (for production with proxy)
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL === undefined || process.env.REACT_APP_BACKEND_URL === 'undefined'
+  ? '' // Use relative URLs in production
+  : process.env.REACT_APP_BACKEND_URL || '';
 
 // Create an Axios instance for backend requests
 export const api = axios.create({
