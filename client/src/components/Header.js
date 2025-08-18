@@ -17,11 +17,17 @@ const MoonIcon = () => (
 );
 
 const Header = () => {
-  const { user, initiateGithubLogin } = useAuth();
+  const { user, initiateGithubLogin, error } = useAuth();
   const { theme, toggleTheme }       = useTheme();
 
   return (
-    <header className="flex items-center justify-between px-6 h-16 bg-surface border-b border-default shadow-sm">
+    <>
+      {error && (
+        <div className="bg-red-500 text-white px-4 py-2 text-center">
+          {error}
+        </div>
+      )}
+      <header className="flex items-center justify-between px-6 h-16 bg-surface border-b border-default shadow-sm">
       <Link to="/" className="text-xl font-bold text-primary hover:text-primary-light transition-colors">
         Gist Manager
       </Link>
@@ -44,6 +50,7 @@ const Header = () => {
         }
       </div>
     </header>
+    </>
   );
 };
 

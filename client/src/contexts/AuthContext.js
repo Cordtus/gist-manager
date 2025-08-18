@@ -7,7 +7,10 @@ import authService from '../services/api/auth';
 import { logInfo, logError, trackError, ErrorCategory } from '../utils/logger';
 
 // API base URL configuration
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+// Use relative URLs if REACT_APP_BACKEND_URL is not set (for production with proxy)
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL !== undefined 
+  ? process.env.REACT_APP_BACKEND_URL 
+  : 'http://localhost:5000';
 
 // Create AuthContext
 const AuthContext = createContext();
@@ -143,8 +146,11 @@ export const AuthProvider = ({ children }) => {
       // Redirect to GitHub
       window.location.href = response.data.url;
     } catch (error) {
-      console.error('Error initiating GitHub login:', error.message);
-      setError('Failed to initiate GitHub login. Please try again later.');
+      console.error('Error initiating GitHub login:', error);
+      const errorMsg = `Failed to initiate GitHub login: ${error.message}`;
+      setError(errorMsg);
+      // Also show alert for immediate visibility
+      alert(errorMsg);
     }
   }, []);
 

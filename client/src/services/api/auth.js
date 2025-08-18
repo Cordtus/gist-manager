@@ -4,7 +4,10 @@ import axios from 'axios';
 import { setAuthToken } from './github';
 import { logInfo, logError, logWarning, trackError, ErrorCategory } from '../../utils/logger';
 
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+// Use relative URLs if REACT_APP_BACKEND_URL is not set (for production with proxy)
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL !== undefined 
+  ? process.env.REACT_APP_BACKEND_URL 
+  : 'http://localhost:5000';
 
 /**
  * Authenticate with GitHub by exchanging an authorization code for an access token

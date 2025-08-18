@@ -1,38 +1,56 @@
 # Gist Manager
 
-Web application for creating, editing, and managing GitHub Gists with Markdown preview and format conversion.
+Modern web application for creating, editing, and managing GitHub Gists with advanced features and customizable theming.
 
 ## Features
 
-- GitHub OAuth authentication
-- Gist creation and editing with live Markdown preview
-- Multi-file gist support
-- Search and filtering of gists
-- File format conversion (Markdown, HTML, plain text)
-- Community gist sharing
-- Responsive UI with dark/light mode support
-- Syntax highlighting for code snippets
+### Core Functionality
+- **GitHub OAuth authentication** - Secure login with GitHub account
+- **Gist management** - Create, edit, delete, and organize your gists
+- **Multi-file support** - Manage multiple files within a single gist
+- **Smart title generation** - Automatic descriptive titles from file metadata
+- **Live Markdown preview** - Real-time preview while editing Markdown files
+- **Advanced search** - Search by title, filename, content with filters
+- **Community sharing** - Share and discover gists from other users
+
+### Theme System
+- **Modern CSS variable-based theming** - Consistent design across the app
+- **Three theme modes** - Light, Dark, and Custom themes
+- **Theme Sandbox** - Visual theme editor with live preview
+- **Customizable colors** - Modify 12+ color properties including:
+  - Primary colors (buttons, links, highlights)
+  - Background and surface colors
+  - Text hierarchy colors
+  - UI elements (borders, success, warning, danger)
+
+### User Experience
+- **Responsive design** - Works on desktop, tablet, and mobile
+- **Collapsible sidebar** - Space-efficient navigation
+- **Toast notifications** - User-friendly feedback system
+- **File format conversion** - Convert between Markdown, HTML, and plain text
+- **Syntax highlighting** - Code display with language detection
+- **Per-user cache isolation** - Enhanced security and performance
 
 ## Requirements
 
-- Node.js 14+
+- Node.js 18+ (recommended) or 14+ (minimum)
+- Yarn package manager
 - GitHub account
 - GitHub OAuth application credentials
 
 ## Installation
 
 1. Clone repository:
-
    ```bash
    git clone https://github.com/yourusername/gist-manager.git
    cd gist-manager
    ```
 
 2. Install dependencies:
-
    ```bash
-   yarn install
+   yarn install:all
    ```
+   This will install dependencies for both client and server workspaces.
 
 3. Configure environment:
    Create `.env` file with:
@@ -50,56 +68,140 @@ Web application for creating, editing, and managing GitHub Gists with Markdown p
    REACT_APP_BACKEND_URL=http://localhost:3000
    ```
 
-## Running
+## Running the Application
 
-Development mode:
-
+### Development Mode
+Start both client and server in development mode:
 ```bash
 yarn dev
 ```
 
-Production mode:
-
+### Production Build
+Create optimized production build:
 ```bash
-yarn prod
+yarn build:prod
 ```
 
-Run existing production build:
-
+Serve production build:
 ```bash
-yarn serve-prod
+yarn serve:prod
 ```
 
-## API Structure
+### Individual Services
+Start server only:
+```bash
+yarn start:server
+```
 
-### Authentication Flow
+Start client only:
+```bash
+yarn start:client
+```
 
-- OAuth 2.0 authorization code flow
-- Session-based authentication with secure cookies
-- Token management with automatic refreshing
+### Testing
+Run test suite:
+```bash
+yarn test
+```
 
-### Core Endpoints
+### Cleanup
+Remove all dependencies and build files:
+```bash
+yarn clean
+```
 
-- `/api/auth/github`: GitHub OAuth integration
-- `/api/gists`: CRUD operations for gists
-- `/api/shared-gists`: Community sharing functionality
+## Architecture
+
+### Authentication
+- **OAuth 2.0** - GitHub authorization code flow
+- **Session management** - Secure HTTP-only cookies
+- **Token caching** - Per-user isolated cache with security boundaries
+- **Automatic token refresh** - Seamless user experience
+
+### API Endpoints
+
+#### Authentication
+- `GET /api/auth/github` - Initiate OAuth flow
+- `GET /api/auth/callback` - Handle OAuth callback
+- `POST /api/auth/logout` - Clear session and cache
+
+#### Gist Management
+- `GET /api/gists` - Fetch user's gists
+- `GET /api/gists/:id` - Get specific gist
+- `POST /api/gists` - Create new gist
+- `PUT /api/gists/:id` - Update existing gist
+- `DELETE /api/gists/:id` - Delete gist
+
+#### Community Features
+- `GET /api/shared-gists` - Browse shared gists
+- `POST /api/shared-gists` - Share a gist
+- `DELETE /api/shared-gists/:id` - Unshare a gist
 
 ## Project Structure
 
-```ini
-/
-├── public/           # Static assets
-├── src/              # React frontend
-│   ├── components/   # UI components
-│   ├── contexts/     # React contexts (auth, etc.)
-│   ├── services/     # API service modules
-│   ├── styles/       # CSS styles
-│   └── utils/        # Utility functions
-├── server/           # Express backend
-│   ├── controllers/  # API controllers
-│   └── routes/       # API routes
-└── data/             # Application data storage
 ```
+gist-manager/
+├── client/                    # React frontend workspace
+│   ├── public/               # Static assets
+│   ├── src/
+│   │   ├── components/       # React components
+│   │   │   ├── common/      # Reusable UI components
+│   │   │   ├── markdown/    # Markdown rendering
+│   │   │   └── ...         # Feature components
+│   │   ├── contexts/        # React contexts
+│   │   │   ├── AuthContext.js
+│   │   │   ├── ThemeContext.js
+│   │   │   └── ToastContext.js
+│   │   ├── services/        # API service layer
+│   │   │   └── api/        # API endpoints
+│   │   ├── styles/          # CSS and theme files
+│   │   │   ├── index.css
+│   │   │   ├── modern-theme.css
+│   │   │   └── ...        # Component styles
+│   │   └── utils/          # Utility functions
+│   └── package.json
+├── server/                   # Express backend workspace
+│   ├── controllers/         # Request handlers
+│   ├── routes/             # API route definitions
+│   ├── server.js           # Main server file
+│   └── package.json
+├── data/                    # Persistent data storage
+│   └── sharedGists.json    # Community gists database
+└── package.json            # Root workspace configuration
+```
+
+## Key Technologies
+
+### Frontend
+- **React 18** - Modern React with hooks
+- **React Router** - Client-side routing
+- **Tailwind CSS** - Utility-first styling
+- **CSS Variables** - Dynamic theming
+- **React Icons** - Icon library
+- **Prism.js** - Syntax highlighting
+
+### Backend
+- **Express.js** - Web framework
+- **express-session** - Session management
+- **node-cache** - In-memory caching
+- **axios** - HTTP client
+- **cors** - Cross-origin support
+
+## Security Features
+
+- **Per-user cache isolation** - Prevents cross-user data leakage
+- **Secure session management** - HTTP-only cookies with proper SameSite settings
+- **Token validation** - Ensures tokens are valid before API calls
+- **CORS configuration** - Restricts API access to authorized origins
+- **Environment variable protection** - Sensitive data kept in `.env` files
+
+## Contributing
+
+Contributions are welcome! Please ensure:
+- Code follows existing patterns and conventions
+- New features include appropriate documentation
+- Changes maintain backward compatibility
+- Security best practices are followed
 
 ## License
 
