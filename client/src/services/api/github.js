@@ -1,11 +1,7 @@
 // services/api/github.js
 import axios from 'axios';
 import { logInfo, logError, logWarning } from '../../utils/logger';
-
-// Use relative URLs if REACT_APP_BACKEND_URL is empty (for production with proxy)
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL === undefined || process.env.REACT_APP_BACKEND_URL === 'undefined'
-  ? '' // Use relative URLs in production
-  : process.env.REACT_APP_BACKEND_URL || '';
+import { API_BASE_URL, GITHUB_API } from '../../config/api';
 
 // Create an Axios instance for backend requests
 export const api = axios.create({
@@ -14,12 +10,7 @@ export const api = axios.create({
 });
 
 // Create an Axios instance for GitHub API requests
-export const githubApi = axios.create({
-  baseURL: 'https://api.github.com',
-  headers: {
-    Accept: 'application/vnd.github.v3+json',
-  },
-});
+export const githubApi = axios.create(GITHUB_API);
 
 // Add request interceptor to handle errors and retries
 githubApi.interceptors.response.use(

@@ -6,6 +6,7 @@ import { getGists } from '../services/api/gists';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from './common/Spinner';
 import { generateGistPreview } from '../utils/describeGist';
+import { logError } from '../utils/logger';
 
 const Dashboard = () => {
   const [gists, setGists] = useState([]);
@@ -60,7 +61,7 @@ const Dashboard = () => {
       // Only display the 5 most recent gists on dashboard
       setGists(gistsData.slice(0, 5));
     } catch (error) {
-      console.error('Error fetching gists:', error);
+      logError('Error fetching gists', error);
       setError('Failed to fetch gists. Please try again later.');
     } finally {
       setLoading(false);

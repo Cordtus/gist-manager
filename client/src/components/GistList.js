@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import ConfirmationDialog from './ConfirmationDialog';
 import Spinner from './common/Spinner';
 import { generateGistPreview } from '../utils/describeGist';
+import { logError } from '../utils/logger';
 import { FiFileText, FiPlus, FiSearch, FiFilter } from 'react-icons/fi';
 
 const GistList = () => {
@@ -188,7 +189,7 @@ const fetchGists = useCallback(async () => {
       applyFiltersAndSort(gistsData, searchTerm, filterOptions, sortOption, sortDirection);
     }
   } catch (error) {
-    console.error('Error fetching gists:', error);
+    logError('Error fetching gists', error);
     setError('Failed to fetch gists.'); // Removed the trailing 'r.'
   } finally {
     // Always set this, so it won't fetch again
@@ -269,7 +270,7 @@ useEffect(() => {
         setGists(gists.filter(g => g.id !== gistToDelete.id));
         setFilteredGists(filteredGists.filter(g => g.id !== gistToDelete.id));
       } catch (error) {
-        console.error('Error deleting gist:', error);
+        logError('Error deleting gist', error);
         setError('Failed to delete gist. Please try again later.');
       }
     }
@@ -328,7 +329,7 @@ useEffect(() => {
       setEditingGist(null);
       setEditingDescription('');
     } catch (error) {
-      console.error('Error updating description:', error);
+      logError('Error updating description', error);
       setError('Failed to update description. Please try again.');
     }
   };

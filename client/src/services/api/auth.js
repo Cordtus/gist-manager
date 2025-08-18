@@ -3,11 +3,7 @@
 import axios from 'axios';
 import { setAuthToken } from './github';
 import { logInfo, logError, logWarning, trackError, ErrorCategory } from '../../utils/logger';
-
-// Use relative URLs if REACT_APP_BACKEND_URL is empty (for production with proxy)
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL === undefined || process.env.REACT_APP_BACKEND_URL === 'undefined'
-  ? '' // Use relative URLs in production
-  : process.env.REACT_APP_BACKEND_URL || '';
+import { API_BASE_URL, API_ENDPOINTS } from '../../config/api';
 
 /**
  * Authenticate with GitHub by exchanging an authorization code for an access token
@@ -35,7 +31,7 @@ export const authenticateWithGitHub = async (code, state, options = {}) => {
     logInfo('Sending authentication request to server', { redirectUri });
     
     // Send the request to the server
-    const response = await axios.post(`${API_BASE_URL}/api/auth/github`, requestData);
+    const response = await axios.post(`${API_BASE_URL}${API_ENDPOINTS.AUTH_GITHUB}`, requestData);
        
     // Check if we have a valid response with an access token
     if (!response.data || !response.data.access_token) {

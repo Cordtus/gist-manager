@@ -1,6 +1,7 @@
 // components/UserProfile.js
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { calculateUserTenure } from '../utils/dateUtils';
 
 export const UserProfile = () => {
   const auth = useAuth();
@@ -20,29 +21,16 @@ export const UserProfile = () => {
       
       setIsLoading(true);
       try {
-        const createdAt = new Date(auth.user.created_at);
-        const now = new Date();
-        const yearDiff = now.getFullYear() - createdAt.getFullYear();
-        
-        let userSince;
-        if (yearDiff > 0) {
-          userSince = `${yearDiff} ${yearDiff === 1 ? 'year' : 'years'}`;
-        } else {
-          const monthDiff = now.getMonth() - createdAt.getMonth() + 
-            (now.getFullYear() - createdAt.getFullYear()) * 12;
-          userSince = `${monthDiff} ${monthDiff === 1 ? 'month' : 'months'}`;
-        }
-        
-        // generate stats from available user data
+        // Generate stats from available user data
         setUserStats({
           publicRepos: auth.user.public_repos || 0,
           followers: auth.user.followers || 0,
           following: auth.user.following || 0,
           gistCount: auth.user.public_gists || 0,
-          userSince
+          userSince: calculateUserTenure(auth.user.created_at)
         });
       } catch (error) {
-        console.error('Error fetching additional user data:', error);
+        // Silently handle error - additional data is not critical
       } finally {
         setIsLoading(false);
       }

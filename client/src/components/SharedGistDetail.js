@@ -3,9 +3,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getAllSharedGists } from '../services/api/sharedGists';
-// Remove unused import: import { useAuth } from '../contexts/AuthContext';
 import MarkdownPreview from './markdown/MarkdownPreview';
 import Spinner from './common/Spinner';
+import { logError } from '../utils/logger';
 
 const SharedGistDetail = () => {
   const [gist, setGist] = useState(null);
@@ -37,7 +37,7 @@ const SharedGistDetail = () => {
         }
       }
     } catch (error) {
-      console.error('Error fetching shared gist:', error);
+      logError('Error fetching shared gist', error);
       setError('Failed to fetch shared gist. Please try again later.');
     } finally {
       setLoading(false);

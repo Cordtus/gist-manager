@@ -5,12 +5,7 @@ import axios from 'axios';
 import { setAuthToken } from '../services/api/github';
 import authService from '../services/api/auth';
 import { logInfo, logError, trackError, ErrorCategory } from '../utils/logger';
-
-// API base URL configuration
-// Use relative URLs if REACT_APP_BACKEND_URL is empty (for production with proxy)
-const API_BASE_URL = process.env.REACT_APP_BACKEND_URL === undefined || process.env.REACT_APP_BACKEND_URL === 'undefined'
-  ? '' // Use relative URLs in production
-  : process.env.REACT_APP_BACKEND_URL || '';
+import { API_BASE_URL, API_ENDPOINTS, GITHUB_CONFIG } from '../config/api';
 
 // Create AuthContext
 const AuthContext = createContext();
@@ -70,7 +65,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       setError(null);
     } catch (error) {
-      console.error('Error fetching user:', error.message);
+      logError('Error fetching user', error);
       setError('Failed to retrieve user information');
       logout();
     } finally {
@@ -132,9 +127,9 @@ export const AuthProvider = ({ children }) => {
   const initiateGithubLogin = useCallback(async () => {
     try {
       // Get auth URL from server (which handles state)
-      const response = await axios.get(`${API_BASE_URL}/api/auth/github/login`, { 
+      const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.AUTH_LOGIN}`, { 
         params: {
-          scopes: 'gist user user:email'  // Add user:email scope for email access
+          scopes: GITHUB_CONFIG.scopes
         },
         withCredentials: true 
       });
@@ -151,7 +146,7 @@ export const AuthProvider = ({ children }) => {
       // Redirect to GitHub
       window.location.href = response.data.url;
     } catch (error) {
-      console.error('Error initiating GitHub login:', error);
+      logError('Error initiating GitHub login', error);
       const errorMsg = `Failed to initiate GitHub login: ${error.message}`;
       setError(errorMsg);
       // Also show alert for immediate visibility
@@ -166,7 +161,7 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       
       // Exchange code for token (server validates state)
-      const response = await axios.post(`${API_BASE_URL}/api/auth/github`, 
+      const response = await axios.post(`${API_BASE_URL}${API_ENDPOINTS.AUTH_GITHUB}`, 
         { code, state }, 
         { withCredentials: true }
       );

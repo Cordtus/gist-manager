@@ -6,6 +6,7 @@ import { getAllSharedGists } from '../services/api/sharedGists';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from './common/Spinner';
 import { generateGistPreview } from '../utils/describeGist';
+import { logError } from '../utils/logger';
 
 const SharedGistList = () => {
   const [sharedGists, setSharedGists] = useState([]);
@@ -30,7 +31,7 @@ const SharedGistList = () => {
         setFilteredGists(response.gists);
       }
     } catch (error) {
-      console.error('Error fetching shared gists:', error);
+      logError('Error fetching shared gists', error);
       setError('Failed to fetch shared gists. Please try again later.');
     } finally {
       setLoading(false);

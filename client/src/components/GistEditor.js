@@ -6,6 +6,7 @@ import { createGist, updateGist, getGist } from '../services/api/gists';
 import { isGistShared, shareGist, unshareGist } from '../services/api/sharedGists';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { logError } from '../utils/logger';
 import MarkdownPreview from './markdown/MarkdownPreview';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -278,7 +279,7 @@ const GistEditor = () => {
       setGist(data);
       setActiveFile(Object.keys(data.files)[0]);
     } catch (err) {
-      console.error(err);
+      logError('Failed to fetch gist', err);
       setError('Failed to fetch gist. Please try again later.');
     } finally {
       setLoading(false);
@@ -290,7 +291,7 @@ const GistEditor = () => {
       const shared = await isGistShared(gistId);
       setIsShared(shared);
     } catch (err) {
-      console.error(err);
+      logError('Failed to check if gist is shared', err);
     }
   };
 
@@ -319,7 +320,7 @@ const GistEditor = () => {
         navigate(`/gist/${newG.id}`);
       }
     } catch (err) {
-      console.error(err);
+      logError('Failed to save gist', err);
       toast.error('Failed to save gist. Please try again.');
     } finally {
       setLoading(false);
@@ -373,7 +374,7 @@ const GistEditor = () => {
         toast.success('Gist removed from community sharing!');
       }
     } catch (err) {
-      console.error(err);
+      logError(`Failed to ${isShared ? 'unshare' : 'share'} gist`, err);
       toast.error(`Failed to ${isShared ? 'unshare' : 'share'} gist. Please try again later.`);
     } finally {
       setSharingLoading(false);

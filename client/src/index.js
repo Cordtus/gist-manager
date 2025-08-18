@@ -1,4 +1,4 @@
-// index,js
+// index.js
 import './styles/theme.css';
 import './styles/modern-theme.css';
 import './styles/index.css';
@@ -8,8 +8,7 @@ import './styles/markdownPreview.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-
-
+import { logError } from './utils/logger';
 
 // Add error boundary for the entire app
 class ErrorBoundary extends React.Component {
@@ -24,7 +23,7 @@ class ErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     this.setState({ error, errorInfo });
-    console.error("App error:", error, errorInfo);
+    logError('App error boundary caught error', { error, errorInfo });
   }
 
   render() {

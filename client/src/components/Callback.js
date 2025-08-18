@@ -33,9 +33,6 @@ const Callback = () => {
         // If no state in URL, try to get it from sessionStorage (backup)
         if (!returnedState) {
           returnedState = sessionStorage.getItem('oauth_state');
-          if (returnedState) {
-            console.log('Using backup state from sessionStorage');
-          }
         }
         
         // Clear the backup state
@@ -51,7 +48,6 @@ const Callback = () => {
           setIsProcessing(false);
         }
       } catch (error) {
-        console.error('Authentication error:', error);
         setError(`Authentication failed: ${isDevelopment ? error.message : 'Please try again later.'}`);
         setIsProcessing(false);
       }
