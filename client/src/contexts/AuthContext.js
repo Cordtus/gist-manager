@@ -143,6 +143,11 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Invalid response from server');
       }
       
+      // Store state in sessionStorage as backup
+      if (response.data.state) {
+        sessionStorage.setItem('oauth_state', response.data.state);
+      }
+      
       // Redirect to GitHub
       window.location.href = response.data.url;
     } catch (error) {

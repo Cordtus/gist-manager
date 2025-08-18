@@ -22,13 +22,24 @@ const Callback = () => {
         // Parse URL parameters
         const searchParams = new URLSearchParams(location.search);
         const code = searchParams.get('code');
-        const returnedState = searchParams.get('state');
+        let returnedState = searchParams.get('state');
         
         if (!code) {
           setError('No authorization code received from GitHub. Authentication failed.');
           setIsProcessing(false);
           return;
         }
+        
+        // If no state in URL, try to get it from sessionStorage (backup)
+        if (!returnedState) {
+          returnedState = sessionStorage.getItem('oauth_state');
+          if (returnedState) {
+            console.log('Using backup state from sessionStorage');
+          }
+        }
+        
+        // Clear the backup state
+        sessionStorage.removeItem('oauth_state');
         
         // Call login function with code and state
         const success = await login(code, returnedState);

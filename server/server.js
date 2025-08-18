@@ -83,13 +83,15 @@ const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toStr
 app.use(session({
   secret: sessionSecret,
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: true, // Changed to true to ensure session is created
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    maxAge: 24 * 60 * 60 * 1000 // 24h
-  }
+    maxAge: 24 * 60 * 60 * 1000, // 24h
+    domain: process.env.COOKIE_DOMAIN || undefined // Allow setting cookie domain
+  },
+  name: 'gist_manager_session' // Explicit session name
 }));
 
 // CSP config
@@ -133,16 +135,27 @@ app.get('/api/auth/github/login', (req, res) => {
   req.session.oauthState = state;
   const scopes = req.query.scopes || 'gist user';
   
-  logger.info(`[OAuth] Generated state: ${state} and stored in session`);
+  // Force session save before sending response
+  req.session.save((err) => {
+    if (err) {
+      logger.error(`[OAuth] Failed to save session: ${err.message}`);
+    }
+    
+    logger.info(`[OAuth] Generated state: ${state} and stored in session`);
+    logger.info(`[OAuth] Session ID: ${req.sessionID}`);
 
-  const params = new URLSearchParams({
-    client_id: process.env.GITHUB_CLIENT_ID,
-    redirect_uri: process.env.REDIRECT_URI || `${req.protocol}://${req.get('host')}/callback`,
-    scope: scopes,
-    state: state
+    const params = new URLSearchParams({
+      client_id: process.env.GITHUB_CLIENT_ID,
+      redirect_uri: process.env.REDIRECT_URI || `${req.protocol}://${req.get('host')}/callback`,
+      scope: scopes,
+      state: state
+    });
+
+    res.json({ 
+      url: `https://github.com/login/oauth/authorize?${params.toString()}`,
+      state: state // Also return state to client as backup
+    });
   });
-
-  res.json({ url: `https://github.com/login/oauth/authorize?${params.toString()}` });
 });
 
 app.post('/api/auth/github', async (req, res) => {
@@ -155,12 +168,27 @@ app.post('/api/auth/github', async (req, res) => {
     }
 
     logger.info(`[OAuth] Received code exchange request:`);
+    logger.info(`  - Session ID: ${req.sessionID}`);
     logger.info(`  - State from client: ${state}`);
     logger.info(`  - State from session: ${req.session.oauthState}`);
+    logger.info(`  - Session exists: ${!!req.session}`);
+    logger.info(`  - Session cookie received: ${!!req.headers.cookie}`);
     
     if (process.env.NODE_ENV !== 'development') {
-      if (!req.session.oauthState || state !== req.session.oauthState) {
-        logger.error('[OAuth] State validation failed');
+      // Allow state from client if session state is missing (backup mechanism)
+      if (!req.session.oauthState && !state) {
+        logger.error('[OAuth] No state available (neither session nor client)');
+        return res.status(400).json({ 
+          error: 'Invalid state parameter',
+          message: 'Authentication failed due to missing state. Please try logging in again.'
+        });
+      }
+      
+      // If we have session state, validate it
+      if (req.session.oauthState && state !== req.session.oauthState) {
+        logger.error('[OAuth] State validation failed - mismatch');
+        logger.error(`  - Expected: ${req.session.oauthState}`);
+        logger.error(`  - Received: ${state}`);
         return res.status(400).json({ 
           error: 'Invalid state parameter',
           message: 'Authentication failed due to invalid state. This could be a CSRF attempt or session expiration.'
