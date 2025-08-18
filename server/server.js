@@ -13,6 +13,7 @@ const fs = require('fs').promises;
 // Import API routes
 const gistRoutes = require('./routes/gists.js');
 const sharedGistsRoutes = require('./routes/sharedGists.js');
+const webhookRoutes = require('./routes/webhook.js');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -340,6 +341,7 @@ app.use(express.static(path.join(__dirname, 'build'), {
 // API ROUTES
 app.use('/api/gists', gistRoutes);
 app.use('/api/shared-gists', sharedGistsRoutes);
+app.use('/api/webhook', webhookRoutes);
 
 // CATCH-ALL ROUTE
 app.get('*', (req, res) => {
