@@ -61,7 +61,15 @@ const FileConverter = () => {
     const txt = e.target.value;
     setInputContent(txt);
     if (!hasManualFormat) {
-      setInputFormat(inferType(txt));
+      const detectedFormat = inferType(txt);
+      setInputFormat(detectedFormat);
+      // If output format is same as input, change it
+      if (outputFormat === detectedFormat) {
+        const alternativeFormat = detectedFormat === 'markdown' ? 'html' : 
+                                  detectedFormat === 'html' ? 'markdown' : 
+                                  detectedFormat === 'json' ? 'plaintext' : 'markdown';
+        setOutputFormat(alternativeFormat);
+      }
     }
   };
 
@@ -74,7 +82,15 @@ const FileConverter = () => {
     reader.onload = ev => {
       const txt = ev.target.result;
       setInputContent(txt);
-      setInputFormat(inferType(txt));
+      const detectedFormat = inferType(txt);
+      setInputFormat(detectedFormat);
+      // If output format is same as input, change it
+      if (outputFormat === detectedFormat) {
+        const alternativeFormat = detectedFormat === 'markdown' ? 'html' : 
+                                  detectedFormat === 'html' ? 'markdown' : 
+                                  detectedFormat === 'json' ? 'plaintext' : 'markdown';
+        setOutputFormat(alternativeFormat);
+      }
     };
     reader.readAsText(file);
   };
@@ -83,6 +99,10 @@ const FileConverter = () => {
   const handleConvert = () => {
     if (!inputContent.trim()) {
       setErrorMessage('Please enter or upload content to convert');
+      return;
+    }
+    if (inputFormat === outputFormat) {
+      setErrorMessage('Input and output formats cannot be the same');
       return;
     }
     setErrorMessage('');
@@ -113,15 +133,21 @@ const FileConverter = () => {
       }
       // Plaintext → HTML
       else if (inputFormat === 'plaintext' && outputFormat === 'html') {
-        result = inputContent
+        result = `<html>\n<head>\n<title>Converted Document</title>\n</head>\n<body>\n<pre>${inputContent
           .replace(/&/g, '&amp;')
           .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/\n/g, '<br>');
+          .replace(/>/g, '&gt;')}</pre>\n</body>\n</html>`;
       }
       // Plaintext → Markdown
       else if (inputFormat === 'plaintext' && outputFormat === 'markdown') {
-        result = inputContent;
+        // Convert plain text to markdown by adding appropriate formatting
+        result = inputContent
+          .split('\n')
+          .map(line => {
+            // Convert URLs to markdown links
+            return line.replace(/(https?:\/\/[^\s]+)/g, '[$1]($1)');
+          })
+          .join('\n');
       }
       // Wrap to JSON
       else if (outputFormat === 'json') {
@@ -150,9 +176,9 @@ const FileConverter = () => {
             : JSON.stringify(parsed.content, null, 2);
         }
       }
-      // Same format
-      else if (inputFormat === outputFormat) {
-        result = inputContent;
+      // Default fallback for unsupported conversions
+      else {
+        throw new Error(`Conversion from ${FORMATS[inputFormat].name} to ${FORMATS[outputFormat].name} is not supported`);
       }
 
       setOutputContent(result);
@@ -195,7 +221,10 @@ const FileConverter = () => {
 
   return (
     <div className="p-6 bg-surface rounded shadow-md space-y-6">
-      <h2 className="text-xl font-semibold text-primary">File Format Converter</h2>
+      <div>
+        <h2 className="text-xl font-semibold text-primary">File Format Converter</h2>
+        <p className="text-sm text-secondary mt-1">Convert between Markdown, HTML, JSON, and Plain Text formats</p>
+      </div>
 
       {successMessage && (
         <div className="bg-success bg-opacity-10 text-success p-4 rounded-md">
@@ -212,12 +241,23 @@ const FileConverter = () => {
         {/* Input */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-secondary">Input</h3>
-          <div className="flex flex-wrap gap-4 mb-2">
-            <div className="flex-1">
+          <div className="flex gap-4 mb-2">
+            <div className="flex-1 min-w-[150px]">
               <label className="block text-sm font-medium text-secondary mb-1">Format</label>
               <select
                 value={inputFormat}
-                onChange={e => { setInputFormat(e.target.value); setHasManualFormat(true); }}
+                onChange={e => { 
+                  const newFormat = e.target.value;
+                  setInputFormat(newFormat); 
+                  setHasManualFormat(true); 
+                  // If output format is same as new input format, change output
+                  if (outputFormat === newFormat) {
+                    const alternativeFormat = newFormat === 'markdown' ? 'html' : 
+                                              newFormat === 'html' ? 'markdown' : 
+                                              newFormat === 'json' ? 'plaintext' : 'markdown';
+                    setOutputFormat(alternativeFormat);
+                  }
+                }}
                 className="w-full p-2 border border-default rounded bg-background text-primary"
               >
                 {Object.entries(FORMATS).map(([key, f]) => (
@@ -226,11 +266,11 @@ const FileConverter = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-secondary mb-1">Upload</label>
+              <label className="block text-sm font-medium text-secondary mb-1">Upload File</label>
               <input
                 type="file"
                 onChange={handleFileInputChange}
-                className="block text-sm"
+                className="block text-sm p-1.5 border border-default rounded"
               />
             </div>
           </div>
@@ -245,26 +285,32 @@ const FileConverter = () => {
         {/* Output */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-secondary">Output</h3>
-          <div className="flex gap-4 mb-2">
-            <div className="flex-1">
+          <div className="flex gap-4 mb-2 items-end">
+            <div className="flex-1 min-w-[150px]">
               <label className="block text-sm font-medium text-secondary mb-1">Format</label>
               <select
                 value={outputFormat}
                 onChange={e => setOutputFormat(e.target.value)}
                 className="w-full p-2 border border-default rounded bg-background text-primary"
               >
-                {Object.entries(FORMATS).map(([key, f]) => (
-                  <option key={key} value={key}>{f.name}</option>
-                ))}
+                {Object.entries(FORMATS)
+                  .filter(([key]) => key !== inputFormat) // Prevent selecting same format
+                  .map(([key, f]) => (
+                    <option key={key} value={key}>{f.name}</option>
+                  ))}
               </select>
             </div>
-            <input
-              type="text"
-              value={outputFileName}
-              readOnly
-              placeholder="output.html"
-              className="w-full p-2 border border-default rounded bg-background text-primary"
-            />
+            <div className="w-[200px]">
+              <label className="block text-sm font-medium text-secondary mb-1" title="The name for the downloaded file">Output Filename</label>
+              <input
+                type="text"
+                value={outputFileName}
+                onChange={e => setOutputFileName(e.target.value)}
+                placeholder="output.html"
+                className="w-full p-2 border border-default rounded bg-background text-primary h-[42px]"
+                title="This will be the filename when you download the converted file"
+              />
+            </div>
           </div>
           <textarea
             value={outputContent}
