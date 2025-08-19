@@ -5,13 +5,24 @@ import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import remarkEmoji from 'remark-emoji';
+import remarkBreaks from 'remark-breaks';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import "../../styles/markdownPreview.css";
 
 const MarkdownPreview = memo(({ content }) => {
   return (
     <div className="markdown-preview">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[
+          remarkGfm,
+          remarkMath,
+          remarkEmoji,
+          remarkBreaks
+        ]}
+        rehypePlugins={[rehypeKatex]}
         components={{
           // Custom rendering for code blocks with syntax highlighting
           code({ node: _node, inline, className, children, ...props }) {
@@ -53,31 +64,31 @@ const MarkdownPreview = memo(({ content }) => {
           
           // Custom heading with anchor links
           h1({ children }) {
-            const id = children.toString().toLowerCase().replace(/\s+/g, '-');
+            const id = children?.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '') || '';
             return (
               <h1 id={id} className="heading-anchor">
                 {children}
-                <a href={`#${id}`} className="anchor-link">#</a>
+                <a href={`#${id}`} className="anchor-link" aria-label="Link to heading">#</a>
               </h1>
             );
           },
           
           h2({ children }) {
-            const id = children.toString().toLowerCase().replace(/\s+/g, '-');
+            const id = children?.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '') || '';
             return (
               <h2 id={id} className="heading-anchor">
                 {children}
-                <a href={`#${id}`} className="anchor-link">#</a>
+                <a href={`#${id}`} className="anchor-link" aria-label="Link to heading">#</a>
               </h2>
             );
           },
           
           h3({ children }) {
-            const id = children.toString().toLowerCase().replace(/\s+/g, '-');
+            const id = children?.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '') || '';
             return (
               <h3 id={id} className="heading-anchor">
                 {children}
-                <a href={`#${id}`} className="anchor-link">#</a>
+                <a href={`#${id}`} className="anchor-link" aria-label="Link to heading">#</a>
               </h3>
             );
           },
