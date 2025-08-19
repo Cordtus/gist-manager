@@ -702,7 +702,7 @@ const GistEditor = () => {
               >
                 <div className="preview" onScroll={syncScroll}>
                   {isMarkdownFile(activeFile)
-                    ? <MarkdownPreview content={currentFileContent} />
+                    ? (currentFileContent ? <MarkdownPreview content={currentFileContent} /> : <div>Enter some markdown content...</div>)
                     : <SyntaxHighlighter language={getFileLanguage(activeFile)} style={tomorrow} className="syntax-highlighter">
                         {currentFileContent}
                       </SyntaxHighlighter>

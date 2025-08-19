@@ -13,17 +13,21 @@ import 'katex/dist/katex.min.css';
 import "../../styles/markdownPreview.css";
 
 const MarkdownPreview = memo(({ content }) => {
+  // Ensure content is a string
+  const markdownContent = content || '';
+  
   return (
     <div className="markdown-preview">
-      <ReactMarkdown
-        remarkPlugins={[
-          remarkGfm,
-          remarkMath,
-          remarkEmoji,
-          remarkBreaks
-        ]}
-        rehypePlugins={[rehypeKatex]}
-        components={{
+      {markdownContent ? (
+        <ReactMarkdown
+          remarkPlugins={[
+            remarkGfm,
+            remarkMath,
+            remarkEmoji,
+            remarkBreaks
+          ]}
+          rehypePlugins={[rehypeKatex]}
+          components={{
           // Custom rendering for code blocks with syntax highlighting
           code({ node: _node, inline, className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
@@ -146,8 +150,13 @@ const MarkdownPreview = memo(({ content }) => {
           }
         }}
       >
-        {content}
+        {markdownContent}
       </ReactMarkdown>
+      ) : (
+        <div style={{ color: 'var(--color-text-secondary)', padding: '1rem' }}>
+          Start typing markdown to see the preview...
+        </div>
+      )}
     </div>
   );
 });

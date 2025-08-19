@@ -271,6 +271,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0;
 }
 
 
@@ -309,11 +310,14 @@
 .preview {
   padding: 1rem;
   overflow-y: auto;
+  overflow-x: hidden;
   background: var(--color-surface);
   flex: 1;
   height: 100%;
+  width: 100%;
   font-size: 0.875rem;
   line-height: 1.6;
+  min-height: 0;
 }
 
 /* Resizable divider */
