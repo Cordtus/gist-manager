@@ -191,7 +191,7 @@ const GistEditor = () => {
   const [wrapText, setWrapText] = useState(true);
   const [splitRatio, setSplitRatio] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
-  const [editorHeight, setEditorHeight] = useState(typeof window !== 'undefined' ? window.innerHeight - 300 : 500);
+  const editorHeight = typeof window !== 'undefined' ? window.innerHeight - 300 : 500;
   const [isShared, setIsShared] = useState(false);
   const [sharingLoading, setSharingLoading] = useState(false);
   const [activeFile, setActiveFile] = useState(null);
@@ -206,6 +206,31 @@ const GistEditor = () => {
   const containerRef = useRef(null);
   const resizeHandleRef = useRef(null);
 
+  // API calls - define before use
+  const fetchGist = useCallback(async gistId => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getGist(gistId, token, setError);
+      setGist(data);
+      setActiveFile(Object.keys(data.files)[0]);
+    } catch (err) {
+      logError('Failed to fetch gist', err);
+      setError('Failed to fetch gist. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  const checkIfGistIsShared = useCallback(async gistId => {
+    try {
+      const shared = await isGistShared(gistId);
+      setIsShared(shared);
+    } catch (err) {
+      logError('Failed to check if gist is shared', err);
+    }
+  }, []);
+
   // Fetch or initialize
   useEffect(() => {
     if (id) {
@@ -214,7 +239,7 @@ const GistEditor = () => {
     } else {
       setActiveFile('newfile.md');
     }
-  }, [id]);
+  }, [id, fetchGist, checkIfGistIsShared]);
 
   // Set active file when gist is loaded
   useEffect(() => {
@@ -256,32 +281,6 @@ const GistEditor = () => {
   const handleResizeStart = e => { 
     e.preventDefault(); 
     setIsResizing(true); 
-  };
-
-
-  // API calls
-  const fetchGist = async gistId => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await getGist(gistId, token, setError);
-      setGist(data);
-      setActiveFile(Object.keys(data.files)[0]);
-    } catch (err) {
-      logError('Failed to fetch gist', err);
-      setError('Failed to fetch gist. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const checkIfGistIsShared = async gistId => {
-    try {
-      const shared = await isGistShared(gistId);
-      setIsShared(shared);
-    } catch (err) {
-      logError('Failed to check if gist is shared', err);
-    }
   };
 
   // Form submission handler

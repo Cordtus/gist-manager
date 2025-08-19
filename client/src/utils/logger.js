@@ -11,26 +11,26 @@ export const ErrorCategory = {
 
 // Basic logging functions
 export const logInfo = (message, meta = {}) => {
-  console.info(message, meta);
+  console.info(message, meta); // eslint-disable-line no-console
 };
 
 export const logWarning = (message, meta = {}) => {
-  console.warn(message, meta);
+  console.warn(message, meta); // eslint-disable-line no-console
 };
 
 export const logError = (message, meta = {}) => {
-  console.error(message, meta);
+  console.error(message, meta); // eslint-disable-line no-console
 };
 
 export const logDebug = (message, meta = {}) => {
   if (process.env.NODE_ENV !== 'production') {
-    console.debug(message, meta);
+    console.debug(message, meta); // eslint-disable-line no-console
   }
 };
 
 // Error tracking
 export const trackError = (error, category = ErrorCategory.UNKNOWN, context = {}) => {
-  console.error(`[${category}] ${error.message}`, { stack: error.stack, ...context });
+  console.error(`[${category}] ${error.message}`, { stack: error.stack, ...context }); // eslint-disable-line no-console
   
   // Store in localStorage for debugging (dev only)
   if (process.env.NODE_ENV !== 'production') {

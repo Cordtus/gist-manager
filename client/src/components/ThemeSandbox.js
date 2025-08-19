@@ -1,5 +1,5 @@
 // src/components/ThemeSandbox.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 
 const ThemeSandbox = () => {
@@ -20,7 +20,7 @@ const ThemeSandbox = () => {
   });
 
   // Default colors for each theme
-  const defaultColors = {
+  const defaultColors = useMemo(() => ({
     light: {
       primary: '#3b82f6',
       primaryLight: '#60a5fa',
@@ -49,7 +49,7 @@ const ThemeSandbox = () => {
       warning: '#fbbf24',
       danger: '#f87171'
     }
-  };
+  }), []);
 
   // Initialize color inputs with current CSS variables when component mounts or theme changes
   useEffect(() => {
@@ -68,7 +68,7 @@ const ThemeSandbox = () => {
       warning: rootStyles.getPropertyValue('--color-warning').trim() || defaultColors[theme === 'custom' ? 'light' : theme].warning,
       danger: rootStyles.getPropertyValue('--color-danger').trim() || defaultColors[theme === 'custom' ? 'light' : theme].danger
     });
-  }, [theme]);
+  }, [theme, defaultColors]);
 
   const applyColors = () => {
     // Apply colors to CSS variables - this modifies the current theme
