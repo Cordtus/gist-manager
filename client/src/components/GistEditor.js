@@ -191,8 +191,7 @@ const GistEditor = () => {
   const [wrapText, setWrapText] = useState(true);
   const [splitRatio, setSplitRatio] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
-  const [isVerticalResizing, setIsVerticalResizing] = useState(false);
-  const [editorHeight, setEditorHeight] = useState(400);
+  const [editorHeight, setEditorHeight] = useState(typeof window !== 'undefined' ? window.innerHeight - 300 : 500);
   const [isShared, setIsShared] = useState(false);
   const [sharingLoading, setSharingLoading] = useState(false);
   const [activeFile, setActiveFile] = useState(null);
@@ -232,22 +231,16 @@ const GistEditor = () => {
         const rect = containerRef.current.getBoundingClientRect();
         const ratio = ((e.clientX - rect.left) / rect.width) * 100;
         setSplitRatio(Math.min(Math.max(ratio, 20), 80));
-      } else if (isVerticalResizing && containerRef.current) {
-        // Vertical resize
-        const rect = containerRef.current.getBoundingClientRect();
-        const newHeight = e.clientY - rect.top;
-        setEditorHeight(Math.max(200, Math.min(newHeight, 800))); // Between 200px and 800px
       }
     };
     
     const handleMouseUp = () => {
       setIsResizing(false);
-      setIsVerticalResizing(false);
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
     
-    if (isResizing || isVerticalResizing) {
+    if (isResizing) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       document.body.style.cursor = isResizing ? 'col-resize' : 'row-resize';
@@ -258,17 +251,13 @@ const GistEditor = () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizing, isVerticalResizing]);
+  }, [isResizing]);
 
   const handleResizeStart = e => { 
     e.preventDefault(); 
     setIsResizing(true); 
   };
 
-  const handleVerticalResizeStart = e => {
-    e.preventDefault();
-    setIsVerticalResizing(true);
-  };
 
   // API calls
   const fetchGist = async gistId => {
@@ -453,53 +442,35 @@ const GistEditor = () => {
 
   return (
     <form onSubmit={handleSubmit} className="gist-editor-form">
-      {/* Description & Settings */}
-      <div className="form-header">
-        <div className="flex flex-col gap-3">
-          <label htmlFor="description" className="text-sm font-medium text-primary">
-            Description (optional)
-          </label>
-          <input
-            type="text"
-            id="description"
-            value={gist.description}
-            onChange={handleDescriptionChange}
-            placeholder="Enter a description for your gist..."
-          />
-        </div>
-        <div className="flex flex-wrap gap-4 items-center">
-          <div className="flex items-center gap-2">
+      {/* Compact Header */}
+      <div className="form-header-compact">
+        <input
+          type="text"
+          id="description"
+          value={gist.description}
+          onChange={handleDescriptionChange}
+          placeholder="Gist description (optional)"
+          className="description-input"
+        />
+        <div className="header-options">
+          <label className="checkbox-compact">
             <input
               type="checkbox"
-              id="public"
               checked={gist.public}
               onChange={handlePublicChange}
             />
-            <label htmlFor="public">
-              Public gist
-            </label>
-          </div>
-          {id && (
-            <span className={`status-badge ${gist.public ? 'public' : 'private'}`}>
-              {gist.public ? 'Public' : 'Private'}
-            </span>
-          )}
+            <span>Public</span>
+          </label>
           {id && gist.public && (
-            <div className="flex items-center gap-2">
+            <label className="checkbox-compact">
               <input
                 type="checkbox"
-                id="share-community"
                 checked={isShared}
                 onChange={handleShareGist}
                 disabled={sharingLoading}
               />
-              <label htmlFor="share-community">
-                Share with Community
-              </label>
-              <span className="text-xs text-secondary">
-                (Visible in Community Gists)
-              </span>
-            </div>
+              <span>Community</span>
+            </label>
           )}
         </div>
       </div>
@@ -582,67 +553,52 @@ const GistEditor = () => {
 
       {/* Editor & Preview */}
       {activeFile && (
-        <div ref={containerRef} className={`editor-container ${previewMode === 'split' ? 'split-view' : ''}`}>
-          <textarea
-            ref={editorRef}
-            value={currentFileContent}
-            onChange={e => handleFileChange(activeFile, e.target.value)}
-            onScroll={syncScroll}
-            className={`editor ${wrapText ? 'wrap' : 'no-wrap'}`}
-            style={previewMode === 'split' 
-              ? { width: `${splitRatio}%`, height: `${editorHeight}px` } 
-              : { width: '100%', height: `${editorHeight}px` }
-            }
-            placeholder="Enter file content here..."
-            aria-label={`Editor for ${activeFile}`}
-          />
+        <div 
+          ref={containerRef} 
+          className={`editor-container ${previewMode === 'split' ? 'split-view' : ''}`}
+          style={{ height: `${editorHeight}px` }}
+        >
+          <div 
+            className="editor-panel"
+            style={{ width: previewMode === 'split' ? `${splitRatio}%` : '100%' }}
+          >
+            <textarea
+              ref={editorRef}
+              value={currentFileContent}
+              onChange={e => handleFileChange(activeFile, e.target.value)}
+              onScroll={syncScroll}
+              className={`editor ${wrapText ? 'wrap' : 'no-wrap'}`}
+              placeholder="Enter file content here..."
+              aria-label={`Editor for ${activeFile}`}
+            />
+          </div>
           {previewMode === 'split' && (
             <>
               <div
                 ref={resizeHandleRef}
                 className={`resize-handle ${isResizing ? 'active' : ''}`}
                 onMouseDown={handleResizeStart}
-                style={{ left: `${splitRatio}%` }}
                 aria-hidden="true"
               />
               <div
                 ref={previewRef}
-                className="preview"
-                onScroll={syncScroll}
-                style={{ width: `${100 - splitRatio}%`, height: `${editorHeight}px` }}
-                aria-label="Preview pane"
+                className="preview-panel"
+                style={{ width: `${100 - splitRatio}%` }}
               >
-                {isMarkdownFile(activeFile)
-                  ? <MarkdownPreview content={currentFileContent} />
-                  : <SyntaxHighlighter language={getFileLanguage(activeFile)} style={tomorrow} className="syntax-highlighter">
-                      {currentFileContent}
-                    </SyntaxHighlighter>
-                }
+                <div className="preview" onScroll={syncScroll}>
+                  {isMarkdownFile(activeFile)
+                    ? <MarkdownPreview content={currentFileContent} />
+                    : <SyntaxHighlighter language={getFileLanguage(activeFile)} style={tomorrow} className="syntax-highlighter">
+                        {currentFileContent}
+                      </SyntaxHighlighter>
+                  }
+                </div>
               </div>
             </>
           )}
-          {/* Vertical resize handle */}
-          <div
-            className={`vertical-resize-handle ${isVerticalResizing ? 'active' : ''}`}
-            onMouseDown={handleVerticalResizeStart}
-            aria-hidden="true"
-          />
         </div>
       )}
 
-      {/* Keyboard Shortcuts */}
-      <div className="shortcuts-section">
-        <details>
-          <summary>Keyboard Shortcuts</summary>
-          <div className="shortcuts-grid">
-            <div><strong>Ctrl+B</strong>: Bold</div>
-            <div><strong>Ctrl+I</strong>: Italic</div>
-            <div><strong>Ctrl+K</strong>: Link</div>
-            <div><strong>Ctrl+`</strong>: Inline Code</div>
-            <div><strong>Ctrl+/</strong>: Toggle Preview</div>
-          </div>
-        </details>
-      </div>
 
     </form>
   );
