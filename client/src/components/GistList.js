@@ -172,7 +172,7 @@ const GistList = () => {
     setCurrentPage(1); // Reset to first page after filtering
   }, [searchIndex]);
 
-// Fetch gists from API
+// Fetch gists from API with progressive loading
 const fetchGists = useCallback(async () => {
   if (hasDataFetchedRef.current) {
     return;
@@ -184,13 +184,15 @@ const fetchGists = useCallback(async () => {
 
     const gistsData = await getGists(token, setError, user?.id);
     if (Array.isArray(gistsData)) {
+      // Set gists immediately so they appear as they load
       setGists(gistsData);
       buildSearchIndex(gistsData);
-      applyFiltersAndSort(gistsData, searchTerm, filterOptions, sortOption, sortDirection);
+      // Apply initial sort without filters
+      applyFiltersAndSort(gistsData, '', {}, 'updated_at', 'desc');
     }
   } catch (error) {
     logError('Error fetching gists', error);
-    setError('Failed to fetch gists.'); // Removed the trailing 'r.'
+    setError('Failed to fetch gists.');
   } finally {
     // Always set this, so it won't fetch again
     hasDataFetchedRef.current = true;
@@ -200,11 +202,7 @@ const fetchGists = useCallback(async () => {
   token,
   user,
   buildSearchIndex,
-  applyFiltersAndSort,
-  searchTerm,
-  filterOptions,
-  sortOption,
-  sortDirection
+  applyFiltersAndSort
 ]);
 
 
@@ -364,7 +362,12 @@ useEffect(() => {
   }
 
   if (loading && gists.length === 0) {
-    return <Spinner />;
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <Spinner />
+        <p className="mt-4 text-secondary">Loading your gists...</p>
+      </div>
+    );
   }
 
   if (error && gists.length === 0) {
@@ -558,10 +561,15 @@ useEffect(() => {
 
 {/* Gists List */}
       <div className="card overflow-hidden p-6">
-        {loading && gists.length > 0 && (
-          <div className="py-4 text-center text-secondary">
-            <Spinner />
-            <p className="mt-2">Updating gists...</p>
+        {loading && (
+          <div className="py-4 text-center text-secondary animate-pulse">
+            <div className="inline-flex items-center gap-2">
+              <svg className="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Loading gists...</span>
+            </div>
           </div>
         )}
         
