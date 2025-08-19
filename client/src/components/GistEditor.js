@@ -24,14 +24,16 @@ const MarkdownToolbar = ({ onInsert, activeFile }) => {
         {
           key: 'bold',
           icon: <strong>B</strong>,
-          title: 'Bold (Ctrl+B)',
+          title: 'Bold text',
+          tooltip: 'Make selected text bold. Wrap text with ** on each side. Example: **bold text**',
           action: () => onInsert('**', '**'),
           shortcut: 'Ctrl+B'
         },
         {
           key: 'italic',
           icon: <em>I</em>,
-          title: 'Italic (Ctrl+I)',
+          title: 'Italic text',
+          tooltip: 'Make selected text italic. Wrap text with * on each side. Example: *italic text*',
           action: () => onInsert('*', '*'),
           shortcut: 'Ctrl+I'
         },
@@ -39,23 +41,71 @@ const MarkdownToolbar = ({ onInsert, activeFile }) => {
           key: 'strikethrough',
           icon: <span style={{ textDecoration: 'line-through' }}>S</span>,
           title: 'Strikethrough',
+          tooltip: 'Strike through selected text. Wrap with ~~ on each side. Example: ~~deleted text~~',
           action: () => onInsert('~~', '~~')
         },
         {
           key: 'code',
           icon: <code>{`<>`}</code>,
-          title: 'Inline Code (Ctrl+`)',
+          title: 'Inline code',
+          tooltip: 'Format as inline code. Wrap with backticks. Example: `code`',
           action: () => onInsert('`', '`'),
           shortcut: 'Ctrl+`'
+        },
+        {
+          key: 'highlight',
+          icon: <mark style={{ padding: '0 2px' }}>H</mark>,
+          title: 'Highlight',
+          tooltip: 'Highlight selected text. Wrap with == on each side. Example: ==highlighted==',
+          action: () => onInsert('==', '==')
+        },
+        {
+          key: 'subscript',
+          icon: <span>X<sub>2</sub></span>,
+          title: 'Subscript',
+          tooltip: 'Format as subscript. Wrap with ~ on each side. Example: H~2~O',
+          action: () => onInsert('~', '~')
+        },
+        {
+          key: 'superscript',
+          icon: <span>X<sup>2</sup></span>,
+          title: 'Superscript',
+          tooltip: 'Format as superscript. Wrap with ^ on each side. Example: X^2^',
+          action: () => onInsert('^', '^')
         }
       ]
     },
     {
       group: 'Headings',
       items: [
-        { key: 'h1', icon: 'H1', title: 'Heading 1', action: () => onInsert('# ', '\n') },
-        { key: 'h2', icon: 'H2', title: 'Heading 2', action: () => onInsert('## ', '\n') },
-        { key: 'h3', icon: 'H3', title: 'Heading 3', action: () => onInsert('### ', '\n') }
+        { 
+          key: 'h1', 
+          icon: 'H1', 
+          title: 'Heading 1', 
+          tooltip: 'Largest heading. Use # at the start of a line. Example: # Main Title',
+          action: () => onInsert('# ', '\n') 
+        },
+        { 
+          key: 'h2', 
+          icon: 'H2', 
+          title: 'Heading 2', 
+          tooltip: 'Section heading. Use ## at the start of a line. Example: ## Section Title',
+          action: () => onInsert('## ', '\n') 
+        },
+        { 
+          key: 'h3', 
+          icon: 'H3', 
+          title: 'Heading 3', 
+          tooltip: 'Subsection heading. Use ### at the start of a line. Example: ### Subsection',
+          action: () => onInsert('### ', '\n') 
+        },
+        { 
+          key: 'h4', 
+          icon: 'H4', 
+          title: 'Heading 4', 
+          tooltip: 'Sub-subsection heading. Use #### at the start of a line.',
+          action: () => onInsert('#### ', '\n') 
+        }
       ]
     },
     {
@@ -64,7 +114,8 @@ const MarkdownToolbar = ({ onInsert, activeFile }) => {
         {
           key: 'link',
           icon: '🔗',
-          title: 'Link (Ctrl+K)',
+          title: 'Link',
+          tooltip: 'Insert a hyperlink. Format: [link text](URL). Example: [GitHub](https://github.com)',
           action: () => onInsert('[', '](https://)'),
           shortcut: 'Ctrl+K'
         },
@@ -72,7 +123,22 @@ const MarkdownToolbar = ({ onInsert, activeFile }) => {
           key: 'image',
           icon: '🖼️',
           title: 'Image',
+          tooltip: 'Embed an image. Format: ![alt text](image URL). Example: ![Logo](https://example.com/logo.png)',
           action: () => onInsert('![', '](https://)')
+        },
+        {
+          key: 'video',
+          icon: '📹',
+          title: 'Video/HTML',
+          tooltip: 'Embed video or HTML content. You can use HTML tags directly in markdown.',
+          action: () => onInsert('<video width="320" height="240" controls>\n  <source src="', '" type="video/mp4">\n</video>')
+        },
+        {
+          key: 'footnote',
+          icon: <span>[^1]</span>,
+          title: 'Footnote',
+          tooltip: 'Add a footnote reference. Example: [^1] then define it as [^1]: Footnote text',
+          action: () => onInsert('[^', ']')
         }
       ]
     },
@@ -83,19 +149,29 @@ const MarkdownToolbar = ({ onInsert, activeFile }) => {
           key: 'ul',
           icon: '•',
           title: 'Bullet List',
+          tooltip: 'Create an unordered list. Use - or * at the start of each line. Indent for nested lists.',
           action: () => onInsert('- ', '\n- ')
         },
         {
           key: 'ol',
           icon: '1.',
           title: 'Numbered List',
+          tooltip: 'Create an ordered list. Use 1. 2. 3. etc. at the start of each line.',
           action: () => onInsert('1. ', '\n2. ')
         },
         {
           key: 'task',
           icon: '☑',
           title: 'Task List',
+          tooltip: 'Create a checklist. Use - [ ] for unchecked, - [x] for checked items.',
           action: () => onInsert('- [ ] ', '\n- [ ] ')
+        },
+        {
+          key: 'indent',
+          icon: '→',
+          title: 'Indent',
+          tooltip: 'Indent list item or create nested list. Add 2 spaces before the list marker.',
+          action: () => onInsert('  ', '')
         }
       ]
     },
@@ -106,21 +182,24 @@ const MarkdownToolbar = ({ onInsert, activeFile }) => {
           key: 'quote',
           icon: '❝',
           title: 'Blockquote',
+          tooltip: 'Quote text. Use > at the start of lines. Use >> for nested quotes.',
           action: () => onInsert('> ', '\n')
         },
         {
           key: 'codeblock',
           icon: '{ }',
           title: 'Code Block',
-          action: () => onInsert('```', '```')
+          tooltip: 'Format code with syntax highlighting. Use ``` followed by language name (js, python, etc).',
+          action: () => onInsert('```javascript\n', '\n```')
         },
         {
           key: 'table',
           icon: '⊞',
           title: 'Table',
+          tooltip: 'Insert a table. Use | to separate columns, --- for headers. Align with :--- :---: ---:',
           action: () =>
             onInsert(
-              '| Header 1 | Header 2 |\n| --- | --- |\n| Cell 1 | Cell 2 |',
+              '| Header 1 | Header 2 | Header 3 |\n| :--- | :---: | ---: |\n| Left | Center | Right |\n| Cell | Cell | Cell |',
               ''
             )
         },
@@ -128,22 +207,59 @@ const MarkdownToolbar = ({ onInsert, activeFile }) => {
           key: 'hr',
           icon: '─',
           title: 'Horizontal Rule',
+          tooltip: 'Insert a horizontal divider. Use --- or *** on its own line.',
           action: () => onInsert('\n---\n', '')
+        },
+        {
+          key: 'math',
+          icon: '∑',
+          title: 'Math Formula',
+          tooltip: 'Insert LaTeX math formula. Use $ for inline, $$ for block math. Example: $x^2 + y^2 = z^2$',
+          action: () => onInsert('$$\n', '\n$$')
         }
       ]
     },
     {
-      group: 'Custom',
+      group: 'Advanced',
       items: [
         {
           key: 'details',
           icon: '▶️',
-          title: 'Collapsible Details Block',
+          title: 'Collapsible Section',
+          tooltip: 'Create an expandable/collapsible section using <details> and <summary> tags.',
           action: () =>
             onInsert(
-              '<details>\n<summary>Click to expand</summary>\n\n```',
-              '```\n\n</details>'
+              '<details>\n<summary>Click to expand</summary>\n\n',
+              '\n\n</details>'
             )
+        },
+        {
+          key: 'comment',
+          icon: '<!--',
+          title: 'Comment',
+          tooltip: 'Add a hidden comment that won\'t appear in the rendered output.',
+          action: () => onInsert('<!-- ', ' -->')
+        },
+        {
+          key: 'emoji',
+          icon: '😊',
+          title: 'Emoji',
+          tooltip: 'Insert emoji using :shortcode: format. Example: :smile: :heart: :thumbsup:',
+          action: () => onInsert(':', ':')
+        },
+        {
+          key: 'kbd',
+          icon: '⌨️',
+          title: 'Keyboard Key',
+          tooltip: 'Show keyboard keys. Example: <kbd>Ctrl</kbd>+<kbd>C</kbd>',
+          action: () => onInsert('<kbd>', '</kbd>')
+        },
+        {
+          key: 'toc',
+          icon: '📑',
+          title: 'Table of Contents',
+          tooltip: 'Insert a placeholder for table of contents. Use [[TOC]] or generate from headings.',
+          action: () => onInsert('\n## Table of Contents\n\n', '\n')
         }
       ]
     }
@@ -160,7 +276,7 @@ const MarkdownToolbar = ({ onInsert, activeFile }) => {
                 type="button"
                 onClick={item.action}
                 className="toolbar-button"
-                title={`${item.title}${item.shortcut ? ` (${item.shortcut})` : ''}`}
+                title={item.tooltip || `${item.title}${item.shortcut ? ` (${item.shortcut})` : ''}`}
                 disabled={!activeFile}
               >
                 {item.icon}
