@@ -1,0 +1,32 @@
+[Unit]
+Description=Update Gist Manager code and rebuild
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/gist-manager
+User=root
+Environment=HOME=/root
+ExecStart=/bin/bash -c "\
+  git fetch origin main && \
+  LOCAL=$(git rev-parse @) && \
+  REMOTE=$(git rev-parse @{u}) && \
+  if [ \"$LOCAL\" = \"$REMOTE\" ]; then \
+    echo 'No new commits; skipping update'; \
+    exit 0; \
+  fi && \
+  echo 'New commits detected, updating...' && \
+  git pull origin main && \
+  cd client && \
+  yarn install && \
+  REACT_APP_BACKEND_URL='' yarn build && \
+  rm -rf ../server/build && \
+  cp -r build ../server/ && \
+  cd ../server && \
+  yarn install --production && \
+  chown -R gistui:gistui /opt/gist-manager && \
+  systemctl restart gist-manager.service && \
+  echo 'Update complete, service restarted'"
+
+StandardOutput=journal
+StandardError=journal
