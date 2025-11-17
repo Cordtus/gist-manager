@@ -1,10 +1,9 @@
 /* markdownPreview.css - Consolidated markdown preview styles */
-@import './theme.css';
 
 .markdown-preview {
-  color: var(--color-text-primary);
+  color: hsl(var(--foreground));
   line-height: 1.6;
-  font-family: var(--font-sans);
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   max-width: none;
   padding: 0;
 }
@@ -19,16 +18,16 @@
   position: relative;
   margin: 1.5rem 0 1rem 0;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: hsl(var(--foreground));
   scroll-margin-top: 2rem;
 }
 
-.markdown-preview h1 { font-size: 2rem; border-bottom: 1px solid var(--color-border); padding-bottom: 0.5rem; }
-.markdown-preview h2 { font-size: 1.75rem; border-bottom: 1px solid var(--color-border); padding-bottom: 0.3rem; }
+.markdown-preview h1 { font-size: 2rem; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 0.5rem; }
+.markdown-preview h2 { font-size: 1.75rem; border-bottom: 1px solid hsl(var(--border)); padding-bottom: 0.3rem; }
 .markdown-preview h3 { font-size: 1.5rem; }
 .markdown-preview h4 { font-size: 1.25rem; }
 .markdown-preview h5 { font-size: 1rem; }
-.markdown-preview h6 { font-size: 0.875rem; color: var(--color-text-secondary); }
+.markdown-preview h6 { font-size: 0.875rem; color: hsl(var(--muted-foreground)); }
 
 /* Heading anchor links - consolidated from markdownExtras */
 .markdown-preview h1[id]::before,
@@ -44,7 +43,7 @@
   transform: translateY(-50%);
   opacity: 0;
   transition: opacity 0.2s ease;
-  color: var(--color-primary);
+  color: hsl(var(--primary));
   font-weight: normal;
   font-size: 0.8em;
 }
@@ -66,7 +65,7 @@
 
 .markdown-preview strong {
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: hsl(var(--foreground));
 }
 
 .markdown-preview em {
@@ -80,18 +79,18 @@
 
 /* Links */
 .markdown-preview a {
-  color: var(--color-primary);
+  color: hsl(var(--primary));
   text-decoration: none;
   border-bottom: 1px solid transparent;
   transition: all 0.2s ease;
 }
 
 .markdown-preview a:hover {
-  border-bottom-color: var(--color-primary);
+  border-bottom-color: hsl(var(--primary));
 }
 
 .markdown-preview a:visited {
-  color: var(--color-primary-dark);
+  color: hsl(var(--primary));
 }
 
 /* Lists */
@@ -123,26 +122,26 @@
   margin-right: 0.5rem;
   margin-top: 0.1rem;
   vertical-align: middle;
-  accent-color: var(--color-primary);
+  accent-color: hsl(var(--primary));
 }
 
 /* Code */
 .markdown-preview code {
-  background: var(--color-surface-variant);
+  background: hsl(var(--muted));
   padding: 0.2rem 0.4rem;
   border-radius: 0.25rem;
-  font-family: var(--font-mono);
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace;
   font-size: 0.85em;
-  border: 1px solid var(--color-border);
+  border: 1px solid hsl(var(--border));
 }
 
 .markdown-preview pre {
-  background: var(--color-surface-variant);
+  background: hsl(var(--muted));
   padding: 1rem;
   border-radius: 0.5rem;
   overflow-x: auto;
   margin: 1.5rem 0;
-  border: 1px solid var(--color-border);
+  border: 1px solid hsl(var(--border));
   position: relative;
 }
 
@@ -151,7 +150,7 @@
   padding: 0;
   border: none;
   font-size: 0.875rem;
-  color: var(--color-text-primary);
+  color: hsl(var(--foreground));
 }
 
 /* Tables */
@@ -159,7 +158,7 @@
   width: 100%;
   border-collapse: collapse;
   margin: 1.5rem 0;
-  border: 1px solid var(--color-border);
+  border: 1px solid hsl(var(--border));
   border-radius: 0.5rem;
   overflow: hidden;
 }
@@ -168,38 +167,38 @@
   overflow-x: auto;
   margin: 1.5rem 0;
   border-radius: 0.5rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid hsl(var(--border));
 }
 
 .markdown-preview th,
 .markdown-preview td {
-  border: 1px solid var(--color-border);
+  border: 1px solid hsl(var(--border));
   padding: 0.75rem;
   text-align: left;
 }
 
 .markdown-preview th {
-  background: var(--color-surface-variant);
+  background: hsl(var(--muted));
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: hsl(var(--foreground));
 }
 
 .markdown-preview tbody tr:nth-child(even) {
-  background: var(--color-surface-variant);
+  background: hsl(var(--muted));
 }
 
 .markdown-preview tbody tr:hover {
-  background: var(--color-surface-secondary);
+  background: hsl(var(--accent));
 }
 
 /* Blockquotes */
 .markdown-preview blockquote {
-  border-left: 4px solid var(--color-primary);
+  border-left: 4px solid hsl(var(--primary));
   padding: 1rem 1.5rem;
   margin: 1.5rem 0;
-  background: var(--color-surface-variant);
+  background: hsl(var(--muted));
   border-radius: 0 0.375rem 0.375rem 0;
-  color: var(--color-text-secondary);
+  color: hsl(var(--muted-foreground));
   position: relative;
 }
 
@@ -207,7 +206,7 @@
 .markdown-preview hr {
   border: none;
   height: 2px;
-  background: linear-gradient(to right, transparent, var(--color-border), transparent);
+  background: linear-gradient(to right, transparent, hsl(var(--border)), transparent);
   margin: 2rem 0;
 }
 
@@ -218,13 +217,13 @@
   display: block;
   border-radius: 0.375rem;
   margin: 1.5rem 0;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border: 1px solid hsl(var(--border));
 }
 
 /* Collapsible details/summary */
 .markdown-preview details {
-  border: 1px solid var(--color-border);
+  border: 1px solid hsl(var(--border));
   border-radius: 0.5rem;
   margin: 1.5rem 0;
   overflow: hidden;
@@ -232,7 +231,7 @@
 
 .markdown-preview summary {
   padding: 1rem;
-  background: var(--color-surface-variant);
+  background: hsl(var(--muted));
   cursor: pointer;
   user-select: none;
   list-style: none;
@@ -244,7 +243,7 @@
 }
 
 .markdown-preview summary:hover {
-  background: var(--color-surface-secondary);
+  background: hsl(var(--accent));
 }
 
 .markdown-preview summary::marker {
@@ -265,18 +264,18 @@
 
 .markdown-preview details > *:not(summary) {
   padding: 1rem;
-  background: var(--color-surface);
+  background: hsl(var(--card));
 }
 
 /* Keyboard shortcuts */
 .markdown-preview kbd {
-  background: var(--color-surface-variant);
-  border: 1px solid var(--color-border);
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
   border-radius: 0.25rem;
   padding: 0.1rem 0.4rem;
-  font-family: var(--font-mono);
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace;
   font-size: 0.8em;
-  box-shadow: inset 0 -1px 0 var(--color-border);
+  box-shadow: inset 0 -1px 0 hsl(var(--border));
 }
 
 /* Footnotes */
@@ -288,7 +287,7 @@
 .markdown-preview .footnotes {
   margin-top: 2rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid hsl(var(--border));
   font-size: 0.875rem;
 }
 

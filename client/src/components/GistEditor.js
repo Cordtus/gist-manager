@@ -10,6 +10,7 @@ import { logError } from '../utils/logger';
 import MarkdownPreview from './markdown/MarkdownPreview';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './ui/resizable';
 import '../styles/gistEditor.css';
 import '../styles/markdownPreview.css';
 
@@ -305,8 +306,6 @@ const GistEditor = () => {
   const [error, setError] = useState(null);
   const [previewMode, setPreviewMode] = useState('split'); // 'editor', 'split', 'preview'
   const [wrapText, setWrapText] = useState(true);
-  const [splitRatio, setSplitRatio] = useState(50);
-  const [isResizing, setIsResizing] = useState(false);
   const editorHeight = typeof window !== 'undefined' ? window.innerHeight - 300 : 500;
   const [isShared, setIsShared] = useState(false);
   const [sharingLoading, setSharingLoading] = useState(false);
@@ -319,8 +318,6 @@ const GistEditor = () => {
 
   const editorRef = useRef(null);
   const previewRef = useRef(null);
-  const containerRef = useRef(null);
-  const resizeHandleRef = useRef(null);
 
   // API calls - define before use
   const fetchGist = useCallback(async gistId => {
@@ -364,40 +361,6 @@ const GistEditor = () => {
     }
   }, [gist, activeFile]);
 
-  // Resize handlers
-  useEffect(() => {
-    const handleMouseMove = e => {
-      if (isResizing && containerRef.current) {
-        // Horizontal resize
-        const rect = containerRef.current.getBoundingClientRect();
-        const ratio = ((e.clientX - rect.left) / rect.width) * 100;
-        setSplitRatio(Math.min(Math.max(ratio, 20), 80));
-      }
-    };
-    
-    const handleMouseUp = () => {
-      setIsResizing(false);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-    
-    if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = isResizing ? 'col-resize' : 'row-resize';
-      document.body.style.userSelect = 'none';
-    }
-    
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isResizing]);
-
-  const handleResizeStart = e => { 
-    e.preventDefault(); 
-    setIsResizing(true); 
-  };
 
   // Form submission handler
   const handleSubmit = async e => {
@@ -490,13 +453,13 @@ const GistEditor = () => {
     if (previewMode !== 'split') return;
     const src = e.target;
     const dst = src === editorRef.current ? previewRef.current : editorRef.current;
-    if (dst && !isResizing) {
+    if (dst) {
       window.requestAnimationFrame(() => {
         const ratio = src.scrollTop / ((src.scrollHeight - src.clientHeight) || 1);
         dst.scrollTop = ratio * (dst.scrollHeight - dst.clientHeight);
       });
     }
-  }, [previewMode, isResizing]);
+  }, [previewMode]);
 
   // Text insertion helper for toolbar actions
   const insertText = useCallback((before, after = '') => {
@@ -668,48 +631,51 @@ const GistEditor = () => {
 
       {/* Editor & Preview */}
       {activeFile && (
-        <div 
-          ref={containerRef} 
+        <div
           className={`editor-container ${previewMode === 'split' ? 'split-view' : ''}`}
           style={{ height: `${editorHeight}px` }}
         >
-          <div 
-            className="editor-panel"
-            style={{ width: previewMode === 'split' ? `${splitRatio}%` : '100%' }}
-          >
-            <textarea
-              ref={editorRef}
-              value={currentFileContent}
-              onChange={e => handleFileChange(activeFile, e.target.value)}
-              onScroll={syncScroll}
-              className={`editor ${wrapText ? 'wrap' : 'no-wrap'}`}
-              placeholder="Enter file content here..."
-              aria-label={`Editor for ${activeFile}`}
-            />
-          </div>
-          {previewMode === 'split' && (
-            <>
-              <div
-                ref={resizeHandleRef}
-                className={`resize-handle ${isResizing ? 'active' : ''}`}
-                onMouseDown={handleResizeStart}
-                aria-hidden="true"
-              />
-              <div
-                ref={previewRef}
-                className="preview-panel"
-                style={{ width: `${100 - splitRatio}%` }}
-              >
-                <div className="preview" onScroll={syncScroll}>
-                  {isMarkdownFile(activeFile)
-                    ? (currentFileContent ? <MarkdownPreview content={currentFileContent} /> : <div>Enter some markdown content...</div>)
-                    : <SyntaxHighlighter language={getFileLanguage(activeFile)} style={tomorrow} className="syntax-highlighter">
-                        {currentFileContent}
-                      </SyntaxHighlighter>
-                  }
+          {previewMode === 'split' ? (
+            <ResizablePanelGroup direction="horizontal" className="h-full">
+              <ResizablePanel defaultSize={50} minSize={20}>
+                <div className="editor-panel h-full">
+                  <textarea
+                    ref={editorRef}
+                    value={currentFileContent}
+                    onChange={e => handleFileChange(activeFile, e.target.value)}
+                    onScroll={syncScroll}
+                    className={`editor ${wrapText ? 'wrap' : 'no-wrap'}`}
+                    placeholder="Enter file content here..."
+                    aria-label={`Editor for ${activeFile}`}
+                  />
                 </div>
-              </div>
-            </>
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={50} minSize={20}>
+                <div ref={previewRef} className="preview-panel h-full">
+                  <div className="preview" onScroll={syncScroll}>
+                    {isMarkdownFile(activeFile)
+                      ? (currentFileContent ? <MarkdownPreview content={currentFileContent} /> : <div>Enter some markdown content...</div>)
+                      : <SyntaxHighlighter language={getFileLanguage(activeFile)} style={tomorrow} className="syntax-highlighter">
+                          {currentFileContent}
+                        </SyntaxHighlighter>
+                    }
+                  </div>
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          ) : (
+            <div className="editor-panel" style={{ width: '100%', height: '100%' }}>
+              <textarea
+                ref={editorRef}
+                value={currentFileContent}
+                onChange={e => handleFileChange(activeFile, e.target.value)}
+                onScroll={syncScroll}
+                className={`editor ${wrapText ? 'wrap' : 'no-wrap'}`}
+                placeholder="Enter file content here..."
+                aria-label={`Editor for ${activeFile}`}
+              />
+            </div>
           )}
         </div>
       )}
