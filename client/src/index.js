@@ -1,6 +1,4 @@
 // index.js
-import './styles/theme.css';
-import './styles/modern-theme.css';
 import './styles/index.css';
 import './styles/gistEditor.css';
 import './styles/markdownPreview.css';
