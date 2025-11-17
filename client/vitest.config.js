@@ -17,8 +17,8 @@ export default defineConfig({
         'src/test/',
         '**/*.test.{js,jsx}',
         '**/*.spec.{js,jsx}',
-      ],
-    },
+      ]
+    }
   },
   resolve: {
     alias: {
