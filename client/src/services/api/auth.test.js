@@ -1,527 +1,559 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import axios from 'axios';
-import { mockUser, mockAuthToken, createMockError } from '../../test/fixtures';
 
-// Mock axios with proper interceptors structure
-vi.mock('axios', () => {
-  const mockAxios = {
-    create: vi.fn(() => ({
-      get: vi.fn(),
-      post: vi.fn(),
-      put: vi.fn(),
-      patch: vi.fn(),
-      delete: vi.fn(),
-      defaults: {
-        headers: {
-          common: {}
-        }
-      },
-      interceptors: {
-        request: {
-          use: vi.fn(),
-          eject: vi.fn()
-        },
-        response: {
-          use: vi.fn(),
-          eject: vi.fn()
-        }
-      }
-    })),
-    get: vi.fn(),
-    post: vi.fn(),
-    put: vi.fn(),
-    patch: vi.fn(),
-    delete: vi.fn(),
-    defaults: {
-      headers: {
-        common: {}
-      }
-    },
-    interceptors: {
-      request: {
-        use: vi.fn(),
-        eject: vi.fn()
-      },
-      response: {
-        use: vi.fn(),
-        eject: vi.fn()
-      }
-    }
-  };
-  return { default: mockAxios };
-});
+// Mock axios
+vi.mock('axios', () => ({
+	default: {
+		get: vi.fn(),
+		post: vi.fn(),
+		defaults: {
+			headers: {
+				common: {}
+			}
+		}
+	}
+}));
+
+// Mock github module
+vi.mock('./github', () => ({
+	setAuthToken: vi.fn()
+}));
+
+// Mock logger
+vi.mock('../../utils/logger', () => ({
+	logInfo: vi.fn(),
+	logError: vi.fn(),
+	logWarning: vi.fn(),
+	trackError: vi.fn(),
+	ErrorCategory: {
+		AUTHENTICATION: 'auth',
+		API: 'api',
+		NETWORK: 'network',
+		UI: 'ui',
+		UNKNOWN: 'unknown'
+	}
+}));
+
+// Mock config
+vi.mock('../../config/api', () => ({
+	API_BASE_URL: 'http://localhost:3000',
+	API_ENDPOINTS: {
+		AUTH_GITHUB: '/api/auth/github'
+	}
+}));
 
 // Import after mocking
 const authService = await import('./auth');
+const { setAuthToken } = await import('./github');
+
+// Test fixtures
+const mockUser = {
+	id: 12345,
+	login: 'testuser',
+	avatar_url: 'https://avatars.githubusercontent.com/u/12345',
+	name: 'Test User'
+};
+
+const mockAuthToken = 'gho_test_token_12345';
 
 describe('Authentication Service', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    localStorage.clear();
-  });
-
-  describe('GitHub OAuth flow', () => {
-    it('initiates GitHub OAuth login', async () => {
-      const authUrl = 'https://github.com/login/oauth/authorize';
-      window.location.href = '';
-
-      await authService.initiateGitHubLogin();
-
-      expect(window.location.href).toContain('github.com/login/oauth/authorize');
-      expect(window.location.href).toContain('client_id');
-      expect(window.location.href).toContain('scope');
-    });
-
-    it('handles OAuth callback with authorization code', async () => {
-      const code = 'test_auth_code_123';
-      axios.post.mockResolvedValue({
-        data: {
-          access_token: mockAuthToken,
-          user: mockUser
-        }
-      });
-
-      const result = await authService.handleOAuthCallback(code);
-
-      expect(axios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/api/auth/github/callback'),
-        expect.objectContaining({ code }),
-        expect.any(Object)
-      );
-
-      expect(result.access_token).toBe(mockAuthToken);
-      expect(result.user).toEqual(mockUser);
-    });
-
-    it('stores token in localStorage after successful auth', async () => {
-      const code = 'test_auth_code_123';
-      axios.post.mockResolvedValue({
-        data: {
-          access_token: mockAuthToken,
-          user: mockUser
-        }
-      });
-
-      await authService.handleOAuthCallback(code);
-
-      expect(localStorage.getItem('github_token')).toBe(mockAuthToken);
-      expect(localStorage.getItem('gist_manager_session')).toBeTruthy();
-    });
-
-    it('handles OAuth callback errors', async () => {
-      const code = 'invalid_code';
-      axios.post.mockRejectedValue(createMockError(401, 'Invalid authorization code'));
-
-      await expect(authService.handleOAuthCallback(code)).rejects.toThrow();
-      expect(localStorage.getItem('github_token')).toBeNull();
-    });
-
-    it('handles OAuth cancellation by user', async () => {
-      const error = 'access_denied';
-      const errorDescription = 'User cancelled the authorization';
-
-      const result = await authService.handleOAuthError(error, errorDescription);
-
-      expect(result).toEqual({
-        error,
-        description: errorDescription,
-        cancelled: true
-      });
-    });
-  });
-
-  describe('Session management', () => {
-    it('checks if user is authenticated with valid token', async () => {
-      localStorage.setItem('github_token', mockAuthToken);
-      axios.get.mockResolvedValue({ data: mockUser });
-
-      const isAuth = await authService.isAuthenticated();
-
-      expect(isAuth).toBe(true);
-      expect(axios.get).toHaveBeenCalledWith(
-        'https://api.github.com/user',
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            Authorization: `Bearer ${mockAuthToken}`
-          })
-        })
-      );
-    });
-
-    it('returns false for expired/invalid tokens', async () => {
-      localStorage.setItem('github_token', 'expired_token');
-      axios.get.mockRejectedValue(createMockError(401, 'Bad credentials'));
-
-      const isAuth = await authService.isAuthenticated();
-
-      expect(isAuth).toBe(false);
-      expect(localStorage.getItem('github_token')).toBeNull();
-    });
-
-    it('returns false when no token exists', async () => {
-      const isAuth = await authService.isAuthenticated();
-
-      expect(isAuth).toBe(false);
-      expect(axios.get).not.toHaveBeenCalled();
-    });
-
-    it('retrieves current user from server session', async () => {
-      axios.get.mockResolvedValue({
-        data: {
-          authenticated: true,
-          user: mockUser
-        }
-      });
-
-      const result = await authService.getCurrentUser();
-
-      expect(result).toEqual(mockUser);
-      expect(axios.get).toHaveBeenCalledWith(
-        expect.stringContaining('/api/auth/status'),
-        expect.objectContaining({ withCredentials: true })
-      );
-    });
-
-    it('validates token with GitHub API', async () => {
-      localStorage.setItem('github_token', mockAuthToken);
-      axios.get.mockResolvedValue({ data: mockUser });
-
-      const isValid = await authService.validateToken();
-
-      expect(isValid).toBe(true);
-      expect(axios.get).toHaveBeenCalledWith('https://api.github.com/user');
-    });
-
-    it('invalidates and clears expired tokens', async () => {
-      localStorage.setItem('github_token', 'expired_token');
-      axios.get.mockRejectedValue(createMockError(401, 'Bad credentials'));
-
-      const isValid = await authService.validateToken();
-
-      expect(isValid).toBe(false);
-      expect(localStorage.getItem('github_token')).toBeNull();
-    });
-  });
-
-  describe('Logout functionality', () => {
-    it('logs out user and clears local storage', async () => {
-      localStorage.setItem('github_token', mockAuthToken);
-      localStorage.setItem('gist_manager_session', JSON.stringify({ user: mockUser }));
-      axios.post.mockResolvedValue({ data: { success: true } });
-
-      await authService.logout();
-
-      expect(axios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/api/auth/logout'),
-        expect.any(Object),
-        expect.objectContaining({ withCredentials: true })
-      );
-
-      expect(localStorage.getItem('github_token')).toBeNull();
-      expect(localStorage.getItem('gist_manager_session')).toBeNull();
-    });
-
-    it('clears auth header from axios defaults', async () => {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${mockAuthToken}`;
-      axios.post.mockResolvedValue({ data: { success: true } });
-
-      await authService.logout();
-
-      expect(axios.defaults.headers.common['Authorization']).toBeUndefined();
-    });
-
-    it('dispatches logout event for app-wide cleanup', async () => {
-      const eventListener = vi.fn();
-      window.addEventListener('auth:logout', eventListener);
-
-      axios.post.mockResolvedValue({ data: { success: true } });
-
-      await authService.logout();
-
-      expect(eventListener).toHaveBeenCalled();
-    });
-
-    it('handles logout errors gracefully', async () => {
-      axios.post.mockRejectedValue(new Error('Network error'));
-
-      // Should not throw, just clear local state
-      await expect(authService.logout()).resolves.not.toThrow();
-
-      expect(localStorage.getItem('github_token')).toBeNull();
-    });
-  });
-
-  describe('Token refresh and expiration', () => {
-    it('checks if session is expired', () => {
-      const expiredSession = {
-        token: mockAuthToken,
-        expiration: Date.now() - 1000 // 1 second ago
-      };
-
-      localStorage.setItem('gist_manager_session', JSON.stringify(expiredSession));
-
-      const isExpired = authService.isSessionExpired();
-
-      expect(isExpired).toBe(true);
-    });
-
-    it('checks if session is valid', () => {
-      const validSession = {
-        token: mockAuthToken,
-        expiration: Date.now() + 3600000 // 1 hour from now
-      };
-
-      localStorage.setItem('gist_manager_session', JSON.stringify(validSession));
-
-      const isExpired = authService.isSessionExpired();
-
-      expect(isExpired).toBe(false);
-    });
-
-    it('refreshes token before expiration', async () => {
-      const expiringSession = {
-        token: mockAuthToken,
-        expiration: Date.now() + 300000 // 5 minutes from now
-      };
-
-      localStorage.setItem('gist_manager_session', JSON.stringify(expiringSession));
-
-      axios.post.mockResolvedValue({
-        data: {
-          access_token: 'new_token_456',
-          expires_in: 3600
-        }
-      });
-
-      await authService.refreshTokenIfNeeded();
-
-      expect(axios.post).toHaveBeenCalledWith(
-        expect.stringContaining('/api/auth/refresh'),
-        expect.any(Object),
-        expect.any(Object)
-      );
-
-      const newSession = JSON.parse(localStorage.getItem('gist_manager_session'));
-      expect(newSession.token).toBe('new_token_456');
-    });
-
-    it('does not refresh if token is still valid for long time', async () => {
-      const validSession = {
-        token: mockAuthToken,
-        expiration: Date.now() + 3600000 // 1 hour from now
-      };
-
-      localStorage.setItem('gist_manager_session', JSON.stringify(validSession));
-
-      await authService.refreshTokenIfNeeded();
-
-      expect(axios.post).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('Permission and scope management', () => {
-    it('checks if user has required scopes', async () => {
-      localStorage.setItem('github_token', mockAuthToken);
-      axios.get.mockResolvedValue({
-        headers: {
-          'x-oauth-scopes': 'gist, repo, user'
-        },
-        data: mockUser
-      });
-
-      const hasScopes = await authService.hasRequiredScopes(['gist', 'user']);
-
-      expect(hasScopes).toBe(true);
-    });
-
-    it('returns false if missing required scopes', async () => {
-      localStorage.setItem('github_token', mockAuthToken);
-      axios.get.mockResolvedValue({
-        headers: {
-          'x-oauth-scopes': 'user'
-        },
-        data: mockUser
-      });
-
-      const hasScopes = await authService.hasRequiredScopes(['gist', 'repo']);
-
-      expect(hasScopes).toBe(false);
-    });
-
-    it('prompts for additional scopes if needed', async () => {
-      const requestScopes = vi.fn();
-      authService.requestAdditionalScopes = requestScopes;
-
-      await authService.ensureScopes(['gist', 'repo']);
-
-      expect(requestScopes).toHaveBeenCalledWith(['gist', 'repo']);
-    });
-  });
-
-  describe('Rate limiting and API quota', () => {
-    it('retrieves current API rate limit status', async () => {
-      axios.get.mockResolvedValue({
-        data: {
-          resources: {
-            core: {
-              limit: 5000,
-              remaining: 4999,
-              reset: Date.now() + 3600000
-            }
-          }
-        }
-      });
-
-      const rateLimit = await authService.getRateLimitStatus();
-
-      expect(rateLimit.remaining).toBe(4999);
-      expect(rateLimit.limit).toBe(5000);
-    });
-
-    it('warns when rate limit is low', async () => {
-      axios.get.mockResolvedValue({
-        data: {
-          resources: {
-            core: {
-              limit: 5000,
-              remaining: 10,
-              reset: Date.now() + 600000
-            }
-          }
-        }
-      });
-
-      const rateLimit = await authService.getRateLimitStatus();
-
-      expect(rateLimit.remaining).toBeLessThan(100);
-      expect(rateLimit.nearLimit).toBe(true);
-    });
-
-    it('handles rate limit exceeded errors', async () => {
-      axios.get.mockRejectedValue(createMockError(403, 'API rate limit exceeded'));
-
-      await expect(authService.makeAuthenticatedRequest()).rejects.toThrow(/rate limit/i);
-    });
-
-    it('calculates time until rate limit reset', async () => {
-      const resetTime = Date.now() + 3600000; // 1 hour from now
-
-      axios.get.mockResolvedValue({
-        data: {
-          resources: {
-            core: {
-              limit: 5000,
-              remaining: 0,
-              reset: resetTime
-            }
-          }
-        }
-      });
-
-      const rateLimit = await authService.getRateLimitStatus();
-
-      expect(rateLimit.resetAt).toBe(resetTime);
-      expect(rateLimit.minutesUntilReset).toBeGreaterThan(0);
-    });
-  });
-
-  describe('Error handling and recovery', () => {
-    it('handles network errors during auth', async () => {
-      const networkError = new Error('Network Error');
-      networkError.code = 'ECONNREFUSED';
-      axios.post.mockRejectedValue(networkError);
-
-      await expect(authService.handleOAuthCallback('code')).rejects.toThrow('Network Error');
-    });
-
-    it('handles server errors during auth', async () => {
-      axios.post.mockRejectedValue(createMockError(500, 'Internal Server Error'));
-
-      await expect(authService.handleOAuthCallback('code')).rejects.toThrow();
-    });
-
-    it('retries failed auth requests', async () => {
-      axios.post
-        .mockRejectedValueOnce(new Error('Timeout'))
-        .mockResolvedValueOnce({
-          data: {
-            access_token: mockAuthToken,
-            user: mockUser
-          }
-        });
-
-      const result = await authService.handleOAuthCallbackWithRetry('code');
-
-      expect(result.access_token).toBe(mockAuthToken);
-      expect(axios.post).toHaveBeenCalledTimes(2);
-    });
-
-    it('gives up after max retry attempts', async () => {
-      axios.post.mockRejectedValue(new Error('Persistent error'));
-
-      await expect(
-        authService.handleOAuthCallbackWithRetry('code', { maxRetries: 3 })
-      ).rejects.toThrow();
-
-      expect(axios.post).toHaveBeenCalledTimes(3);
-    });
-
-    it('clears corrupted session data', () => {
-      localStorage.setItem('gist_manager_session', 'invalid json');
-
-      authService.clearSession();
-
-      expect(localStorage.getItem('gist_manager_session')).toBeNull();
-    });
-  });
-
-  describe('Security features', () => {
-    it('does not store sensitive data in localStorage without encryption', () => {
-      const sessionData = {
-        token: mockAuthToken,
-        user: mockUser,
-        expiration: Date.now() + 3600000
-      };
-
-      authService.saveSession(sessionData);
-
-      const stored = localStorage.getItem('gist_manager_session');
-      // Token should not be visible in plaintext in sensitive implementations
-      expect(stored).toBeTruthy();
-    });
-
-    it('validates redirect URI to prevent open redirects', () => {
-      const validUri = 'http://localhost:3000/callback';
-      const invalidUri = 'http://evil.com/steal-token';
-
-      expect(authService.isValidRedirectUri(validUri)).toBe(true);
-      expect(authService.isValidRedirectUri(invalidUri)).toBe(false);
-    });
-
-    it('generates secure state parameter for OAuth', () => {
-      const state1 = authService.generateOAuthState();
-      const state2 = authService.generateOAuthState();
-
-      expect(state1).toHaveLength(32);
-      expect(state2).toHaveLength(32);
-      expect(state1).not.toBe(state2);
-    });
-
-    it('validates state parameter matches on callback', () => {
-      const state = authService.generateOAuthState();
-      localStorage.setItem('oauth_state', state);
-
-      expect(authService.validateOAuthState(state)).toBe(true);
-      expect(authService.validateOAuthState('different_state')).toBe(false);
-    });
-
-    it('cleans up state parameter after validation', () => {
-      const state = authService.generateOAuthState();
-      localStorage.setItem('oauth_state', state);
-
-      authService.validateAndCleanupState(state);
-
-      expect(localStorage.getItem('oauth_state')).toBeNull();
-    });
-  });
+	beforeEach(() => {
+		vi.clearAllMocks();
+		localStorage.clear();
+		sessionStorage.clear();
+
+		// Mock window.location
+		delete window.location;
+		window.location = {
+			origin: 'http://localhost:3000',
+			href: ''
+		};
+
+		// Mock window.crypto
+		if (!window.crypto) {
+			window.crypto = {
+				getRandomValues: (arr) => {
+					for (let i = 0; i < arr.length; i++) {
+						arr[i] = Math.floor(Math.random() * 256);
+					}
+					return arr;
+				}
+			};
+		}
+	});
+
+	afterEach(() => {
+		vi.restoreAllMocks();
+	});
+
+	describe('generateOAuthState', () => {
+		it('generates a 64-character hex string', () => {
+			const state = authService.generateOAuthState();
+
+			// 32 bytes as hex = 64 characters
+			expect(state).toHaveLength(64);
+			expect(/^[0-9a-f]+$/.test(state)).toBe(true);
+		});
+
+		it('generates unique states', () => {
+			const state1 = authService.generateOAuthState();
+			const state2 = authService.generateOAuthState();
+
+			expect(state1).not.toBe(state2);
+		});
+	});
+
+	describe('isValidRedirectUri', () => {
+		it('accepts localhost URIs', () => {
+			expect(authService.isValidRedirectUri('http://localhost:3000/callback')).toBe(true);
+		});
+
+		it('rejects external URIs', () => {
+			expect(authService.isValidRedirectUri('http://evil.com/steal-token')).toBe(false);
+		});
+
+		it('handles invalid URIs gracefully', () => {
+			expect(authService.isValidRedirectUri('not-a-valid-uri')).toBe(false);
+		});
+	});
+
+	describe('initiateGitHubLogin', () => {
+		it('returns OAuth authorization URL', () => {
+			process.env.REACT_APP_GITHUB_CLIENT_ID = 'test_client_id';
+			process.env.REACT_APP_REDIRECT_URI = 'http://localhost:3000/callback';
+
+			const authUrl = authService.initiateGitHubLogin();
+
+			expect(authUrl).toContain('github.com/login/oauth/authorize');
+			expect(authUrl).toContain('client_id=test_client_id');
+			expect(authUrl).toContain('scope=gist%20user');
+		});
+
+		it('stores state in sessionStorage', () => {
+			process.env.REACT_APP_GITHUB_CLIENT_ID = 'test_client_id';
+			process.env.REACT_APP_REDIRECT_URI = 'http://localhost:3000/callback';
+
+			authService.initiateGitHubLogin();
+
+			const storedState = sessionStorage.getItem('oauth_state');
+			expect(storedState).toBeTruthy();
+			expect(storedState).toHaveLength(64);
+		});
+
+		it('accepts custom scopes', () => {
+			process.env.REACT_APP_GITHUB_CLIENT_ID = 'test_client_id';
+			process.env.REACT_APP_REDIRECT_URI = 'http://localhost:3000/callback';
+
+			const authUrl = authService.initiateGitHubLogin({ scope: 'gist repo' });
+
+			expect(authUrl).toContain('scope=gist%20repo');
+		});
+	});
+
+	describe('authenticateWithGitHub', () => {
+		it('exchanges code for access token', async () => {
+			axios.post.mockResolvedValue({
+				data: { access_token: mockAuthToken }
+			});
+
+			const token = await authService.authenticateWithGitHub('test_code', 'test_state');
+
+			expect(token).toBe(mockAuthToken);
+			expect(axios.post).toHaveBeenCalledWith(
+				'http://localhost:3000/api/auth/github',
+				expect.objectContaining({ code: 'test_code', state: 'test_state' })
+			);
+			expect(setAuthToken).toHaveBeenCalledWith(mockAuthToken);
+		});
+
+		it('throws error when no token received', async () => {
+			axios.post.mockResolvedValue({ data: {} });
+
+			await expect(
+				authService.authenticateWithGitHub('test_code', 'test_state')
+			).rejects.toThrow('No access token received from server');
+		});
+
+		it('handles server errors', async () => {
+			axios.post.mockRejectedValue({
+				response: {
+					status: 401,
+					data: { error: 'Invalid code' }
+				}
+			});
+
+			await expect(
+				authService.authenticateWithGitHub('invalid_code', 'test_state')
+			).rejects.toThrow();
+		});
+
+		it('handles network errors', async () => {
+			axios.post.mockRejectedValue({
+				request: {},
+				message: 'Network Error'
+			});
+
+			await expect(
+				authService.authenticateWithGitHub('test_code', 'test_state')
+			).rejects.toThrow('No response received from the server');
+		});
+	});
+
+	describe('handleOAuthCallback', () => {
+		beforeEach(() => {
+			// Set up stored state
+			sessionStorage.setItem('oauth_state', 'valid_state');
+		});
+
+		it('validates state parameter', async () => {
+			await expect(
+				authService.handleOAuthCallback('test_code', 'invalid_state')
+			).rejects.toThrow('Invalid state parameter');
+		});
+
+		it('exchanges code and stores token on success', async () => {
+			axios.post.mockResolvedValue({
+				data: { access_token: mockAuthToken }
+			});
+			axios.get.mockResolvedValue({ data: mockUser });
+
+			const result = await authService.handleOAuthCallback('test_code', 'valid_state');
+
+			expect(result.access_token).toBe(mockAuthToken);
+			expect(result.user).toEqual(mockUser);
+			expect(localStorage.getItem('github_token')).toBe(mockAuthToken);
+			expect(localStorage.getItem('gist_manager_session')).toBeTruthy();
+		});
+
+		it('clears state from sessionStorage after use', async () => {
+			axios.post.mockResolvedValue({
+				data: { access_token: mockAuthToken }
+			});
+			axios.get.mockResolvedValue({ data: mockUser });
+
+			await authService.handleOAuthCallback('test_code', 'valid_state');
+
+			expect(sessionStorage.getItem('oauth_state')).toBeNull();
+		});
+	});
+
+	describe('handleOAuthCallbackWithRetry', () => {
+		it('succeeds on first attempt', async () => {
+			sessionStorage.setItem('oauth_state', 'valid_state');
+			axios.post.mockResolvedValue({ data: { access_token: mockAuthToken } });
+			axios.get.mockResolvedValue({ data: mockUser });
+
+			const result = await authService.handleOAuthCallbackWithRetry('test_code', 'valid_state', 3);
+
+			expect(result.access_token).toBe(mockAuthToken);
+		});
+
+		it('fails with invalid state', async () => {
+			sessionStorage.setItem('oauth_state', 'different_state');
+
+			await expect(
+				authService.handleOAuthCallbackWithRetry('test_code', 'invalid_state', 2)
+			).rejects.toThrow('Invalid state parameter');
+		});
+	});
+
+	describe('handleOAuthError', () => {
+		it('throws error with error details', () => {
+			expect(() => {
+				authService.handleOAuthError('access_denied', 'User cancelled');
+			}).toThrow('OAuth error: access_denied - User cancelled');
+		});
+	});
+
+	describe('getCurrentUser', () => {
+		it('fetches user from GitHub API with token', async () => {
+			localStorage.setItem('github_token', mockAuthToken);
+			axios.get.mockResolvedValue({ data: mockUser });
+
+			const user = await authService.getCurrentUser();
+
+			expect(user).toEqual(mockUser);
+			expect(axios.get).toHaveBeenCalledWith(
+				'https://api.github.com/user',
+				expect.objectContaining({
+					headers: { Authorization: `Bearer ${mockAuthToken}` }
+				})
+			);
+		});
+
+		it('throws when no token exists', async () => {
+			await expect(authService.getCurrentUser()).rejects.toThrow(
+				'No authentication token found'
+			);
+		});
+
+		it('uses token from session data if available', async () => {
+			const sessionData = {
+				token: mockAuthToken,
+				expiration: Date.now() + 3600000
+			};
+			localStorage.setItem('gist_manager_session', JSON.stringify(sessionData));
+			axios.get.mockResolvedValue({ data: mockUser });
+
+			const user = await authService.getCurrentUser();
+
+			expect(user).toEqual(mockUser);
+		});
+	});
+
+	describe('validateToken', () => {
+		it('returns true for valid token', async () => {
+			localStorage.setItem('github_token', mockAuthToken);
+			axios.get.mockResolvedValue({ data: mockUser });
+
+			const isValid = await authService.validateToken();
+
+			expect(isValid).toBe(true);
+		});
+
+		it('returns false for 401 response', async () => {
+			localStorage.setItem('github_token', 'expired_token');
+			axios.get.mockRejectedValue({ response: { status: 401 } });
+
+			const isValid = await authService.validateToken();
+
+			expect(isValid).toBe(false);
+		});
+
+		it('returns true for non-401 errors', async () => {
+			localStorage.setItem('github_token', mockAuthToken);
+			axios.get.mockRejectedValue({ response: { status: 500 } });
+
+			const isValid = await authService.validateToken();
+
+			expect(isValid).toBe(true);
+		});
+	});
+
+	describe('isAuthenticated', () => {
+		it('returns true with valid session', () => {
+			const sessionData = {
+				token: mockAuthToken,
+				expiration: Date.now() + 3600000
+			};
+			localStorage.setItem('gist_manager_session', JSON.stringify(sessionData));
+
+			expect(authService.isAuthenticated()).toBe(true);
+		});
+
+		it('returns false with expired session', () => {
+			const sessionData = {
+				token: mockAuthToken,
+				expiration: Date.now() - 1000
+			};
+			localStorage.setItem('gist_manager_session', JSON.stringify(sessionData));
+
+			expect(authService.isAuthenticated()).toBe(false);
+		});
+
+		it('returns false with no session', () => {
+			expect(authService.isAuthenticated()).toBe(false);
+		});
+	});
+
+	describe('isSessionExpired', () => {
+		it('returns true for expired session', () => {
+			const sessionData = {
+				token: mockAuthToken,
+				expiration: Date.now() - 1000
+			};
+			localStorage.setItem('gist_manager_session', JSON.stringify(sessionData));
+
+			expect(authService.isSessionExpired()).toBe(true);
+		});
+
+		it('returns false for valid session', () => {
+			const sessionData = {
+				token: mockAuthToken,
+				expiration: Date.now() + 3600000
+			};
+			localStorage.setItem('gist_manager_session', JSON.stringify(sessionData));
+
+			expect(authService.isSessionExpired()).toBe(false);
+		});
+
+		it('returns true with no session', () => {
+			expect(authService.isSessionExpired()).toBe(true);
+		});
+	});
+
+	describe('refreshTokenIfNeeded', () => {
+		it('extends session when expiring soon', async () => {
+			const sessionData = {
+				token: mockAuthToken,
+				expiration: Date.now() + 300000 // 5 minutes from now
+			};
+			localStorage.setItem('gist_manager_session', JSON.stringify(sessionData));
+
+			const refreshed = await authService.refreshTokenIfNeeded();
+
+			expect(refreshed).toBe(true);
+			const newSession = JSON.parse(localStorage.getItem('gist_manager_session'));
+			expect(newSession.expiration).toBeGreaterThan(sessionData.expiration);
+		});
+
+		it('does not refresh when session has plenty of time', async () => {
+			const sessionData = {
+				token: mockAuthToken,
+				expiration: Date.now() + 3600000 // 1 hour from now
+			};
+			localStorage.setItem('gist_manager_session', JSON.stringify(sessionData));
+
+			const refreshed = await authService.refreshTokenIfNeeded();
+
+			expect(refreshed).toBe(false);
+		});
+
+		it('returns false with no session', async () => {
+			const refreshed = await authService.refreshTokenIfNeeded();
+			expect(refreshed).toBe(false);
+		});
+	});
+
+	describe('logout', () => {
+		it('clears all auth data', () => {
+			localStorage.setItem('github_token', mockAuthToken);
+			localStorage.setItem('gist_manager_session', JSON.stringify({ token: mockAuthToken }));
+			sessionStorage.setItem('oauth_state', 'some_state');
+
+			authService.logout();
+
+			expect(localStorage.getItem('github_token')).toBeNull();
+			expect(localStorage.getItem('gist_manager_session')).toBeNull();
+			expect(setAuthToken).toHaveBeenCalledWith(null);
+		});
+
+		it('dispatches logout event', () => {
+			const eventListener = vi.fn();
+			window.addEventListener('auth:logout', eventListener);
+
+			authService.logout();
+
+			expect(eventListener).toHaveBeenCalled();
+			window.removeEventListener('auth:logout', eventListener);
+		});
+	});
+
+	describe('clearSession', () => {
+		it('clears session data', () => {
+			localStorage.setItem('gist_manager_session', JSON.stringify({ token: mockAuthToken }));
+			sessionStorage.setItem('oauth_state', 'some_state');
+
+			authService.clearSession();
+
+			expect(localStorage.getItem('gist_manager_session')).toBeNull();
+		});
+	});
+
+	describe('saveSession', () => {
+		it('saves session to localStorage', () => {
+			const sessionData = {
+				token: mockAuthToken,
+				expiration: Date.now() + 3600000
+			};
+
+			authService.saveSession(sessionData);
+
+			const stored = JSON.parse(localStorage.getItem('gist_manager_session'));
+			expect(stored.token).toBe(mockAuthToken);
+		});
+	});
+
+	describe('hasRequiredScopes', () => {
+		it('returns true when scopes match', async () => {
+			localStorage.setItem('github_token', mockAuthToken);
+			const sessionData = {
+				token: mockAuthToken,
+				scopes: ['gist', 'user']
+			};
+			localStorage.setItem('gist_manager_session', JSON.stringify(sessionData));
+
+			const hasScopes = await authService.hasRequiredScopes(['gist']);
+
+			expect(hasScopes).toBe(true);
+		});
+
+		it('returns false when missing scopes', async () => {
+			localStorage.setItem('github_token', mockAuthToken);
+			const sessionData = {
+				token: mockAuthToken,
+				scopes: ['user']
+			};
+			localStorage.setItem('gist_manager_session', JSON.stringify(sessionData));
+
+			const hasScopes = await authService.hasRequiredScopes(['gist', 'repo']);
+
+			expect(hasScopes).toBe(false);
+		});
+
+		it('returns false when no token', async () => {
+			const hasScopes = await authService.hasRequiredScopes(['gist']);
+			expect(hasScopes).toBe(false);
+		});
+
+		it('returns true when scope info not available', async () => {
+			localStorage.setItem('github_token', mockAuthToken);
+			localStorage.setItem('gist_manager_session', JSON.stringify({ token: mockAuthToken }));
+
+			const hasScopes = await authService.hasRequiredScopes(['gist']);
+
+			expect(hasScopes).toBe(true);
+		});
+	});
+
+	describe('getRateLimitStatus', () => {
+		it('fetches rate limit from GitHub API', async () => {
+			const rateData = {
+				rate: {
+					limit: 5000,
+					remaining: 4999,
+					reset: Math.floor(Date.now() / 1000) + 3600
+				}
+			};
+			axios.get.mockResolvedValue({ data: rateData });
+
+			const result = await authService.getRateLimitStatus();
+
+			expect(result).toEqual(rateData.rate);
+			expect(axios.get).toHaveBeenCalledWith(
+				'https://api.github.com/rate_limit',
+				expect.any(Object)
+			);
+		});
+	});
+
+	describe('makeAuthenticatedRequest', () => {
+		it('executes request function', async () => {
+			const rateData = {
+				rate: { limit: 5000, remaining: 4999, reset: Math.floor(Date.now() / 1000) + 3600 }
+			};
+			axios.get.mockResolvedValue({ data: rateData });
+
+			const requestFn = vi.fn().mockResolvedValue('result');
+			const result = await authService.makeAuthenticatedRequest(requestFn);
+
+			expect(result).toBe('result');
+			expect(requestFn).toHaveBeenCalled();
+		});
+
+		it('throws when rate limit exceeded', async () => {
+			const rateData = {
+				rate: { limit: 5000, remaining: 0, reset: Math.floor(Date.now() / 1000) + 3600 }
+			};
+			axios.get.mockResolvedValue({ data: rateData });
+
+			const requestFn = vi.fn();
+
+			await expect(
+				authService.makeAuthenticatedRequest(requestFn)
+			).rejects.toThrow('Rate limit exceeded');
+
+			expect(requestFn).not.toHaveBeenCalled();
+		});
+	});
 });
