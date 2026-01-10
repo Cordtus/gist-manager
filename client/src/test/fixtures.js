@@ -90,17 +90,20 @@ export const mockUser = {
 export const mockAuthToken = 'ghp_test_token_1234567890';
 
 export const mockSharedGist = {
-  _id: 'shared-123',
-  gistId: 'test-gist-123',
-  title: 'Shared Test Gist',
+  sharedId: 'shared-123',
+  id: 'test-gist-123',
   description: 'A test gist shared to community',
   username: 'testuser',
-  tags: ['javascript', 'test'],
-  isPublic: true,
-  createdAt: '2024-01-01T00:00:00Z',
-  updatedAt: '2024-01-02T00:00:00Z',
-  stars: 5,
-  views: 100
+  files: {
+    'shared.js': {
+      filename: 'shared.js',
+      type: 'application/javascript',
+      language: 'JavaScript',
+      content: 'console.log("shared");'
+    }
+  },
+  sharedAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-02T00:00:00Z'
 };
 
 export const mockComment = {

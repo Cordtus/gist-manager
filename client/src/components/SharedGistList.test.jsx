@@ -1,6 +1,6 @@
 /**
  * Tests for SharedGistList Component
- * Tests community gist browsing and interaction features
+ * Tests community gist browsing and interaction features.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -11,10 +11,8 @@ import { mockSharedGist, mockUser } from '../test/fixtures';
 import { ToastProvider } from '../contexts/ToastContext';
 import * as sharedGistsApi from '../services/api/sharedGists';
 
-// Mock the shared gists API module
 vi.mock('../services/api/sharedGists');
 
-// Mock the auth context
 vi.mock('../contexts/AuthContext', async () => {
 	const actual = await vi.importActual('../contexts/AuthContext');
 	return {
@@ -46,13 +44,26 @@ describe('SharedGistList - Community Features', () => {
 
 	describe('Fetching community gists', () => {
 		it('calls API to fetch shared gists on mount', async () => {
-			sharedGistsApi.getAllSharedGists.mockResolvedValue([mockSharedGist]);
+			sharedGistsApi.getAllSharedGists.mockResolvedValue({ gists: [mockSharedGist] });
 
 			renderWithProviders(<SharedGistList />);
 
 			await waitFor(() => {
 				expect(sharedGistsApi.getAllSharedGists).toHaveBeenCalled();
 			});
+		});
+
+		it('displays shared gists after loading', async () => {
+			sharedGistsApi.getAllSharedGists.mockResolvedValue({ gists: [mockSharedGist] });
+
+			renderWithProviders(<SharedGistList />);
+
+			await waitFor(() => {
+				expect(screen.queryByText(/loading/i)).not.toBeInTheDocument();
+			});
+
+			// Component should display something after loading completes
+			expect(screen.getByText(/community shared gists/i)).toBeInTheDocument();
 		});
 
 		it('handles API errors gracefully', async () => {
@@ -61,17 +72,17 @@ describe('SharedGistList - Community Features', () => {
 			renderWithProviders(<SharedGistList />);
 
 			await waitFor(() => {
-				expect(sharedGistsApi.getAllSharedGists).toHaveBeenCalled();
+				expect(screen.getByText(/failed/i)).toBeInTheDocument();
 			});
 		});
 
-		it('renders component without crashing', async () => {
-			sharedGistsApi.getAllSharedGists.mockResolvedValue([]);
+		it('shows empty state when no shared gists', async () => {
+			sharedGistsApi.getAllSharedGists.mockResolvedValue({ gists: [] });
 
 			renderWithProviders(<SharedGistList />);
 
 			await waitFor(() => {
-				expect(sharedGistsApi.getAllSharedGists).toHaveBeenCalled();
+				expect(screen.getByText(/no shared gists/i)).toBeInTheDocument();
 			});
 		});
 	});

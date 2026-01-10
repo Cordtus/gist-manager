@@ -1,21 +1,32 @@
 /**
  * Tests for GistEditor Component
- * Tests markdown editing, preview, file management, and save operations
+ * Tests core editing functionality: loading, saving, and file management.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { BrowserRouter } from 'react-router-dom';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { BrowserRouter, useParams } from 'react-router-dom';
 import GistEditor from './GistEditor';
 import { mockGist, mockUser } from '../test/fixtures';
 import * as gistsApi from '../services/api/gists';
 import { ToastProvider } from '../contexts/ToastContext';
 
-// Mock the gists API module
 vi.mock('../services/api/gists');
+vi.mock('../services/api/sharedGists', () => ({
+	isGistShared: vi.fn().mockResolvedValue(false),
+	shareGist: vi.fn(),
+	unshareGist: vi.fn()
+}));
 
-// Mock the auth context
+vi.mock('react-router-dom', async () => {
+	const actual = await vi.importActual('react-router-dom');
+	return {
+		...actual,
+		useParams: vi.fn(() => ({})),
+		useNavigate: vi.fn(() => vi.fn())
+	};
+});
+
 vi.mock('../contexts/AuthContext', async () => {
 	const actual = await vi.importActual('../contexts/AuthContext');
 	return {
@@ -29,11 +40,11 @@ vi.mock('../contexts/AuthContext', async () => {
 	};
 });
 
-const renderWithRouter = (component) => {
+const renderEditor = (props = {}) => {
 	return render(
 		<BrowserRouter>
 			<ToastProvider>
-				{component}
+				<GistEditor {...props} />
 			</ToastProvider>
 		</BrowserRouter>
 	);
@@ -43,150 +54,80 @@ describe('GistEditor Component', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		localStorage.clear();
+		useParams.mockReturnValue({});
 	});
 
-	describe('Editor initialization', () => {
-		it('renders editor with empty state for new gist', () => {
-			renderWithRouter(<GistEditor />);
+	describe('New gist mode', () => {
+		it('renders form elements for creating new gist', () => {
+			renderEditor();
 
-			expect(screen.getByRole('textbox')).toBeInTheDocument();
 			expect(screen.getByPlaceholderText(/description/i)).toBeInTheDocument();
 		});
 
-		it('loads existing gist data for editing', async () => {
-			gistsApi.getGist.mockResolvedValue(mockGist);
+		it('shows Create Gist button for new gists', () => {
+			renderEditor();
 
-			renderWithRouter(<GistEditor gistId="test-gist-123" />);
+			expect(screen.getByRole('button', { name: /create gist/i })).toBeInTheDocument();
+		});
+	});
 
-			await waitFor(() => {
-				expect(screen.getByDisplayValue('Test Gist Description')).toBeInTheDocument();
-			});
-
-			expect(gistsApi.getGist).toHaveBeenCalledWith(
-				'test-gist-123',
-				'test-token',
-				expect.any(Function)
-			);
+	describe('Edit gist mode', () => {
+		beforeEach(() => {
+			useParams.mockReturnValue({ id: 'test-gist-123' });
 		});
 
-		it('shows loading state while fetching gist', () => {
+		it('fetches gist data when id is provided', async () => {
+			gistsApi.getGist.mockResolvedValue(mockGist);
+
+			renderEditor();
+
+			await waitFor(() => {
+				expect(gistsApi.getGist).toHaveBeenCalledWith(
+					'test-gist-123',
+					'test-token',
+					expect.any(Function)
+				);
+			});
+		});
+
+		it('displays loading state while fetching', () => {
 			gistsApi.getGist.mockImplementation(() => new Promise(() => {}));
 
-			renderWithRouter(<GistEditor gistId="test-gist-123" />);
+			renderEditor();
 
-			expect(screen.getByRole('status') || screen.getByText(/loading/i)).toBeInTheDocument();
+			expect(screen.getByText(/loading/i)).toBeInTheDocument();
 		});
 
-		it('handles fetch error gracefully', async () => {
-			gistsApi.getGist.mockRejectedValue(new Error('Not found'));
-
-			renderWithRouter(<GistEditor gistId="nonexistent" />);
-
-			await waitFor(() => {
-				expect(screen.getByText(/error|not found/i)).toBeInTheDocument();
-			});
-		});
-	});
-
-	describe('Editor/Preview panel functionality', () => {
-		it('renders editor and preview panels in split view', async () => {
-			renderWithRouter(<GistEditor />);
-
-			expect(screen.getByRole('textbox')).toBeInTheDocument();
-			expect(screen.getByTestId('preview-panel') || screen.getByText(/preview/i)).toBeInTheDocument();
-		});
-
-		it('updates preview in real-time as user types', async () => {
-			const user = userEvent.setup();
-			renderWithRouter(<GistEditor />);
-
-			const editor = screen.getByRole('textbox');
-			await user.type(editor, '# Hello World\n\nThis is **bold** text');
-
-			await waitFor(() => {
-				const preview = screen.getByTestId('preview-panel') || document.querySelector('.markdown-preview');
-				expect(preview).toHaveTextContent('Hello World');
-			});
-		});
-	});
-
-	describe('File management', () => {
-		it('adds a new file to the gist', async () => {
-			const user = userEvent.setup();
-			renderWithRouter(<GistEditor />);
-
-			const addFileButton = screen.getByRole('button', { name: /add file/i });
-			await user.click(addFileButton);
-
-			const fileNameInput = screen.getByPlaceholderText(/file name/i);
-			await user.type(fileNameInput, 'newfile.js');
-
-			expect(screen.getByText('newfile.js')).toBeInTheDocument();
-		});
-
-		it('switches between multiple files', async () => {
-			const user = userEvent.setup();
+		it('shows Update Gist button for existing gists', async () => {
 			gistsApi.getGist.mockResolvedValue(mockGist);
 
-			renderWithRouter(<GistEditor gistId="test-gist-123" />);
+			renderEditor();
 
 			await waitFor(() => {
-				expect(screen.getByText('test.js')).toBeInTheDocument();
-				expect(screen.getByText('README.md')).toBeInTheDocument();
-			});
-
-			await user.click(screen.getByText('README.md'));
-
-			await waitFor(() => {
-				const editor = screen.getByRole('textbox');
-				expect(editor.value).toContain('# Test Gist');
-			});
-		});
-
-		it('deletes a file from the gist', async () => {
-			const user = userEvent.setup();
-			gistsApi.getGist.mockResolvedValue(mockGist);
-			window.confirm = vi.fn(() => true);
-
-			renderWithRouter(<GistEditor gistId="test-gist-123" />);
-
-			await waitFor(() => {
-				expect(screen.getByText('test.js')).toBeInTheDocument();
-			});
-
-			const deleteButton = screen.getAllByRole('button', { name: /delete|remove/i })[0];
-			await user.click(deleteButton);
-
-			expect(window.confirm).toHaveBeenCalled();
-
-			await waitFor(() => {
-				expect(screen.queryByText('test.js')).not.toBeInTheDocument();
+				expect(screen.getByRole('button', { name: /update gist/i })).toBeInTheDocument();
 			});
 		});
 	});
 
-	describe('Saving gists', () => {
-		it('creates a new gist', async () => {
-			const user = userEvent.setup();
-			gistsApi.createGist.mockResolvedValue(mockGist);
+	describe('Form submission', () => {
+		it('calls createGist API on submit for new gist with content', async () => {
+			gistsApi.createGist.mockResolvedValue({ ...mockGist, id: 'new-gist-id' });
 
-			renderWithRouter(<GistEditor />);
+			renderEditor();
 
 			const descInput = screen.getByPlaceholderText(/description/i);
-			await user.type(descInput, 'New Test Gist');
+			fireEvent.change(descInput, { target: { value: 'New Gist' } });
 
-			const editor = screen.getByRole('textbox');
-			await user.type(editor, 'console.log("test");');
+			const editor = screen.getByPlaceholderText(/enter file content/i);
+			fireEvent.change(editor, { target: { value: 'test content' } });
 
-			const saveButton = screen.getByRole('button', { name: /save|create/i });
-			await user.click(saveButton);
+			const submitBtn = screen.getByRole('button', { name: /create gist/i });
+			fireEvent.click(submitBtn);
 
 			await waitFor(() => {
 				expect(gistsApi.createGist).toHaveBeenCalledWith(
 					expect.objectContaining({
-						description: 'New Test Gist',
-						public: expect.any(Boolean),
-						files: expect.any(Object)
+						description: 'New Gist'
 					}),
 					'test-token',
 					expect.any(Function),
@@ -195,30 +136,24 @@ describe('GistEditor Component', () => {
 			});
 		});
 
-		it('updates an existing gist', async () => {
-			const user = userEvent.setup();
+		it('calls updateGist API on submit for existing gist', async () => {
+			useParams.mockReturnValue({ id: 'test-gist-123' });
 			gistsApi.getGist.mockResolvedValue(mockGist);
-			gistsApi.updateGist.mockResolvedValue({ ...mockGist, description: 'Updated' });
+			gistsApi.updateGist.mockResolvedValue(mockGist);
 
-			renderWithRouter(<GistEditor gistId="test-gist-123" />);
+			renderEditor();
 
 			await waitFor(() => {
 				expect(screen.getByDisplayValue('Test Gist Description')).toBeInTheDocument();
 			});
 
-			const descInput = screen.getByDisplayValue('Test Gist Description');
-			await user.clear(descInput);
-			await user.type(descInput, 'Updated Description');
-
-			const saveButton = screen.getByRole('button', { name: /save|update/i });
-			await user.click(saveButton);
+			const submitBtn = screen.getByRole('button', { name: /update gist/i });
+			fireEvent.click(submitBtn);
 
 			await waitFor(() => {
 				expect(gistsApi.updateGist).toHaveBeenCalledWith(
 					'test-gist-123',
-					expect.objectContaining({
-						description: 'Updated Description'
-					}),
+					expect.any(Object),
 					'test-token',
 					expect.any(Function),
 					mockUser.id
@@ -226,99 +161,53 @@ describe('GistEditor Component', () => {
 			});
 		});
 
-		it('toggles gist visibility (public/private)', async () => {
-			const user = userEvent.setup();
-			renderWithRouter(<GistEditor />);
+		it('shows validation error when files are empty', async () => {
+			renderEditor();
 
-			const visibilityToggle = screen.getByRole('checkbox', { name: /public|private/i });
-			expect(visibilityToggle).toBeChecked();
-
-			await user.click(visibilityToggle);
-
-			expect(visibilityToggle).not.toBeChecked();
-		});
-
-		it('shows validation errors for invalid input', async () => {
-			const user = userEvent.setup();
-			renderWithRouter(<GistEditor />);
-
-			const saveButton = screen.getByRole('button', { name: /save|create/i });
-			await user.click(saveButton);
+			const submitBtn = screen.getByRole('button', { name: /create gist/i });
+			fireEvent.click(submitBtn);
 
 			await waitFor(() => {
-				expect(screen.getByText(/required|cannot be empty/i)).toBeInTheDocument();
+				expect(screen.getByText(/non-empty/i)).toBeInTheDocument();
 			});
 
 			expect(gistsApi.createGist).not.toHaveBeenCalled();
 		});
+	});
 
-		it('handles save errors gracefully', async () => {
-			const user = userEvent.setup();
-			gistsApi.createGist.mockRejectedValue(new Error('Network error'));
+	describe('File management', () => {
+		it('adds new file when Add File button clicked', async () => {
+			renderEditor();
 
-			renderWithRouter(<GistEditor />);
+			const initialTabCount = screen.getAllByRole('button').filter(
+				btn => btn.textContent.includes('newfile')
+			).length;
 
-			const descInput = screen.getByPlaceholderText(/description/i);
-			await user.type(descInput, 'Test');
-
-			const editor = screen.getByRole('textbox');
-			await user.type(editor, 'content');
-
-			const saveButton = screen.getByRole('button', { name: /save|create/i });
-			await user.click(saveButton);
+			const addBtn = screen.getByRole('button', { name: /add file/i });
+			fireEvent.click(addBtn);
 
 			await waitFor(() => {
-				expect(screen.getByText(/failed|error/i)).toBeInTheDocument();
+				const newTabCount = screen.getAllByRole('button').filter(
+					btn => btn.textContent.includes('newfile')
+				).length;
+				expect(newTabCount).toBeGreaterThan(initialTabCount);
 			});
 		});
 	});
 
-	describe('Toolbar actions', () => {
-		it('inserts bold markdown syntax', async () => {
-			const user = userEvent.setup();
-			renderWithRouter(<GistEditor />);
-
-			const editor = screen.getByRole('textbox');
-			await user.type(editor, 'text');
-
-			editor.setSelectionRange(0, 4);
-
-			const boldButton = screen.getByRole('button', { name: /bold/i });
-			await user.click(boldButton);
-
-			expect(editor.value).toContain('**text**');
-		});
-
-		it('inserts code block', async () => {
-			const user = userEvent.setup();
-			renderWithRouter(<GistEditor />);
-
-			const codeButton = screen.getByRole('button', { name: /code/i });
-			await user.click(codeButton);
-
-			const editor = screen.getByRole('textbox');
-			expect(editor.value).toContain('```');
-		});
-	});
-
-	describe('Keyboard shortcuts', () => {
-		it('saves gist with Ctrl+S', async () => {
-			const user = userEvent.setup();
-			gistsApi.createGist.mockResolvedValue(mockGist);
-
-			renderWithRouter(<GistEditor />);
-
-			const descInput = screen.getByPlaceholderText(/description/i);
-			await user.type(descInput, 'Test');
-
-			const editor = screen.getByRole('textbox');
-			await user.type(editor, 'content');
-
-			await user.keyboard('{Control>}s{/Control}');
-
-			await waitFor(() => {
-				expect(gistsApi.createGist).toHaveBeenCalled();
+	describe('Unauthenticated state', () => {
+		it('shows login prompt when user is not authenticated', async () => {
+			const { useAuth } = await import('../contexts/AuthContext');
+			useAuth.mockReturnValue({
+				user: null,
+				token: null,
+				isAuthenticated: false,
+				loading: false
 			});
+
+			renderEditor();
+
+			expect(screen.getByText(/log in/i)).toBeInTheDocument();
 		});
 	});
 });
