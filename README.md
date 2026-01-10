@@ -121,21 +121,24 @@ yarn clean
 ### API Endpoints
 
 #### Authentication
-- `GET /api/auth/github` - Initiate OAuth flow
-- `GET /api/auth/callback` - Handle OAuth callback
+- `GET /api/auth/github/login` - Get OAuth authorization URL
+- `POST /api/auth/github` - Exchange authorization code for token
+- `GET /api/auth/status` - Check authentication status
 - `POST /api/auth/logout` - Clear session and cache
 
 #### Gist Management
-- `GET /api/gists` - Fetch user's gists
+- `GET /api/gists` - Fetch authenticated user's gists
 - `GET /api/gists/:id` - Get specific gist
 - `POST /api/gists` - Create new gist
-- `PUT /api/gists/:id` - Update existing gist
+- `PATCH /api/gists/:id` - Update existing gist
 - `DELETE /api/gists/:id` - Delete gist
 
 #### Community Features
-- `GET /api/shared-gists` - Browse shared gists
+- `GET /api/shared-gists` - Browse all shared gists
 - `POST /api/shared-gists` - Share a gist
-- `DELETE /api/shared-gists/:id` - Unshare a gist
+- `GET /api/shared-gists/check/:gistId` - Check if gist is shared
+- `GET /api/shared-gists/user` - Get user's shared gists
+- `DELETE /api/shared-gists/:gistId` - Unshare a gist
 
 ## Project Structure
 
@@ -173,19 +176,27 @@ gist-manager/
 ## Key Technologies
 
 ### Frontend
-- **React 18** - Modern React with hooks
+- **React 18** - Modern React with hooks and Context API
 - **React Router** - Client-side routing
 - **Tailwind CSS** - Utility-first styling
-- **CSS Variables** - Dynamic theming
-- **React Icons** - Icon library
+- **shadcn/ui** - High-quality React component library
+- **CSS Variables** - Dynamic theming system
+- **Lucide React** - Modern icon library
 - **Prism.js** - Syntax highlighting
 
 ### Backend
 - **Express.js** - Web framework
 - **express-session** - Session management
-- **node-cache** - In-memory caching
+- **node-cache** - In-memory caching with TTL
 - **axios** - HTTP client
+- **helmet** - Security headers
+- **winston** - Structured logging
 - **cors** - Cross-origin support
+
+### Testing
+- **Vitest** - Fast, modern test runner
+- **React Testing Library** - Component testing
+- **jsdom** - DOM simulation
 
 ## Security Features
 
