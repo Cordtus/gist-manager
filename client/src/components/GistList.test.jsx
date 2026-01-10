@@ -10,7 +10,7 @@ import { BrowserRouter } from 'react-router-dom';
 import GistList from './GistList';
 import { mockGistList, mockUser } from '../test/fixtures';
 import * as gistsApi from '../services/api/gists';
-import { AuthProvider } from '../contexts/AuthContext';
+import { ToastProvider } from '../contexts/ToastContext';
 
 // Mock the gists API module
 vi.mock('../services/api/gists');
@@ -32,7 +32,9 @@ vi.mock('../contexts/AuthContext', async () => {
 const renderWithProviders = (component) => {
 	return render(
 		<BrowserRouter>
-			{component}
+			<ToastProvider>
+				{component}
+			</ToastProvider>
 		</BrowserRouter>
 	);
 };
