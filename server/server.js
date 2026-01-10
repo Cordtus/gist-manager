@@ -5,10 +5,10 @@ const cors = require('cors');
 const path = require('path');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const winston = require('winston');
 const session = require('express-session');
 const crypto = require('crypto');
 const fs = require('fs').promises;
+const logger = require('./utils/logger');
 
 // Import API routes
 const gistRoutes = require('./routes/gists.js');
@@ -18,42 +18,24 @@ const webhookRoutes = require('./routes/webhook.js');
 const app = express();
 const port = process.env.PORT || 5000;
 
-// ensure data dir exists
+// Enable trust proxy
+app.set('trust proxy', true);
+
+// Ensure data directories exist
 const ensureDataDirectory = async () => {
   const dataDir = path.join(__dirname, '../data');
   const sharedGistsDir = path.join(dataDir, 'shared-gists');
-  
+
   try {
     await fs.mkdir(dataDir, { recursive: true });
     await fs.mkdir(sharedGistsDir, { recursive: true });
     logger.info('Data directories initialized');
   } catch (error) {
-    console.error('Error creating data directories:', error);
+    logger.error('Error creating data directories', { error: error.message });
   }
 };
 
-// init data dir
 ensureDataDirectory();
-
-// Enable trust proxy
-app.set('trust proxy', true);
-
-// Setup logger
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.json(),
-  defaultMeta: { service: 'gist-manager' },
-  transports: [
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' }),
-  ],
-});
-
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.simple(),
-  }));
-}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
