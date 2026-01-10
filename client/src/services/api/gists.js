@@ -1,4 +1,9 @@
-// services/api/gists.js
+/**
+ * Gist API Service
+ * Primary service for GitHub Gist CRUD operations with client-side caching.
+ * Implements per-user cache isolation and security best practices.
+ * @module services/api/gists
+ */
 
 import { handleApiError, logInfo, logError } from '../../utils/logger';
 import { githubApi } from './github';

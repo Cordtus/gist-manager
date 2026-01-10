@@ -1,4 +1,9 @@
-// services/api/sharedGists.js
+/**
+ * Shared Gists API Service
+ * Client-side API for community gist sharing functionality.
+ * Communicates with the backend shared gists endpoints.
+ * @module services/api/sharedGists
+ */
 
 import { api } from './github';
 import { logInfo, logError } from '../../utils/logger';
