@@ -115,3 +115,7 @@ quick-deploy.sh
 
 # ESM cache
 .esm-cache/
+
+# Claude Code
+.claude/
+CLAUDE.md
