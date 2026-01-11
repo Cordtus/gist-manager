@@ -22,14 +22,16 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Simple link styling without bubbly animation */
-a {
+/* Simple link styling - only for content links, not navigation */
+main a:not([class*="text-"]),
+.prose a {
   color: hsl(var(--primary));
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
-a:hover {
+main a:not([class*="text-"]):hover,
+.prose a:hover {
   color: hsl(var(--primary) / 0.8);
 }
 

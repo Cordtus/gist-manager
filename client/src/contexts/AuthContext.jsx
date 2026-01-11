@@ -127,31 +127,41 @@ export const AuthProvider = ({ children }) => {
   const initiateGithubLogin = useCallback(async () => {
     try {
       // Get auth URL from server (which handles state)
-      const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.AUTH_LOGIN}`, { 
+      const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.AUTH_LOGIN}`, {
         params: {
           scopes: GITHUB_CONFIG.scopes
         },
-        withCredentials: true 
+        withCredentials: true
       });
-      
+
       if (!response.data || !response.data.url) {
         throw new Error('Invalid response from server');
       }
-      
+
       // Store state in sessionStorage as backup
       if (response.data.state) {
         sessionStorage.setItem('oauth_state', response.data.state);
       }
-      
+
       // Redirect to GitHub
       window.location.href = response.data.url;
     } catch (error) {
       logError('Error initiating GitHub login', error);
-      const errorMsg = `Failed to initiate GitHub login: ${error.message}`;
-      setError(errorMsg);
-      // Also show alert for immediate visibility
-      alert(errorMsg);
+
+      // Handle 404 (OAuth not configured) gracefully
+      if (error.response?.status === 404) {
+        const errorMsg = 'GitHub OAuth is not configured. Please set up OAuth credentials in the server.';
+        setError(errorMsg);
+      } else {
+        const errorMsg = `Failed to initiate GitHub login: ${error.message}`;
+        setError(errorMsg);
+      }
     }
+  }, []);
+
+  // Clear error message
+  const clearError = useCallback(() => {
+    setError(null);
   }, []);
 
   // Login with authorization code
@@ -197,6 +207,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     loading,
     error,
+    clearError,
     initiateGithubLogin,
     isAuthenticated: !!user
   };

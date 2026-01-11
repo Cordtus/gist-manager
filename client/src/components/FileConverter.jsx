@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import TurndownService from 'turndown';
 import showdown from 'showdown';
+import { CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const turndownService = new TurndownService({
@@ -227,13 +228,15 @@ const FileConverter = () => {
       </div>
 
       {successMessage && (
-        <div className="bg-success bg-opacity-10 text-success p-4 rounded-md">
-          {successMessage}
+        <div className="flex items-center gap-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-4 rounded-lg border border-emerald-500/20">
+          <CheckCircle className="h-5 w-5 flex-shrink-0" />
+          <span>{successMessage}</span>
         </div>
       )}
       {errorMessage && (
-        <div className="bg-error bg-opacity-10 text-error p-4 rounded-md">
-          {errorMessage}
+        <div className="flex items-center gap-3 bg-destructive/10 text-destructive p-4 rounded-lg border border-destructive/20">
+          <XCircle className="h-5 w-5 flex-shrink-0" />
+          <span>{errorMessage}</span>
         </div>
       )}
 
