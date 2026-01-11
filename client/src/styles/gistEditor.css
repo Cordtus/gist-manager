@@ -90,25 +90,6 @@
   align-items: center;
 }
 
-/* Message bars */
-.message-bar {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid hsl(var(--border));
-  font-weight: 500;
-}
-
-.message-bar.error {
-  background-color: hsl(var(--destructive) / 0.1);
-  color: hsl(var(--destructive));
-  border-color: hsl(var(--destructive));
-}
-
-.message-bar.success {
-  background-color: hsl(142 76% 36% / 0.1);
-  color: hsl(142 76% 36%);
-  border-color: hsl(142 76% 36%);
-}
-
 /* Button controls */
 .buttons-container {
   display: flex;

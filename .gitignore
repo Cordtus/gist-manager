@@ -119,3 +119,7 @@ quick-deploy.sh
 # Claude Code
 .claude/
 CLAUDE.md
+# Internal documentation
+ERROR_STATE_IMPLEMENTATION_PLAN.md
+UI_IMPROVEMENTS.md
+.playwright-mcp/

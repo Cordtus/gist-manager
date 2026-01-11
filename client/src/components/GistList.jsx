@@ -12,6 +12,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
+import { ErrorState } from './ui/error-state';
 
 const GistList = () => {
   const [gists, setGists] = useState([]);
@@ -296,14 +297,7 @@ const GistList = () => {
 
   if (error && gists.length === 0) {
     return (
-      <Card className="border-destructive">
-        <CardContent className="pt-6 flex items-center justify-between">
-          <p className="text-destructive">{error}</p>
-          <Button onClick={refreshGists} variant="destructive">
-            Retry
-          </Button>
-        </CardContent>
-      </Card>
+      <ErrorState message={error} variant="card" onRetry={refreshGists} />
     );
   }
 

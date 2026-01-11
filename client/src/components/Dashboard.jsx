@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
+import { ErrorState } from './ui/error-state';
 
 const Dashboard = () => {
   const [gists, setGists] = useState([]);
@@ -156,13 +157,7 @@ const Dashboard = () => {
   }
 
   if (error) {
-    return (
-      <Card className="border-destructive">
-        <CardContent className="pt-6">
-          <p className="text-destructive">{error}</p>
-        </CardContent>
-      </Card>
-    );
+    return <ErrorState message={error} variant="card" />;
   }
 
   const topFileTypes = Object.entries(metrics.fileTypes)

@@ -5,17 +5,16 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
+import { ErrorState } from './ui/error-state';
 
 const Header = () => {
-  const { user, initiateGithubLogin, error } = useAuth();
+  const { user, initiateGithubLogin, error, clearError } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
   return (
     <>
       {error && (
-        <div className="bg-destructive text-destructive-foreground px-4 py-2 text-center text-sm">
-          {error}
-        </div>
+        <ErrorState message={error} variant="banner" onDismiss={clearError} />
       )}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-16 items-center justify-between px-6">

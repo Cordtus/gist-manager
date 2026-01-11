@@ -1,6 +1,7 @@
 // Error boundary component for catching React errors
 import React from 'react';
 import { logError } from '../../utils/logger';
+import { ErrorState } from '../ui/error-state';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -16,21 +17,21 @@ class ErrorBoundary extends React.Component {
     logError('React Error Boundary caught error', { error, errorInfo });
   }
 
+  handleRetry = () => {
+    window.location.reload();
+  };
+
   render() {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex items-center justify-center bg-background">
-          <div className="max-w-md w-full p-6 bg-card rounded-lg shadow-lg">
-            <h2 className="text-2xl font-bold text-danger mb-4">Something went wrong</h2>
-            <p className="text-secondary mb-4">
-              An unexpected error occurred. Please refresh the page and try again.
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="button primary"
-            >
-              Refresh Page
-            </button>
+          <div className="max-w-md w-full">
+            <ErrorState
+              title="Something went wrong"
+              message="An unexpected error occurred. Please refresh the page and try again."
+              variant="fullpage"
+              onRetry={this.handleRetry}
+            />
           </div>
         </div>
       );
