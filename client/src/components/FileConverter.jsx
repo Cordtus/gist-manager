@@ -2,8 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import TurndownService from 'turndown';
 import showdown from 'showdown';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { ErrorState } from './ui/error-state';
 
 const turndownService = new TurndownService({
   headingStyle: 'atx',
@@ -45,7 +46,7 @@ const FileConverter = () => {
   const [isConverting, setIsConverting]         = useState(false);
   const [history, setHistory]                   = useState([]);
   const [successMessage, setSuccessMessage]     = useState('');
-  const [errorMessage, setErrorMessage]         = useState('');
+  const [error, setError]                       = useState('');
   const [hasManualFormat, setHasManualFormat]   = useState(false);
 
   // Update output filename
@@ -99,14 +100,14 @@ const FileConverter = () => {
   // Manual conversion
   const handleConvert = () => {
     if (!inputContent.trim()) {
-      setErrorMessage('Please enter or upload content to convert');
+      setError('Please enter or upload content to convert');
       return;
     }
     if (inputFormat === outputFormat) {
-      setErrorMessage('Input and output formats cannot be the same');
+      setError('Input and output formats cannot be the same');
       return;
     }
-    setErrorMessage('');
+    setError('');
     setSuccessMessage('');
     setIsConverting(true);
 
@@ -186,7 +187,7 @@ const FileConverter = () => {
       setHistory(h => [{ id: Date.now(), inputFormat, outputFormat, timestamp: new Date().toISOString(), inSize: inputContent.length, outSize: result.length }, ...h].slice(0, 10));
       setSuccessMessage('Conversion completed successfully!');
     } catch (err) {
-      setErrorMessage(`Conversion failed: ${err.message}`);
+      setError(`Conversion failed: ${err.message}`);
     } finally {
       setIsConverting(false);
     }
@@ -195,7 +196,7 @@ const FileConverter = () => {
   // Download output
   const handleDownload = () => {
     if (!outputContent) {
-      setErrorMessage('No content to download');
+      setError('No content to download');
       return;
     }
     const blob = new Blob([outputContent], { type: FORMATS[outputFormat].mimeType });
@@ -213,7 +214,7 @@ const FileConverter = () => {
   // Save as gist
   const handleSaveAsGist = () => {
     if (!user || !outputContent) {
-      setErrorMessage('No content to save or user not logged in');
+      setError('No content to save or user not logged in');
       return;
     }
     // stub: integrate your createGist call here
@@ -233,11 +234,8 @@ const FileConverter = () => {
           <span>{successMessage}</span>
         </div>
       )}
-      {errorMessage && (
-        <div className="flex items-center gap-3 bg-destructive/10 text-destructive p-4 rounded-lg border border-destructive/20">
-          <XCircle className="h-5 w-5 flex-shrink-0" />
-          <span>{errorMessage}</span>
-        </div>
+      {error && (
+        <ErrorState message={error} variant="inline" />
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

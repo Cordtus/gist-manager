@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { getAllSharedGists } from '../services/api/sharedGists';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from './common/Spinner';
+import { ErrorState } from './ui/error-state';
 import { generateGistPreview } from '../utils/describeGist';
 import { logError } from '../utils/logger';
 
@@ -128,17 +129,7 @@ const SharedGistList = () => {
   }
 
   if (error) {
-    return (
-      <div className="alert danger">
-        {error}
-        <button 
-          onClick={fetchSharedGists}
-          className="ml-4 button danger small"
-        >
-          Retry
-        </button>
-      </div>
-    );
+    return <ErrorState message={error} variant="card" onRetry={fetchSharedGists} />;
   }
 
   return (

@@ -1,10 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Moon, Sun, Github, X } from 'lucide-react';
+import { Moon, Sun, Github } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
+import { ErrorState } from './ui/error-state';
 
 const Header = () => {
   const { user, initiateGithubLogin, error, clearError } = useAuth();
@@ -13,16 +14,7 @@ const Header = () => {
   return (
     <>
       {error && (
-        <div className="bg-destructive text-destructive-foreground px-4 py-2 text-sm flex items-center justify-center gap-4">
-          <span>{error}</span>
-          <button
-            onClick={clearError}
-            className="hover:bg-destructive-foreground/20 rounded p-1 transition-colors"
-            aria-label="Dismiss error"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+        <ErrorState message={error} variant="banner" onDismiss={clearError} />
       )}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-16 items-center justify-between px-6">

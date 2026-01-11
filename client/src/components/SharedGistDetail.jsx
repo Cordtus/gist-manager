@@ -5,6 +5,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getAllSharedGists } from '../services/api/sharedGists';
 import MarkdownPreview from './markdown/MarkdownPreview';
 import Spinner from './common/Spinner';
+import { ErrorState } from './ui/error-state';
 import { logError } from '../utils/logger';
 
 const SharedGistDetail = () => {
@@ -157,13 +158,8 @@ const SharedGistDetail = () => {
   if (error) {
     return (
       <div className="card p-6">
-        <div className="alert danger mb-4">
-          {error}
-        </div>
-        <button 
-          onClick={() => navigate('/shared')}
-          className="button primary"
-        >
+        <ErrorState message={error} variant="card" className="mb-4" />
+        <button onClick={() => navigate('/shared')} className="button primary">
           Back to Shared Gists
         </button>
       </div>

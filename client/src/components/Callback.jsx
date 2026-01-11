@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from './common/Spinner';
+import { ErrorState } from './ui/error-state';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -58,21 +59,16 @@ const Callback = () => {
   
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center p-6">
-        <div className="alert danger mb-4">
-          <p className="font-bold">Authentication Error</p>
-          <p>{error}</p>
-        </div>
-        
+      <div className="flex flex-col items-center justify-center min-h-[400px] p-6">
+        <ErrorState message={error} title="Authentication Error" variant="fullpage" className="mb-6" />
         <div className="flex space-x-4">
-          <button 
+          <button
             onClick={() => navigate('/')}
             className="button secondary"
           >
             Return to Homepage
           </button>
-          
-          <button 
+          <button
             onClick={() => window.location.href = '/'}
             className="button primary"
           >

@@ -11,6 +11,7 @@ import MarkdownPreview from './markdown/MarkdownPreview';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from './ui/resizable';
+import { ErrorState } from './ui/error-state';
 import '../styles/gistEditor.css';
 import '../styles/markdownPreview.css';
 
@@ -555,7 +556,7 @@ const GistEditor = () => {
 
       {/* Messages */}
       {error && (
-        <div className="message-bar error">{error}</div>
+        <ErrorState message={error} variant="inline" />
       )}
 
       {/* Controls */}
