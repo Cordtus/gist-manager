@@ -1,222 +1,286 @@
-// /contexts/AuthContext.js
+/**
+ * Authentication Context
+ * Provides authentication state and methods for GitHub OAuth PKCE flow.
+ * @module contexts/AuthContext
+ */
 
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import axios from 'axios';
 import { setAuthToken } from '../services/api/github';
 import authService from '../services/api/auth';
 import { logInfo, logError, trackError, ErrorCategory } from '../utils/logger';
-import { API_BASE_URL, API_ENDPOINTS, GITHUB_CONFIG } from '../config/api';
 
-// Create AuthContext
 const AuthContext = createContext();
 
-// Custom hook to use AuthContext
+/**
+ * Hook to access authentication context
+ * @returns {Object} Auth context value
+ */
 export const useAuth = () => useContext(AuthContext);
 
+/**
+ * Authentication Provider Component
+ * Manages GitHub OAuth PKCE flow and user session state
+ */
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+	const [user, setUser] = useState(null);
+	const [token, setToken] = useState(null);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState(null);
 
-  // Clear session and log out
-  const logout = useCallback(async () => {
-    try {
-      // Call server-side logout endpoint
-      await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, { withCredentials: true });
-      
-      // Reset client-side state
-      setUser(null);
-      setToken(null);
-      setError(null);
-      
-      // Clear token from API service
-      setAuthToken(null);
-      
-      // SECURITY: Dispatch logout event to clear caches
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('auth:logout'));
-      }
-      
-      // Clear any stored tokens from localStorage
-      localStorage.removeItem('github_token');
-      localStorage.removeItem('gist_manager_session');
-      
-      logInfo('User logged out successfully');
-    } catch (error) {
-      logError('Logout error:', { error: error.message });
-    }
-  }, []);
+	/**
+	 * Clear session and log out user
+	 */
+	const logout = useCallback(async () => {
+		try {
+			setUser(null);
+			setToken(null);
+			setError(null);
 
-  // Fetch the current authenticated user
-  const fetchUser = useCallback(async () => {
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-  
-    try {
-      setLoading(true);
-      
-      // Use authService to get user data
-      const userData = await authService.getCurrentUser();
-      
-      // If userData has email or we got the data we need, just use it
-      setUser(userData);
-      setError(null);
-    } catch (error) {
-      logError('Error fetching user', error);
-      setError('Failed to retrieve user information');
-      logout();
-    } finally {
-      setLoading(false);
-    }
-  }, [token, logout]);
+			setAuthToken(null);
 
-  // Check authentication status on application load
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        setLoading(true);
-        
-        // Check if we have a token in localStorage (for backward compatibility)
-        const savedToken = localStorage.getItem('github_token');
-        if (savedToken) {
-          setToken(savedToken);
-          setAuthToken(savedToken);
-          await fetchUser();
-          return;
-        }
-        
-        // Otherwise check server-side session
-        const { data } = await axios.get(`${API_BASE_URL}/api/auth/status`, { withCredentials: true });
-        
-        if (data.authenticated && data.user) {
-          setUser(data.user);
-          // We don't need to set a token here as the server-side session handles authentication
-          logInfo('Authenticated via server session');
-        }
-      } catch (error) {
-        logError('Error checking authentication status:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+			if (typeof window !== 'undefined') {
+				window.dispatchEvent(new CustomEvent('auth:logout'));
+			}
 
-    checkAuthStatus();
-  }, [fetchUser]);
+			sessionStorage.removeItem('github_token');
+			sessionStorage.removeItem('gist_manager_session');
+			sessionStorage.removeItem('oauth_state');
+			sessionStorage.removeItem('code_verifier');
 
-  // Set up listener for token invalid events from API calls
-  useEffect(() => {
-    const handleTokenInvalid = () => {
-      logInfo('Received token_invalid event, logging out');
-      trackError(new Error('Token became invalid'), ErrorCategory.AUTHENTICATION, {
-        action: 'auto_logout',
-        reason: 'token_invalid_event'
-      });
-      logout();
-    };
+			logInfo('User logged out successfully');
+		} catch (error) {
+			logError('Logout error:', { error: error.message });
+		}
+	}, []);
 
-    window.addEventListener('auth:token_invalid', handleTokenInvalid);
+	/**
+	 * Fetch current user data from GitHub
+	 */
+	const fetchUser = useCallback(async () => {
+		if (!token) {
+			setLoading(false);
+			return;
+		}
 
-    return () => {
-      window.removeEventListener('auth:token_invalid', handleTokenInvalid);
-    };
-  }, [logout]);
+		try {
+			setLoading(true);
 
-  const initiateGithubLogin = useCallback(async () => {
-    try {
-      // Get auth URL from server (which handles state)
-      const response = await axios.get(`${API_BASE_URL}${API_ENDPOINTS.AUTH_LOGIN}`, {
-        params: {
-          scopes: GITHUB_CONFIG.scopes
-        },
-        withCredentials: true
-      });
+			const userData = await authService.getCurrentUser();
+			setUser(userData);
+			setError(null);
+		} catch (error) {
+			logError('Error fetching user', error);
+			setError('Failed to retrieve user information');
+			logout();
+		} finally {
+			setLoading(false);
+		}
+	}, [token, logout]);
 
-      if (!response.data || !response.data.url) {
-        throw new Error('Invalid response from server');
-      }
+	/**
+	 * Check authentication status on load
+	 */
+	useEffect(() => {
+		const checkAuthStatus = async () => {
+			try {
+				setLoading(true);
 
-      // Store state in sessionStorage as backup
-      if (response.data.state) {
-        sessionStorage.setItem('oauth_state', response.data.state);
-      }
+				// Check sessionStorage for existing token
+				let savedToken = null;
 
-      // Redirect to GitHub
-      window.location.href = response.data.url;
-    } catch (error) {
-      logError('Error initiating GitHub login', error);
+				try {
+					const sessionData = sessionStorage.getItem('gist_manager_session');
+					if (sessionData) {
+						const { token: sessionToken, expiration } = JSON.parse(sessionData);
+						if (expiration && new Date().getTime() < expiration) {
+							savedToken = sessionToken;
+						}
+					}
+				} catch (e) {
+					logError('Error reading session data', { error: e.message });
+				}
 
-      // Handle 404 (OAuth not configured) gracefully
-      if (error.response?.status === 404) {
-        const errorMsg = 'GitHub OAuth is not configured. Please set up OAuth credentials in the server.';
-        setError(errorMsg);
-      } else {
-        const errorMsg = `Failed to initiate GitHub login: ${error.message}`;
-        setError(errorMsg);
-      }
-    }
-  }, []);
+				if (!savedToken) {
+					savedToken = sessionStorage.getItem('github_token');
+				}
 
-  // Clear error message
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
+				if (savedToken) {
+					setToken(savedToken);
+					setAuthToken(savedToken);
+					logInfo('Found existing session token');
+				}
+			} catch (error) {
+				logError('Error checking authentication status:', error);
+			} finally {
+				setLoading(false);
+			}
+		};
 
-  // Login with authorization code
-  const login = async (code, state) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Exchange code for token (server validates state)
-      const response = await axios.post(`${API_BASE_URL}${API_ENDPOINTS.AUTH_GITHUB}`, 
-        { code, state }, 
-        { withCredentials: true }
-      );
-      
-      if (!response.data || !response.data.access_token) {
-        throw new Error('Invalid response from server');
-      }
-      
-      // Set token in memory
-      const authToken = response.data.access_token;
-      setToken(authToken);
-      setAuthToken(authToken);
-      
-      // Fetch user data with token
-      await fetchUser();
-      
-      return true;
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Authentication failed';
-      logError('Login error:', { message: errorMessage, error });
-      setError(errorMessage);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
+		checkAuthStatus();
+	}, []);
 
-  // Value object to provide through the context
-  const contextValue = {
-    user,
-    token,
-    login,
-    logout,
-    loading,
-    error,
-    clearError,
-    initiateGithubLogin,
-    isAuthenticated: !!user
-  };
+	/**
+	 * Fetch user when token changes
+	 */
+	useEffect(() => {
+		if (token) {
+			fetchUser();
+		}
+	}, [token, fetchUser]);
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+	/**
+	 * Listen for token invalid events
+	 */
+	useEffect(() => {
+		const handleTokenInvalid = () => {
+			logInfo('Received token_invalid event, logging out');
+			trackError(new Error('Token became invalid'), ErrorCategory.AUTHENTICATION, {
+				action: 'auto_logout',
+				reason: 'token_invalid_event'
+			});
+			logout();
+		};
+
+		window.addEventListener('auth:token_invalid', handleTokenInvalid);
+
+		return () => {
+			window.removeEventListener('auth:token_invalid', handleTokenInvalid);
+		};
+	}, [logout]);
+
+	/**
+	 * Initiate GitHub OAuth login with PKCE
+	 * Builds authorization URL directly and redirects to GitHub
+	 */
+	const initiateGithubLogin = useCallback(async () => {
+		try {
+			const clientId = process.env.REACT_APP_GITHUB_CLIENT_ID;
+
+			if (!clientId) {
+				const errorMsg = 'GitHub OAuth is not configured. Missing REACT_APP_GITHUB_CLIENT_ID.';
+				setError(errorMsg);
+				logError(errorMsg);
+				return;
+			}
+
+			// Generate PKCE verifier and challenge
+			const codeVerifier = authService.generateCodeVerifier();
+			const codeChallenge = await authService.generateCodeChallenge(codeVerifier);
+			const state = authService.generateOAuthState();
+
+			// Store verifier and state for callback
+			sessionStorage.setItem('code_verifier', codeVerifier);
+			sessionStorage.setItem('oauth_state', state);
+
+			const redirectUri = process.env.REACT_APP_REDIRECT_URI || `${window.location.origin}/callback`;
+			const scopes = 'gist user user:email';
+
+			// Build GitHub authorization URL with PKCE
+			const params = new URLSearchParams({
+				client_id: clientId,
+				redirect_uri: redirectUri,
+				scope: scopes,
+				state: state,
+				code_challenge: codeChallenge,
+				code_challenge_method: 'S256'
+			});
+
+			const authUrl = `https://github.com/login/oauth/authorize?${params.toString()}`;
+
+			logInfo('Initiating GitHub OAuth login with PKCE', { redirectUri, scopes });
+
+			// Redirect to GitHub
+			window.location.href = authUrl;
+		} catch (error) {
+			logError('Error initiating GitHub login', error);
+			setError(`Failed to initiate GitHub login: ${error.message}`);
+		}
+	}, []);
+
+	/**
+	 * Clear error message
+	 */
+	const clearError = useCallback(() => {
+		setError(null);
+	}, []);
+
+	/**
+	 * Handle login with authorization code (called from Callback component)
+	 * @param {string} code - Authorization code from GitHub
+	 * @param {string} state - State parameter for CSRF verification
+	 * @returns {Promise<boolean>} Success status
+	 */
+	const login = async (code, state) => {
+		try {
+			setLoading(true);
+			setError(null);
+
+			// Verify state
+			const storedState = sessionStorage.getItem('oauth_state');
+			if (state !== storedState) {
+				throw new Error('Invalid state parameter - possible CSRF attack');
+			}
+
+			// Get code verifier
+			const codeVerifier = sessionStorage.getItem('code_verifier');
+			if (!codeVerifier) {
+				throw new Error('Missing code verifier - OAuth flow may have been interrupted');
+			}
+
+			// Exchange code for token directly with GitHub
+			const accessToken = await authService.exchangeCodeForToken(code, codeVerifier);
+
+			// Clear OAuth flow data
+			sessionStorage.removeItem('oauth_state');
+			sessionStorage.removeItem('code_verifier');
+
+			// Store token
+			sessionStorage.setItem('github_token', accessToken);
+			const sessionData = {
+				token: accessToken,
+				expiration: new Date().getTime() + (24 * 60 * 60 * 1000),
+				createdAt: new Date().toISOString()
+			};
+			sessionStorage.setItem('gist_manager_session', JSON.stringify(sessionData));
+
+			// Set token in state and API
+			setToken(accessToken);
+			setAuthToken(accessToken);
+
+			logInfo('Login successful');
+			return true;
+		} catch (error) {
+			const errorMessage = error.message || 'Authentication failed';
+			logError('Login error:', { message: errorMessage, error });
+			setError(errorMessage);
+
+			// Clear any partial OAuth state
+			sessionStorage.removeItem('oauth_state');
+			sessionStorage.removeItem('code_verifier');
+
+			return false;
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const contextValue = {
+		user,
+		token,
+		login,
+		logout,
+		loading,
+		error,
+		clearError,
+		initiateGithubLogin,
+		isAuthenticated: !!user
+	};
+
+	return (
+		<AuthContext.Provider value={contextValue}>
+			{children}
+		</AuthContext.Provider>
+	);
 };
 
 export default AuthContext;

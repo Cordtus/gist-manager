@@ -7,17 +7,7 @@
 
 import axios from 'axios';
 import { logInfo, logError, logWarning } from '../../utils/logger';
-import { API_BASE_URL, GITHUB_API } from '../../config/api';
-
-/**
- * Axios instance for backend API requests
- * Includes credentials for cross-origin cookie handling
- * @type {import('axios').AxiosInstance}
- */
-export const api = axios.create({
-	baseURL: API_BASE_URL,
-	withCredentials: true,
-});
+import { GITHUB_API } from '../../config/api';
 
 /**
  * Axios instance for direct GitHub API requests
@@ -61,8 +51,8 @@ githubApi.interceptors.response.use(
 		if (error.response?.status === 401) {
 			logError('Unauthorized GitHub API request - token may be invalid');
 
-			localStorage.removeItem('github_token');
-			localStorage.removeItem('gist_manager_session');
+			sessionStorage.removeItem('github_token');
+			sessionStorage.removeItem('gist_manager_session');
 
 			if (typeof window !== 'undefined') {
 				window.dispatchEvent(new CustomEvent('auth:token_invalid'));
@@ -73,12 +63,12 @@ githubApi.interceptors.response.use(
 	}
 );
 
-// Request interceptor to add authorization header
+// Request interceptor to add authorization header from sessionStorage
 githubApi.interceptors.request.use((config) => {
 	let token = null;
 
 	try {
-		const sessionData = localStorage.getItem('gist_manager_session');
+		const sessionData = sessionStorage.getItem('gist_manager_session');
 		if (sessionData) {
 			const { token: sessionToken, expiration } = JSON.parse(sessionData);
 			if (expiration && new Date().getTime() < expiration) {
@@ -90,7 +80,7 @@ githubApi.interceptors.request.use((config) => {
 	}
 
 	if (!token) {
-		token = localStorage.getItem('github_token');
+		token = sessionStorage.getItem('github_token');
 	}
 
 	if (token) {
@@ -103,16 +93,14 @@ githubApi.interceptors.request.use((config) => {
 });
 
 /**
- * Set authorization token for both API instances
+ * Set authorization token for GitHub API instance
  * @param {string|null} token - GitHub access token or null to clear
  */
 export const setAuthToken = (token) => {
 	if (token) {
-		api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 		githubApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 		logInfo('Auth token set for API requests');
 	} else {
-		delete api.defaults.headers.common['Authorization'];
 		delete githubApi.defaults.headers.common['Authorization'];
 		logInfo('Auth token cleared from API requests');
 	}
@@ -161,7 +149,6 @@ export const forkGist = async (gistId) => {
 };
 
 const githubService = {
-	api,
 	githubApi,
 	setAuthToken,
 	getUserGists,

@@ -39,7 +39,7 @@ const renderList = () => {
 describe('GistList Component', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		localStorage.clear();
+		sessionStorage.clear();
 	});
 
 	describe('Fetching gists', () => {

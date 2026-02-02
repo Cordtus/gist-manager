@@ -12,11 +12,6 @@ import * as gistsApi from '../services/api/gists';
 import { ToastProvider } from '../contexts/ToastContext';
 
 vi.mock('../services/api/gists');
-vi.mock('../services/api/sharedGists', () => ({
-	isGistShared: vi.fn().mockResolvedValue(false),
-	shareGist: vi.fn(),
-	unshareGist: vi.fn()
-}));
 
 vi.mock('react-router-dom', async () => {
 	const actual = await vi.importActual('react-router-dom');
@@ -53,7 +48,7 @@ const renderEditor = (props = {}) => {
 describe('GistEditor Component', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		localStorage.clear();
+		sessionStorage.clear();
 		useParams.mockReturnValue({});
 	});
 

@@ -32,7 +32,7 @@ const githubApi = await import('./github');
 describe('GitHub API Service', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		localStorage.clear();
+		sessionStorage.clear();
 	});
 
 	describe('getUserGists', () => {
@@ -76,6 +76,19 @@ describe('GitHub API Service', () => {
 			axios._instance.post.mockRejectedValue(createMockError(401, 'Requires authentication'));
 
 			await expect(githubApi.forkGist('gist-123')).rejects.toThrow();
+		});
+	});
+
+	describe('setAuthToken', () => {
+		it('sets token on githubApi defaults', () => {
+			githubApi.setAuthToken('test_token');
+			expect(githubApi.githubApi.defaults.headers.common['Authorization']).toBe('Bearer test_token');
+		});
+
+		it('clears token when null passed', () => {
+			githubApi.setAuthToken('test_token');
+			githubApi.setAuthToken(null);
+			expect(githubApi.githubApi.defaults.headers.common['Authorization']).toBeUndefined();
 		});
 	});
 });

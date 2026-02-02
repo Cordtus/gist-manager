@@ -39,8 +39,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "postbuild": "cp -r build ../server/ 2>/dev/null || true",
-    "clean": "rm -rf build dist node_modules ../server/build",
+    "clean": "rm -rf build dist node_modules",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
