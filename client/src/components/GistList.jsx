@@ -7,7 +7,7 @@ import ConfirmationDialog from './ConfirmationDialog';
 import Spinner from './common/Spinner';
 import { generateGistPreview } from '../utils/describeGist';
 import { logError } from '../utils/logger';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
@@ -313,12 +313,7 @@ const GistList = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>My Gists</CardTitle>
-              <CardDescription>
-                Manage and search through your gist collection
-              </CardDescription>
-            </div>
+            <CardTitle>My Gists</CardTitle>
             <div className="flex gap-2">
               <Button onClick={() => setIsAdvancedSearch(!isAdvancedSearch)} variant="outline" size="sm">
                 <Filter className="h-4 w-4 mr-2" />

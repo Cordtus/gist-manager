@@ -3,97 +3,191 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
-  }
+	/* Light theme - clean and minimal */
+	:root,
+	.light {
+		--background: 0 0% 98%;
+		--foreground: 0 0% 12%;
+		--card: 0 0% 100%;
+		--card-foreground: 0 0% 12%;
+		--popover: 0 0% 100%;
+		--popover-foreground: 0 0% 12%;
+		--primary: 220 90% 50%;
+		--primary-foreground: 0 0% 100%;
+		--secondary: 220 15% 94%;
+		--secondary-foreground: 0 0% 12%;
+		--muted: 220 15% 94%;
+		--muted-foreground: 220 10% 45%;
+		--accent: 220 15% 94%;
+		--accent-foreground: 0 0% 12%;
+		--destructive: 0 85% 55%;
+		--destructive-foreground: 0 0% 100%;
+		--border: 220 15% 88%;
+		--input: 220 15% 88%;
+		--ring: 220 90% 50%;
+		--radius: 0.25rem;
+	}
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 72%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-  }
+	/* Dark theme - true dark */
+	.dark {
+		--background: 0 0% 4%;
+		--foreground: 0 0% 95%;
+		--card: 0 0% 7%;
+		--card-foreground: 0 0% 95%;
+		--popover: 0 0% 7%;
+		--popover-foreground: 0 0% 95%;
+		--primary: 220 90% 55%;
+		--primary-foreground: 0 0% 100%;
+		--secondary: 0 0% 12%;
+		--secondary-foreground: 0 0% 95%;
+		--muted: 0 0% 15%;
+		--muted-foreground: 0 0% 60%;
+		--accent: 0 0% 15%;
+		--accent-foreground: 0 0% 95%;
+		--destructive: 0 75% 50%;
+		--destructive-foreground: 0 0% 100%;
+		--border: 0 0% 15%;
+		--input: 0 0% 12%;
+		--ring: 220 90% 55%;
+		--radius: 0.25rem;
+	}
+
+	/* Terminal theme - monochrome with cyan accent */
+	.terminal {
+		--background: 0 0% 0%;
+		--foreground: 180 100% 80%;
+		--card: 0 0% 5%;
+		--card-foreground: 180 100% 80%;
+		--popover: 0 0% 5%;
+		--popover-foreground: 180 100% 80%;
+		--primary: 180 100% 50%;
+		--primary-foreground: 0 0% 0%;
+		--secondary: 0 0% 10%;
+		--secondary-foreground: 180 100% 70%;
+		--muted: 0 0% 12%;
+		--muted-foreground: 180 50% 50%;
+		--accent: 180 100% 25%;
+		--accent-foreground: 180 100% 80%;
+		--destructive: 0 100% 50%;
+		--destructive-foreground: 0 0% 100%;
+		--border: 180 100% 25%;
+		--input: 0 0% 8%;
+		--ring: 180 100% 50%;
+		--radius: 0rem;
+	}
+
+	/* Retro theme - vaporwave inspired */
+	.retro {
+		--background: 270 50% 8%;
+		--foreground: 300 100% 90%;
+		--card: 270 50% 12%;
+		--card-foreground: 300 100% 90%;
+		--popover: 270 50% 12%;
+		--popover-foreground: 300 100% 90%;
+		--primary: 180 100% 50%;
+		--primary-foreground: 0 0% 0%;
+		--secondary: 270 40% 18%;
+		--secondary-foreground: 300 100% 85%;
+		--muted: 270 30% 20%;
+		--muted-foreground: 300 50% 60%;
+		--accent: 300 100% 50%;
+		--accent-foreground: 0 0% 0%;
+		--destructive: 0 100% 60%;
+		--destructive-foreground: 0 0% 100%;
+		--border: 180 60% 30%;
+		--input: 270 40% 15%;
+		--ring: 180 100% 50%;
+		--radius: 0rem;
+	}
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
+	* {
+		@apply border-border;
+	}
+	body {
+		@apply bg-background text-foreground;
+		font-feature-settings: "rlig" 1, "calt" 1;
+	}
 }
 
-/* Custom scrollbar */
+/* Scrollbar - minimal */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+	width: 8px;
+	height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-secondary;
+	background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/30 rounded-md;
+	background-color: hsl(var(--muted-foreground) / 0.3);
+	border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/50;
+	background-color: hsl(var(--muted-foreground) / 0.5);
 }
 
-/* Smooth scrolling */
+/* Terminal theme scrollbar */
+.terminal ::-webkit-scrollbar-thumb {
+	background-color: hsl(180 100% 50% / 0.3);
+	border-radius: 0;
+}
+
+.terminal ::-webkit-scrollbar-thumb:hover {
+	background-color: hsl(180 100% 50% / 0.5);
+}
+
+/* Retro theme scrollbar */
+.retro ::-webkit-scrollbar-thumb {
+	background-color: hsl(180 100% 50% / 0.4);
+	border-radius: 0;
+}
+
 html {
-  scroll-behavior: smooth;
+	scroll-behavior: smooth;
 }
 
-/* Focus visible for accessibility */
 :focus-visible {
-  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+	@apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
 }
 
-/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}
+
+/* Terminal theme specific */
+.terminal {
+	font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Menlo', monospace;
+}
+
+.terminal input,
+.terminal textarea,
+.terminal select {
+	font-family: inherit;
+}
+
+/* Retro theme specific */
+.retro {
+	font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* Remove excessive shadows in terminal/retro */
+.terminal .shadow-sm,
+.terminal .shadow,
+.terminal .shadow-md,
+.terminal .shadow-lg,
+.retro .shadow-sm,
+.retro .shadow,
+.retro .shadow-md,
+.retro .shadow-lg {
+	box-shadow: none;
 }
