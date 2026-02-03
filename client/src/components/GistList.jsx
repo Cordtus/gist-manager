@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Filter, RefreshCw, FileText, Plus, Edit2, Trash2, ArrowUpDown } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search, Filter, RefreshCw, FileText, Plus, Edit2, Trash2, ArrowUpDown, Eye } from 'lucide-react';
 import { getGists, deleteGist, updateGist } from '../services/api/gists';
 import { useAuth } from '../contexts/AuthContext';
 import ConfirmationDialog from './ConfirmationDialog';
@@ -40,6 +40,7 @@ const GistList = () => {
     dateTo: ''
   });
   const { user, token } = useAuth();
+  const navigate = useNavigate();
 
   // Build search index
   const buildSearchIndex = useCallback((gistsData) => {
@@ -508,8 +509,22 @@ const GistList = () => {
                     <Button
                       variant="ghost"
                       size="sm"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        navigate(`/view/${gist.id}`);
+                      }}
+                      className="h-8 px-2"
+                      title="View gist"
+                    >
+                      <Eye className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={(e) => handleEditDescription(gist, e)}
                       className="h-8 px-2"
+                      title="Edit description"
                     >
                       <Edit2 className="h-3 w-3" />
                     </Button>
@@ -518,6 +533,7 @@ const GistList = () => {
                       size="sm"
                       onClick={(e) => handleDeleteClick(gist, e)}
                       className="h-8 px-2 text-destructive hover:text-destructive"
+                      title="Delete gist"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>

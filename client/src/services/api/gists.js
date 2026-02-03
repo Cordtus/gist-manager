@@ -191,6 +191,66 @@ export const getGist = async (id, token, setError) => {
 };
 
 /**
+ * Fetch a public gist by ID (no authentication required)
+ * Used for shareable links - only works for public gists
+ *
+ * @param {string} id - Gist ID
+ * @param {Function} [setError] - Error handler
+ * @returns {Promise<Object>}
+ */
+export const getPublicGist = async (id, setError) => {
+  try {
+    logInfo(`Fetching public gist with ID: ${id}`);
+    const response = await githubApi.get(`/gists/${id}`);
+    logInfo(`Successfully fetched public gist: ${id}`);
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 404) {
+      logInfo(`Gist not found or is private: ${id}`);
+      if (setError) setError('Gist not found or is private');
+    } else {
+      logError(`Error fetching public gist: ${id}`, { error: error.message });
+      handleApiError(error, setError);
+    }
+    throw error;
+  }
+};
+
+/**
+ * Fork a gist to the authenticated user's account
+ * SECURITY: Requires authentication
+ *
+ * @param {string} gistId - Gist ID to fork
+ * @param {string} token - GitHub access token
+ * @param {Function} [setError] - Error handler
+ * @param {string} [userId] - User ID for cache invalidation
+ * @returns {Promise<Object>} - The forked gist
+ */
+export const forkGist = async (gistId, token, setError, userId = null) => {
+  if (!token) {
+    const error = new Error('Authentication required');
+    if (setError) setError('Authentication required');
+    throw error;
+  }
+
+  try {
+    logInfo(`Forking gist: ${gistId}`);
+    const headers = { Authorization: `Bearer ${token}` };
+    const response = await githubApi.post(`/gists/${gistId}/forks`, {}, { headers });
+    logInfo(`Successfully forked gist: ${gistId} -> ${response.data.id}`);
+
+    // Invalidate user-specific cache since they now have a new gist
+    invalidateGistsCache(token, userId);
+
+    return response.data;
+  } catch (error) {
+    logError(`Error forking gist: ${gistId}`, { error: error.message });
+    handleApiError(error, setError);
+    throw error;
+  }
+};
+
+/**
  * Create a new gist
  * Invalidates cache on success
  * SECURITY: Requires authentication

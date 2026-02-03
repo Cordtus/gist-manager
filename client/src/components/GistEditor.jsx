@@ -1,7 +1,7 @@
 // GistEditor.js - Enhanced split-panel Markdown editor
 
 import React, { useCallback, useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { createGist, updateGist, getGist } from '../services/api/gists';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -305,7 +305,6 @@ const GistEditor = () => {
 	const [error, setError] = useState(null);
 	const [previewMode, setPreviewMode] = useState('split');
 	const [wrapText, setWrapText] = useState(true);
-	const editorHeight = typeof window !== 'undefined' ? window.innerHeight - 300 : 500;
 	const [activeFile, setActiveFile] = useState(null);
 
 	const { id } = useParams();
@@ -456,6 +455,12 @@ const GistEditor = () => {
 		return map[ext] || 'text';
 	};
 
+	// Add page class to body for layout targeting
+	useEffect(() => {
+		document.body.classList.add('gist-editor-page');
+		return () => document.body.classList.remove('gist-editor-page');
+	}, []);
+
 	if (!user) return (
 		<div className="p-6 bg-surface rounded shadow-md text-center">
 			Please log in to edit gists.
@@ -518,6 +523,15 @@ const GistEditor = () => {
 				>
 					{previewMode === 'split' ? 'Editor Only' : 'Split Preview'}
 				</button>
+				{id && (
+					<Link to={`/view/${id}`} className="button secondary" title="View in reader mode">
+						<svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+						</svg>
+						View
+					</Link>
+				)}
 				<button
 					type="submit"
 					className="button primary"
@@ -570,10 +584,7 @@ const GistEditor = () => {
 
 			{/* Editor & Preview */}
 			{activeFile && (
-				<div
-					className={`editor-container ${previewMode === 'split' ? 'split-view' : ''}`}
-					style={{ height: `${editorHeight}px` }}
-				>
+				<div className={`editor-container ${previewMode === 'split' ? 'split-view' : ''}`}>
 					{previewMode === 'split' ? (
 						<ResizablePanelGroup direction="horizontal" className="h-full">
 							<ResizablePanel defaultSize={50} minSize={20}>

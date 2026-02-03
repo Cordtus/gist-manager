@@ -2,6 +2,7 @@
 
 import './styles/globals.css';
 import './styles/gistEditor.css';
+import './styles/gistViewer.css';
 import './styles/markdownPreview.css';
 
 import React from 'react';
@@ -14,6 +15,7 @@ import Dashboard from './components/Dashboard';
 import Callback from './components/Callback';
 import GistList from './components/GistList';
 import GistEditor from './components/GistEditor';
+import GistViewer from './components/GistViewer';
 import FileConverter from './components/FileConverter';
 import { UserProfile } from './components/UserProfile';
 import ThemeColorSelector from './components/ThemeColorSelector';
@@ -48,6 +50,8 @@ const AppContent = () => {
 				<Route path="/my-gists" element={<GistList />} />
 				<Route path="/gists" element={<GistList />} />
 				<Route path="/gist/:id?" element={<GistEditor />} />
+				<Route path="/view/:id" element={<GistViewer />} />
+				<Route path="/view/:id/:filename" element={<GistViewer />} />
 				<Route path="/convert" element={<FileConverter />} />
 				<Route path="/profile" element={<UserProfile />} />
 				{process.env.NODE_ENV === 'development' && (
