@@ -4,6 +4,7 @@ import {
 	LayoutDashboard,
 	FileText,
 	FilePlus,
+	Globe,
 	ArrowLeftRight,
 	User,
 	Palette,
@@ -23,6 +24,7 @@ const Sidebar = () => {
 	const navItems = [
 		{ path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
 		{ path: '/my-gists', icon: FileText, label: 'My Gists' },
+		{ path: '/explore', icon: Globe, label: 'Explore' },
 		{ path: '/gist', icon: FilePlus, label: 'New Gist' },
 		{ path: '/convert', icon: ArrowLeftRight, label: 'Convert' },
 		{ path: '/profile', icon: User, label: 'Profile' }

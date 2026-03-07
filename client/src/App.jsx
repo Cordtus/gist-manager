@@ -16,6 +16,7 @@ import Callback from './components/Callback';
 import GistList from './components/GistList';
 import GistEditor from './components/GistEditor';
 import GistViewer from './components/GistViewer';
+import Explore from './components/Explore';
 import FileConverter from './components/FileConverter';
 import { UserProfile } from './components/UserProfile';
 import ThemeColorSelector from './components/ThemeColorSelector';
@@ -49,6 +50,7 @@ const AppContent = () => {
 				<Route path="/callback" element={<Callback />} />
 				<Route path="/my-gists" element={<GistList />} />
 				<Route path="/gists" element={<GistList />} />
+				<Route path="/explore" element={<Explore />} />
 				<Route path="/gist/:id?" element={<GistEditor />} />
 				<Route path="/view/:id" element={<GistViewer />} />
 				<Route path="/view/:id/:filename" element={<GistViewer />} />
