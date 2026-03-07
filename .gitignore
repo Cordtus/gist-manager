@@ -58,8 +58,9 @@ jspm_packages/
 # Output of 'npm pack'
 *.tgz
 
-# Yarn Integrity file
+# Yarn (legacy)
 .yarn-integrity
+yarn.lock
 
 # dotenv environment variables file
 .env
@@ -123,3 +124,4 @@ CLAUDE.md
 ERROR_STATE_IMPLEMENTATION_PLAN.md
 UI_IMPROVEMENTS.md
 .playwright-mcp/
+.serena/

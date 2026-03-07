@@ -38,7 +38,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "clean": "rm -rf build dist node_modules",
     "test": "vitest",
     "test:ui": "vitest --ui",

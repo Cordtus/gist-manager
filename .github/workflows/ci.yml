@@ -17,15 +17,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: yarn
+      - uses: oven-sh/setup-bun@v2
 
-      - run: yarn install --frozen-lockfile
+      - run: bun install --frozen-lockfile
 
       - name: Biome check
-        run: yarn lint
+        run: bun run lint
 
   test:
     name: Test
@@ -33,15 +30,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: oven-sh/setup-bun@v2
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: yarn
 
-      - run: yarn install --frozen-lockfile
+      - run: bun install --frozen-lockfile
 
       - name: Vitest
-        run: yarn workspace gist-manager-client test:run
+        working-directory: client
+        run: node ../node_modules/vitest/vitest.mjs run
 
   build:
     name: Build
@@ -50,15 +49,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: oven-sh/setup-bun@v2
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: yarn
 
-      - run: yarn install --frozen-lockfile
+      - run: bun install --frozen-lockfile
 
       - name: Build client
-        run: yarn workspace gist-manager-client build
+        working-directory: client
+        run: DISABLE_ESLINT_PLUGIN=true node ../node_modules/react-scripts/bin/react-scripts.js build
         env:
           CI: true
           REACT_APP_GITHUB_CLIENT_ID: dummy
