@@ -315,6 +315,21 @@ const GistEditor = () => {
 	const editorRef = useRef(null);
 	const previewRef = useRef(null);
 
+	// Debounce preview content so large markdown doesn't block the editor
+	const [debouncedContent, setDebouncedContent] = useState('');
+	const debounceTimer = useRef(null);
+
+	const currentFileContent = activeFile ? gist.files[activeFile]?.content || '' : '';
+
+	useEffect(() => {
+		if (previewMode !== 'split') return;
+		clearTimeout(debounceTimer.current);
+		debounceTimer.current = setTimeout(() => {
+			setDebouncedContent(currentFileContent);
+		}, 300);
+		return () => clearTimeout(debounceTimer.current);
+	}, [currentFileContent, previewMode]);
+
 	const fetchGist = useCallback(async gistId => {
 		try {
 			setLoading(true);
@@ -471,8 +486,6 @@ const GistEditor = () => {
 		<div className="p-6 bg-surface rounded shadow-md text-center">Loading...</div>
 	);
 
-	const currentFileContent = activeFile ? gist.files[activeFile]?.content || '' : '';
-
 	return (
 		<form onSubmit={handleSubmit} className="gist-editor-form">
 			{/* Compact Header */}
@@ -605,9 +618,9 @@ const GistEditor = () => {
 								<div ref={previewRef} className="preview-panel h-full">
 									<div className="preview" onScroll={syncScroll}>
 										{isMarkdownFile(activeFile)
-											? (currentFileContent ? <MarkdownPreview content={currentFileContent} /> : <div>Enter some markdown content...</div>)
+											? (debouncedContent ? <MarkdownPreview content={debouncedContent} /> : <div>Enter some markdown content...</div>)
 											: <SyntaxHighlighter language={getFileLanguage(activeFile)} style={tomorrow} className="syntax-highlighter">
-												{currentFileContent}
+												{debouncedContent}
 											</SyntaxHighlighter>
 										}
 									</div>
