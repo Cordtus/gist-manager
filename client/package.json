@@ -46,29 +46,6 @@
     "test:coverage": "vitest run --coverage",
     "eject": "react-scripts eject"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app"
-    ],
-    "rules": {
-      "import/no-anonymous-default-export": "off",
-      "no-unused-vars": [
-        "warn",
-        {
-          "argsIgnorePattern": "^_"
-        }
-      ],
-      "no-console": [
-        "warn",
-        {
-          "allow": [
-            "error",
-            "warn"
-          ]
-        }
-      ]
-    }
-  },
   "browserslist": {
     "production": [
       ">0.2%",

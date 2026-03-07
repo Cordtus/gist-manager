@@ -13,9 +13,13 @@
 		"build": "yarn workspace gist-manager-client build && cp -r client/build server/",
 		"start": "yarn workspace gist-manager-server start",
 		"clean": "yarn workspace gist-manager-client run clean && rm -rf node_modules server/build",
-		"test": "yarn workspace gist-manager-client test"
+		"test": "yarn workspace gist-manager-client test",
+		"lint": "biome check client/src/ server/",
+		"lint:fix": "biome check --write client/src/ server/",
+		"format": "biome format --write client/src/ server/"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "^2.4.6",
 		"concurrently": "^9.2.0"
 	}
 }
