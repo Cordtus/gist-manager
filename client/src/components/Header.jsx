@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { ChevronDown, Github, Moon, Sparkles, Sun, Terminal } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Moon, Sun, Terminal, Sparkles, Github, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button } from './ui/button';
@@ -10,14 +10,14 @@ const themeIcons = {
 	light: Sun,
 	dark: Moon,
 	terminal: Terminal,
-	retro: Sparkles
+	retro: Sparkles,
 };
 
 const themeLabels = {
 	light: 'Light',
 	dark: 'Dark',
 	terminal: 'Terminal',
-	retro: 'Retro'
+	retro: 'Retro',
 };
 
 const Header = () => {
@@ -41,15 +41,10 @@ const Header = () => {
 
 	return (
 		<>
-			{error && (
-				<ErrorState message={error} variant="banner" onDismiss={clearError} />
-			)}
+			{error && <ErrorState message={error} variant="banner" onDismiss={clearError} />}
 			<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 				<div className="flex h-14 items-center justify-between px-4">
-					<Link
-						to="/"
-						className="font-semibold text-lg hover:opacity-80 transition-opacity"
-					>
+					<Link to="/" className="font-semibold text-lg hover:opacity-80 transition-opacity">
 						gist.md
 					</Link>
 
@@ -73,6 +68,7 @@ const Header = () => {
 										const Icon = themeIcons[t];
 										return (
 											<button
+												type="button"
 												key={t}
 												onClick={() => {
 													setTheme(t);
@@ -94,15 +90,9 @@ const Header = () => {
 						{user ? (
 							<div className="flex items-center gap-2 pl-2 border-l">
 								{user.avatar_url && (
-									<img
-										src={user.avatar_url}
-										alt={user.login}
-										className="h-7 w-7 rounded-full"
-									/>
+									<img src={user.avatar_url} alt={user.login} className="h-7 w-7 rounded-full" />
 								)}
-								<span className="text-sm hidden sm:inline">
-									{user.login}
-								</span>
+								<span className="text-sm hidden sm:inline">{user.login}</span>
 							</div>
 						) : (
 							<Button onClick={initiateGithubLogin} size="sm">

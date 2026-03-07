@@ -4,23 +4,21 @@ import './styles/globals.css';
 import './styles/gistEditor.css';
 import './styles/gistViewer.css';
 import './styles/markdownPreview.css';
-
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import Callback from './components/Callback';
+import Dashboard from './components/Dashboard';
+import Explore from './components/Explore';
+import FileConverter from './components/FileConverter';
+import GistEditor from './components/GistEditor';
+import GistList from './components/GistList';
+import GistViewer from './components/GistViewer';
+import Layout from './components/Layout';
+import ThemeColorSelector from './components/ThemeColorSelector';
+import ThemeSandbox from './components/ThemeSandbox';
+import { UserProfile } from './components/UserProfile';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './contexts/ToastContext';
-import Layout from './components/Layout';
-import Dashboard from './components/Dashboard';
-import Callback from './components/Callback';
-import GistList from './components/GistList';
-import GistEditor from './components/GistEditor';
-import GistViewer from './components/GistViewer';
-import Explore from './components/Explore';
-import FileConverter from './components/FileConverter';
-import { UserProfile } from './components/UserProfile';
-import ThemeColorSelector from './components/ThemeColorSelector';
-import ThemeSandbox from './components/ThemeSandbox';
 
 const AppContent = () => {
 	const auth = useAuth();

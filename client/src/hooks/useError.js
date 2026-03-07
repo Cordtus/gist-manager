@@ -2,7 +2,7 @@
  * useError Hook
  * Standardized error state management for components
  */
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * Hook for managing error state with optional auto-clear
@@ -22,22 +22,25 @@ export const useError = (autoClearMs = 0) => {
 		};
 	}, []);
 
-	const setError = useCallback((message) => {
-		// Clear any existing timeout
-		if (timeoutRef.current) {
-			clearTimeout(timeoutRef.current);
-			timeoutRef.current = null;
-		}
+	const setError = useCallback(
+		(message) => {
+			// Clear any existing timeout
+			if (timeoutRef.current) {
+				clearTimeout(timeoutRef.current);
+				timeoutRef.current = null;
+			}
 
-		setErrorState(message);
+			setErrorState(message);
 
-		// Set auto-clear timeout if enabled and message is truthy
-		if (autoClearMs > 0 && message) {
-			timeoutRef.current = setTimeout(() => {
-				setErrorState(null);
-			}, autoClearMs);
-		}
-	}, [autoClearMs]);
+			// Set auto-clear timeout if enabled and message is truthy
+			if (autoClearMs > 0 && message) {
+				timeoutRef.current = setTimeout(() => {
+					setErrorState(null);
+				}, autoClearMs);
+			}
+		},
+		[autoClearMs],
+	);
 
 	const clearError = useCallback(() => {
 		if (timeoutRef.current) {

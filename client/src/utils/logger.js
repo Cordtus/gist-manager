@@ -15,7 +15,7 @@ export const ErrorCategory = {
 	API: 'api',
 	NETWORK: 'network',
 	UI: 'ui',
-	UNKNOWN: 'unknown'
+	UNKNOWN: 'unknown',
 };
 
 /**
@@ -74,10 +74,10 @@ export const trackError = (error, category = ErrorCategory.UNKNOWN, context = {}
 				stack: error.stack,
 				category,
 				context,
-				timestamp: new Date().toISOString()
+				timestamp: new Date().toISOString(),
 			});
 			localStorage.setItem('recent_errors', JSON.stringify(errors.slice(0, 10)));
-		} catch (e) {
+		} catch (_e) {
 			// Ignore localStorage errors
 		}
 	}
@@ -95,7 +95,8 @@ export const handleApiError = (error, setError, onError) => {
 
 	if (error.response) {
 		const status = error.response.status;
-		const serverMessage = error.response.data?.message || error.response.data?.error || 'Unknown server error';
+		const serverMessage =
+			error.response.data?.message || error.response.data?.error || 'Unknown server error';
 
 		if (status === 401) {
 			errorMessage = 'Authentication error: Your session may have expired. Please log in again.';
@@ -137,7 +138,7 @@ export const useErrorBoundary = (onError) => {
 			if (onError) {
 				onError(error, info);
 			}
-		}
+		},
 	};
 };
 
@@ -149,7 +150,7 @@ const loggerModule = {
 	logDebug,
 	trackError,
 	useErrorBoundary,
-	ErrorCategory
+	ErrorCategory,
 };
 
 export default loggerModule;

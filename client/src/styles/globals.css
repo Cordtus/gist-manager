@@ -107,7 +107,9 @@
 	}
 	body {
 		@apply bg-background text-foreground;
-		font-feature-settings: "rlig" 1, "calt" 1;
+		font-feature-settings:
+			"rlig" 1,
+			"calt" 1;
 	}
 }
 
@@ -158,15 +160,15 @@ html {
 	*,
 	*::before,
 	*::after {
-		animation-duration: 0.01ms !important;
-		animation-iteration-count: 1 !important;
-		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms;
+		animation-iteration-count: 1;
+		transition-duration: 0.01ms;
 	}
 }
 
 /* Terminal theme specific */
 .terminal {
-	font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Menlo', monospace;
+	font-family: "JetBrains Mono", "Fira Code", "SF Mono", "Menlo", monospace;
 }
 
 .terminal input,
@@ -177,7 +179,7 @@ html {
 
 /* Retro theme specific */
 .retro {
-	font-family: 'JetBrains Mono', 'Fira Code', monospace;
+	font-family: "JetBrains Mono", "Fira Code", monospace;
 }
 
 /* Remove excessive shadows in terminal/retro */

@@ -4,23 +4,22 @@
  * Works without authentication (uses public GitHub API).
  */
 
-import React, { useState, useCallback, useRef } from 'react';
+import { ArrowRight, Eye, FileText, GitFork, Globe, Search } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Globe, FileText, Eye, GitFork, ArrowRight } from 'lucide-react';
-import { getPublicGist } from '../services/api/gists';
-import { getUserGists } from '../services/api/github';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { forkGist } from '../services/api/gists';
+import { getUserGists } from '../services/api/github';
 import { generateGistPreview } from '../utils/describeGist';
 import { logError } from '../utils/logger';
 import Spinner from './common/Spinner';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
 import { Badge } from './ui/badge';
-import { Separator } from './ui/separator';
+import { Button } from './ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
 import { ErrorState } from './ui/error-state';
+import { Input } from './ui/input';
+import { Separator } from './ui/separator';
 
 /**
  * Parse a gist ID from various input formats:
@@ -84,57 +83,62 @@ const Explore = () => {
 	const { user, token } = useAuth();
 	const toast = useToast();
 
-	const handleSearch = useCallback(async (e) => {
-		e?.preventDefault();
-		const trimmed = query.trim();
-		if (!trimmed) return;
+	const handleSearch = useCallback(
+		async (e) => {
+			e?.preventDefault();
+			const trimmed = query.trim();
+			if (!trimmed) return;
 
-		const searchId = ++abortRef.current;
-		setLoading(true);
-		setError(null);
-		setGists([]);
-		setResultLabel('');
+			const searchId = ++abortRef.current;
+			setLoading(true);
+			setError(null);
+			setGists([]);
+			setResultLabel('');
 
-		try {
-			const inputType = detectInputType(trimmed);
+			try {
+				const inputType = detectInputType(trimmed);
 
-			if (inputType === 'gist') {
-				const gistId = parseGistId(trimmed);
-				if (!gistId) {
-					setError('Could not parse a gist ID from that input. Check the URL or ID format.');
+				if (inputType === 'gist') {
+					const gistId = parseGistId(trimmed);
+					if (!gistId) {
+						setError('Could not parse a gist ID from that input. Check the URL or ID format.');
+						return;
+					}
+					// Navigate directly to the viewer
+					navigate(`/view/${gistId}`);
 					return;
 				}
-				// Navigate directly to the viewer
-				navigate(`/view/${gistId}`);
-				return;
-			}
 
-			// Username lookup
-			const userGists = await getUserGists(trimmed);
-			if (searchId !== abortRef.current) return;
+				// Username lookup
+				const userGists = await getUserGists(trimmed);
+				if (searchId !== abortRef.current) return;
 
-			setGists(userGists);
-			setResultLabel(
-				userGists.length > 0
-					? `${userGists.length} public gist${userGists.length !== 1 ? 's' : ''} by @${trimmed}`
-					: `No public gists found for @${trimmed}`
-			);
-		} catch (err) {
-			if (searchId !== abortRef.current) return;
-			logError('Explore search error', err);
-			if (err.response?.status === 404) {
-				setError(`User "${trimmed}" not found on GitHub.`);
-			} else if (err.response?.status === 403) {
-				setError('GitHub API rate limit exceeded. Try again in a minute, or log in for higher limits.');
-			} else {
-				setError('Failed to fetch gists. Please check the input and try again.');
+				setGists(userGists);
+				setResultLabel(
+					userGists.length > 0
+						? `${userGists.length} public gist${userGists.length !== 1 ? 's' : ''} by @${trimmed}`
+						: `No public gists found for @${trimmed}`,
+				);
+			} catch (err) {
+				if (searchId !== abortRef.current) return;
+				logError('Explore search error', err);
+				if (err.response?.status === 404) {
+					setError(`User "${trimmed}" not found on GitHub.`);
+				} else if (err.response?.status === 403) {
+					setError(
+						'GitHub API rate limit exceeded. Try again in a minute, or log in for higher limits.',
+					);
+				} else {
+					setError('Failed to fetch gists. Please check the input and try again.');
+				}
+			} finally {
+				if (searchId === abortRef.current) {
+					setLoading(false);
+				}
 			}
-		} finally {
-			if (searchId === abortRef.current) {
-				setLoading(false);
-			}
-		}
-	}, [query, navigate]);
+		},
+		[query, navigate],
+	);
 
 	const handleFork = async (gistId) => {
 		if (!token) {

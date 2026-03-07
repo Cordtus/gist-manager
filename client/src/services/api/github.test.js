@@ -3,9 +3,9 @@
  * Tests API call behavior for user gists and fork operations.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
 import axios from 'axios';
-import { mockGistList, createMockError } from '../../test/fixtures';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createMockError, mockGistList } from '../../test/fixtures';
 
 vi.mock('axios', () => {
 	const mockInstance = {
@@ -14,16 +14,16 @@ vi.mock('axios', () => {
 		defaults: { headers: { common: {} } },
 		interceptors: {
 			request: { use: vi.fn(), eject: vi.fn() },
-			response: { use: vi.fn(), eject: vi.fn() }
-		}
+			response: { use: vi.fn(), eject: vi.fn() },
+		},
 	};
 	return {
 		default: {
 			create: vi.fn(() => mockInstance),
 			_instance: mockInstance,
 			defaults: { headers: { common: {} } },
-			interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } }
-		}
+			interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
+		},
 	};
 });
 
@@ -41,10 +41,9 @@ describe('GitHub API Service', () => {
 
 			const result = await githubApi.getUserGists('testuser');
 
-			expect(axios._instance.get).toHaveBeenCalledWith(
-				'/users/testuser/gists',
-				{ params: { per_page: 100 } }
-			);
+			expect(axios._instance.get).toHaveBeenCalledWith('/users/testuser/gists', {
+				params: { per_page: 100 },
+			});
 			expect(result).toEqual(mockGistList);
 		});
 
@@ -82,13 +81,13 @@ describe('GitHub API Service', () => {
 	describe('setAuthToken', () => {
 		it('sets token on githubApi defaults', () => {
 			githubApi.setAuthToken('test_token');
-			expect(githubApi.githubApi.defaults.headers.common['Authorization']).toBe('Bearer test_token');
+			expect(githubApi.githubApi.defaults.headers.common.Authorization).toBe('Bearer test_token');
 		});
 
 		it('clears token when null passed', () => {
 			githubApi.setAuthToken('test_token');
 			githubApi.setAuthToken(null);
-			expect(githubApi.githubApi.defaults.headers.common['Authorization']).toBeUndefined();
+			expect(githubApi.githubApi.defaults.headers.common.Authorization).toBeUndefined();
 		});
 	});
 });

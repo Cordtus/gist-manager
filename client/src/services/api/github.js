@@ -6,8 +6,8 @@
  */
 
 import axios from 'axios';
-import { logInfo, logError, logWarning } from '../../utils/logger';
 import { GITHUB_API } from '../../config/api';
+import { logError, logInfo, logWarning } from '../../utils/logger';
 
 /**
  * Axios instance for direct GitHub API requests
@@ -25,11 +25,14 @@ githubApi.interceptors.response.use(
 				remaining: response.headers['x-ratelimit-remaining'],
 				reset: response.headers['x-ratelimit-reset']
 					? new Date(response.headers['x-ratelimit-reset'] * 1000).toISOString()
-					: 'unknown'
+					: 'unknown',
 			};
 
-			if (rateLimit.limit && rateLimit.remaining &&
-				(parseInt(rateLimit.remaining) / parseInt(rateLimit.limit)) < 0.1) {
+			if (
+				rateLimit.limit &&
+				rateLimit.remaining &&
+				parseInt(rateLimit.remaining, 10) / parseInt(rateLimit.limit, 10) < 0.1
+			) {
 				logWarning('GitHub API rate limit running low', rateLimit);
 			}
 		}
@@ -44,7 +47,7 @@ githubApi.interceptors.response.use(
 
 			logWarning('GitHub API rate limit exceeded', {
 				resetTime: resetTime.toISOString(),
-				retryAfter: Math.ceil((resetTime - new Date()) / 1000) + ' seconds'
+				retryAfter: Math.ceil((resetTime - Date.now()) / 1000) + ' seconds',
 			});
 		}
 
@@ -60,37 +63,40 @@ githubApi.interceptors.response.use(
 		}
 
 		return Promise.reject(error);
-	}
+	},
 );
 
 // Request interceptor to add authorization header from sessionStorage
-githubApi.interceptors.request.use((config) => {
-	let token = null;
+githubApi.interceptors.request.use(
+	(config) => {
+		let token = null;
 
-	try {
-		const sessionData = sessionStorage.getItem('gist_manager_session');
-		if (sessionData) {
-			const { token: sessionToken, expiration } = JSON.parse(sessionData);
-			if (expiration && new Date().getTime() < expiration) {
-				token = sessionToken;
+		try {
+			const sessionData = sessionStorage.getItem('gist_manager_session');
+			if (sessionData) {
+				const { token: sessionToken, expiration } = JSON.parse(sessionData);
+				if (expiration && Date.now() < expiration) {
+					token = sessionToken;
+				}
 			}
+		} catch (error) {
+			logError('Error retrieving token from session data', { error: error.message });
 		}
-	} catch (error) {
-		logError('Error retrieving token from session data', { error: error.message });
-	}
 
-	if (!token) {
-		token = sessionStorage.getItem('github_token');
-	}
+		if (!token) {
+			token = sessionStorage.getItem('github_token');
+		}
 
-	if (token) {
-		config.headers.Authorization = `Bearer ${token}`;
-	}
+		if (token) {
+			config.headers.Authorization = `Bearer ${token}`;
+		}
 
-	return config;
-}, (error) => {
-	return Promise.reject(error);
-});
+		return config;
+	},
+	(error) => {
+		return Promise.reject(error);
+	},
+);
 
 /**
  * Set authorization token for GitHub API instance
@@ -98,10 +104,10 @@ githubApi.interceptors.request.use((config) => {
  */
 export const setAuthToken = (token) => {
 	if (token) {
-		githubApi.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+		githubApi.defaults.headers.common.Authorization = `Bearer ${token}`;
 		logInfo('Auth token set for API requests');
 	} else {
-		delete githubApi.defaults.headers.common['Authorization'];
+		delete githubApi.defaults.headers.common.Authorization;
 		logInfo('Auth token cleared from API requests');
 	}
 };
@@ -119,7 +125,7 @@ export const getUserGists = async (username, options = {}) => {
 		logInfo('Fetching gists for user', { username });
 		const params = {
 			per_page: options.per_page || 100,
-			...options
+			...options,
 		};
 
 		const response = await githubApi.get(`/users/${username}/gists`, { params });
@@ -152,7 +158,7 @@ const githubService = {
 	githubApi,
 	setAuthToken,
 	getUserGists,
-	forkGist
+	forkGist,
 };
 
 export default githubService;

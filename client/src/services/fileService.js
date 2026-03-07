@@ -5,8 +5,8 @@
  * @module services/fileService
  */
 
-import TurndownService from 'turndown';
 import showdown from 'showdown';
+import TurndownService from 'turndown';
 
 /** @type {TurndownService} Turndown instance for HTML to Markdown conversion */
 const turndownService = new TurndownService();
@@ -16,7 +16,7 @@ const showdownConverter = new showdown.Converter({
 	tables: true,
 	tasklists: true,
 	strikethrough: true,
-	ghCodeBlocks: true
+	ghCodeBlocks: true,
 });
 
 /**

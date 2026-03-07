@@ -3,20 +3,30 @@
  * Supports public gists without authentication for shareable links.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Copy, Download, GitFork, Edit, ExternalLink, Eye, Lock, Globe } from 'lucide-react';
-import { getGist, getPublicGist, forkGist } from '../services/api/gists';
-import { useAuth } from '../contexts/AuthContext';
-import { useToast } from '../contexts/ToastContext';
-import { logError } from '../utils/logger';
-import { downloadFile, copyToClipboard, getShareableUrl } from '../utils/download';
-import MarkdownPreview from './markdown/MarkdownPreview';
+import {
+	ArrowLeft,
+	Copy,
+	Download,
+	Edit,
+	ExternalLink,
+	Eye,
+	GitFork,
+	Globe,
+	Lock,
+} from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
+import { forkGist, getGist, getPublicGist } from '../services/api/gists';
+import { copyToClipboard, downloadFile, getShareableUrl } from '../utils/download';
+import { logError } from '../utils/logger';
+import Spinner from './common/Spinner';
+import MarkdownPreview from './markdown/MarkdownPreview';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
-import Spinner from './common/Spinner';
 import '../styles/gistViewer.css';
 
 /**
@@ -64,7 +74,7 @@ const getFileLanguage = (filename) => {
 		toml: 'toml',
 		ini: 'ini',
 		xml: 'xml',
-		txt: 'text'
+		txt: 'text',
 	};
 	return languageMap[ext] || 'text';
 };
@@ -247,11 +257,7 @@ const GistViewer = () => {
 							<ArrowLeft className="h-4 w-4 mr-2" />
 							Go Back
 						</Button>
-						{!token && (
-							<Button onClick={() => navigate('/')}>
-								Log In
-							</Button>
-						)}
+						{!token && <Button onClick={() => navigate('/')}>Log In</Button>}
 					</div>
 				</CardContent>
 			</Card>
@@ -275,11 +281,7 @@ const GistViewer = () => {
 				</div>
 
 				<div className="viewer-meta">
-					{gist.owner && (
-						<span className="viewer-meta-item">
-							by @{gist.owner.login}
-						</span>
-					)}
+					{gist.owner && <span className="viewer-meta-item">by @{gist.owner.login}</span>}
 					<span className="viewer-meta-separator">|</span>
 					<span className="viewer-meta-item">
 						{gist.public ? (
@@ -295,9 +297,7 @@ const GistViewer = () => {
 						)}
 					</span>
 					<span className="viewer-meta-separator">|</span>
-					<span className="viewer-meta-item">
-						Updated {formatRelativeTime(gist.updated_at)}
-					</span>
+					<span className="viewer-meta-item">Updated {formatRelativeTime(gist.updated_at)}</span>
 					<span className="viewer-meta-separator">|</span>
 					<span className="viewer-meta-item">
 						{fileList.length} {fileList.length === 1 ? 'file' : 'files'}
@@ -310,6 +310,7 @@ const GistViewer = () => {
 				<div className="viewer-tabs">
 					{fileList.map((filename) => (
 						<button
+							type="button"
 							key={filename}
 							className={`viewer-tab ${activeFile === filename ? 'active' : ''}`}
 							onClick={() => setActiveFile(filename)}
@@ -349,11 +350,7 @@ const GistViewer = () => {
 							Edit
 						</Button>
 					)}
-					<a
-						href={gist.html_url}
-						target="_blank"
-						rel="noopener noreferrer"
-					>
+					<a href={gist.html_url} target="_blank" rel="noopener noreferrer">
 						<Button variant="ghost" size="sm">
 							<Eye className="h-4 w-4 mr-2" />
 							View on GitHub
@@ -363,25 +360,26 @@ const GistViewer = () => {
 			</div>
 
 			{/* Content */}
-			<div className={isMarkdownFile(activeFile) ? 'viewer-content' : 'viewer-content viewer-content-code'}>
-				{activeFile && (
-					<>
-						{isMarkdownFile(activeFile) ? (
-							<MarkdownPreview content={currentContent} />
-						) : (
-							<div className="viewer-code-block">
-								<SyntaxHighlighter
-									language={getFileLanguage(activeFile)}
-									style={tomorrow}
-									showLineNumbers
-									wrapLongLines
-								>
-									{currentContent}
-								</SyntaxHighlighter>
-							</div>
-						)}
-					</>
-				)}
+			<div
+				className={
+					isMarkdownFile(activeFile) ? 'viewer-content' : 'viewer-content viewer-content-code'
+				}
+			>
+				{activeFile &&
+					(isMarkdownFile(activeFile) ? (
+						<MarkdownPreview content={currentContent} />
+					) : (
+						<div className="viewer-code-block">
+							<SyntaxHighlighter
+								language={getFileLanguage(activeFile)}
+								style={tomorrow}
+								showLineNumbers
+								wrapLongLines
+							>
+								{currentContent}
+							</SyntaxHighlighter>
+						</div>
+					))}
 			</div>
 		</div>
 	);

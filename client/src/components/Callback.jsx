@@ -4,8 +4,8 @@
  * @module components/Callback
  */
 
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from './common/Spinner';
 import { ErrorState } from './ui/error-state';
@@ -95,16 +95,19 @@ const Callback = () => {
 	if (error) {
 		return (
 			<div className="flex flex-col items-center justify-center min-h-[400px] p-6">
-				<ErrorState message={error} title="Authentication Error" variant="fullpage" className="mb-6" />
+				<ErrorState
+					message={error}
+					title="Authentication Error"
+					variant="fullpage"
+					className="mb-6"
+				/>
 				<div className="flex space-x-4">
-					<button
-						onClick={() => navigate('/')}
-						className="button secondary"
-					>
+					<button type="button" onClick={() => navigate('/')} className="button secondary">
 						Return to Homepage
 					</button>
 					<button
-						onClick={() => window.location.href = '/'}
+						type="button"
+						onClick={() => (window.location.href = '/')}
 						className="button primary"
 					>
 						Try Again

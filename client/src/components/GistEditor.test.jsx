@@ -3,13 +3,13 @@
  * Tests core editing functionality: loading, saving, and file management.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter, useParams } from 'react-router-dom';
-import GistEditor from './GistEditor';
-import { mockGist, mockUser } from '../test/fixtures';
-import * as gistsApi from '../services/api/gists';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastProvider } from '../contexts/ToastContext';
+import * as gistsApi from '../services/api/gists';
+import { mockGist, mockUser } from '../test/fixtures';
+import GistEditor from './GistEditor';
 
 vi.mock('../services/api/gists');
 
@@ -18,7 +18,7 @@ vi.mock('react-router-dom', async () => {
 	return {
 		...actual,
 		useParams: vi.fn(() => ({})),
-		useNavigate: vi.fn(() => vi.fn())
+		useNavigate: vi.fn(() => vi.fn()),
 	};
 });
 
@@ -30,8 +30,8 @@ vi.mock('../contexts/AuthContext', async () => {
 			user: mockUser,
 			token: 'test-token',
 			isAuthenticated: true,
-			loading: false
-		}))
+			loading: false,
+		})),
 	};
 });
 
@@ -41,7 +41,7 @@ const renderEditor = (props = {}) => {
 			<ToastProvider>
 				<GistEditor {...props} />
 			</ToastProvider>
-		</BrowserRouter>
+		</BrowserRouter>,
 	);
 };
 
@@ -80,7 +80,7 @@ describe('GistEditor Component', () => {
 				expect(gistsApi.getGist).toHaveBeenCalledWith(
 					'test-gist-123',
 					'test-token',
-					expect.any(Function)
+					expect.any(Function),
 				);
 			});
 		});
@@ -122,11 +122,11 @@ describe('GistEditor Component', () => {
 			await waitFor(() => {
 				expect(gistsApi.createGist).toHaveBeenCalledWith(
 					expect.objectContaining({
-						description: 'New Gist'
+						description: 'New Gist',
 					}),
 					'test-token',
 					expect.any(Function),
-					mockUser.id
+					mockUser.id,
 				);
 			});
 		});
@@ -151,7 +151,7 @@ describe('GistEditor Component', () => {
 					expect.any(Object),
 					'test-token',
 					expect.any(Function),
-					mockUser.id
+					mockUser.id,
 				);
 			});
 		});
@@ -174,17 +174,17 @@ describe('GistEditor Component', () => {
 		it('adds new file when Add File button clicked', async () => {
 			renderEditor();
 
-			const initialTabCount = screen.getAllByRole('button').filter(
-				btn => btn.textContent.includes('newfile')
-			).length;
+			const initialTabCount = screen
+				.getAllByRole('button')
+				.filter((btn) => btn.textContent.includes('newfile')).length;
 
 			const addBtn = screen.getByRole('button', { name: /add file/i });
 			fireEvent.click(addBtn);
 
 			await waitFor(() => {
-				const newTabCount = screen.getAllByRole('button').filter(
-					btn => btn.textContent.includes('newfile')
-				).length;
+				const newTabCount = screen
+					.getAllByRole('button')
+					.filter((btn) => btn.textContent.includes('newfile')).length;
 				expect(newTabCount).toBeGreaterThan(initialTabCount);
 			});
 		});
@@ -197,7 +197,7 @@ describe('GistEditor Component', () => {
 				user: null,
 				token: null,
 				isAuthenticated: false,
-				loading: false
+				loading: false,
 			});
 
 			renderEditor();

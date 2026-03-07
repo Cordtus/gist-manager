@@ -5,7 +5,7 @@
 
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
+const path = require('node:path');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,15 +28,15 @@ app.post('/api/auth/token', async (req, res) => {
 		const response = await fetch('https://github.com/login/oauth/access_token', {
 			method: 'POST',
 			headers: {
-				'Accept': 'application/json',
-				'Content-Type': 'application/json'
+				Accept: 'application/json',
+				'Content-Type': 'application/json',
 			},
 			body: JSON.stringify({
 				client_id: process.env.GITHUB_CLIENT_ID,
 				client_secret: process.env.GITHUB_CLIENT_SECRET,
 				code,
-				code_verifier
-			})
+				code_verifier,
+			}),
 		});
 
 		const data = await response.json();
@@ -53,7 +53,7 @@ app.post('/api/auth/token', async (req, res) => {
 });
 
 // SPA fallback
-app.get('*', (req, res) => {
+app.get('*', (_req, res) => {
 	res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 

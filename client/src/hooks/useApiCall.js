@@ -1,5 +1,5 @@
 // Custom hook for managing API call states
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { logError } from '../utils/logger';
 
 /**
@@ -8,35 +8,38 @@ import { logError } from '../utils/logger';
  * @returns {Object} - { data, loading, error, execute, reset }
  */
 export const useApiCall = (apiFunction) => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+	const [data, setData] = useState(null);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState(null);
 
-  const execute = useCallback(async (...args) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const result = await apiFunction(...args);
-      setData(result);
-      return result;
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || 'An error occurred';
-      setError(errorMessage);
-      logError('API call failed', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [apiFunction]);
+	const execute = useCallback(
+		async (...args) => {
+			setLoading(true);
+			setError(null);
 
-  const reset = useCallback(() => {
-    setData(null);
-    setError(null);
-    setLoading(false);
-  }, []);
+			try {
+				const result = await apiFunction(...args);
+				setData(result);
+				return result;
+			} catch (err) {
+				const errorMessage = err.response?.data?.message || err.message || 'An error occurred';
+				setError(errorMessage);
+				logError('API call failed', err);
+				throw err;
+			} finally {
+				setLoading(false);
+			}
+		},
+		[apiFunction],
+	);
 
-  return { data, loading, error, execute, reset };
+	const reset = useCallback(() => {
+		setData(null);
+		setError(null);
+		setLoading(false);
+	}, []);
+
+	return { data, loading, error, execute, reset };
 };
 
 /**
@@ -46,43 +49,46 @@ export const useApiCall = (apiFunction) => {
  * @returns {Object} - Extended API call state with pagination
  */
 export const usePaginatedApiCall = (apiFunction, initialPage = 1) => {
-  const [page, setPage] = useState(initialPage);
-  const [hasMore, setHasMore] = useState(true);
-  const [items, setItems] = useState([]);
-  
-  const { loading, error, execute, reset } = useApiCall(apiFunction);
+	const [page, setPage] = useState(initialPage);
+	const [hasMore, setHasMore] = useState(true);
+	const [items, setItems] = useState([]);
 
-  const fetchPage = useCallback(async (pageNum = page) => {
-    const result = await execute(pageNum);
-    if (result) {
-      setItems(prev => pageNum === 1 ? result.items : [...prev, ...result.items]);
-      setHasMore(result.hasMore || false);
-      setPage(pageNum);
-    }
-    return result;
-  }, [execute, page]);
+	const { loading, error, execute, reset } = useApiCall(apiFunction);
 
-  const loadMore = useCallback(() => {
-    if (!loading && hasMore) {
-      return fetchPage(page + 1);
-    }
-  }, [loading, hasMore, page, fetchPage]);
+	const fetchPage = useCallback(
+		async (pageNum = page) => {
+			const result = await execute(pageNum);
+			if (result) {
+				setItems((prev) => (pageNum === 1 ? result.items : [...prev, ...result.items]));
+				setHasMore(result.hasMore || false);
+				setPage(pageNum);
+			}
+			return result;
+		},
+		[execute, page],
+	);
 
-  const refresh = useCallback(() => {
-    setItems([]);
-    setPage(1);
-    setHasMore(true);
-    reset();
-    return fetchPage(1);
-  }, [fetchPage, reset]);
+	const loadMore = useCallback(() => {
+		if (!loading && hasMore) {
+			return fetchPage(page + 1);
+		}
+	}, [loading, hasMore, page, fetchPage]);
 
-  return {
-    items,
-    loading,
-    error,
-    hasMore,
-    page,
-    loadMore,
-    refresh
-  };
+	const refresh = useCallback(() => {
+		setItems([]);
+		setPage(1);
+		setHasMore(true);
+		reset();
+		return fetchPage(1);
+	}, [fetchPage, reset]);
+
+	return {
+		items,
+		loading,
+		error,
+		hasMore,
+		page,
+		loadMore,
+		refresh,
+	};
 };

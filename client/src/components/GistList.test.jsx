@@ -3,13 +3,13 @@
  * Tests gist fetching, filtering, and CRUD operations.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import GistList from './GistList';
-import { mockGistList, mockUser } from '../test/fixtures';
-import * as gistsApi from '../services/api/gists';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastProvider } from '../contexts/ToastContext';
+import * as gistsApi from '../services/api/gists';
+import { mockGistList, mockUser } from '../test/fixtures';
+import GistList from './GistList';
 
 vi.mock('../services/api/gists');
 
@@ -21,8 +21,8 @@ vi.mock('../contexts/AuthContext', async () => {
 			user: mockUser,
 			token: 'test-token',
 			isAuthenticated: true,
-			loading: false
-		}))
+			loading: false,
+		})),
 	};
 });
 
@@ -32,7 +32,7 @@ const renderList = () => {
 			<ToastProvider>
 				<GistList />
 			</ToastProvider>
-		</BrowserRouter>
+		</BrowserRouter>,
 	);
 };
 
@@ -52,7 +52,7 @@ describe('GistList Component', () => {
 				expect(gistsApi.getGists).toHaveBeenCalledWith(
 					'test-token',
 					expect.any(Function),
-					mockUser.id
+					mockUser.id,
 				);
 			});
 		});
@@ -123,7 +123,7 @@ describe('GistList Component', () => {
 				user: null,
 				token: null,
 				isAuthenticated: false,
-				loading: false
+				loading: false,
 			});
 
 			renderList();

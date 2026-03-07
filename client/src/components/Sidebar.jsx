@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
 import {
-	LayoutDashboard,
-	FileText,
-	FilePlus,
-	Globe,
 	ArrowLeftRight,
-	User,
-	Palette,
-	Menu,
-	X,
 	ChevronLeft,
-	ChevronRight
+	ChevronRight,
+	FilePlus,
+	FileText,
+	Globe,
+	LayoutDashboard,
+	Menu,
+	Palette,
+	User,
+	X,
 } from 'lucide-react';
+import { useState } from 'react';
+import { NavLink } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -27,12 +27,10 @@ const Sidebar = () => {
 		{ path: '/explore', icon: Globe, label: 'Explore' },
 		{ path: '/gist', icon: FilePlus, label: 'New Gist' },
 		{ path: '/convert', icon: ArrowLeftRight, label: 'Convert' },
-		{ path: '/profile', icon: User, label: 'Profile' }
+		{ path: '/profile', icon: User, label: 'Profile' },
 	];
 
-	const devItems = [
-		{ path: '/theme-sandbox', icon: Palette, label: 'Theme Sandbox' }
-	];
+	const devItems = [{ path: '/theme-sandbox', icon: Palette, label: 'Theme Sandbox' }];
 
 	return (
 		<>
@@ -49,8 +47,12 @@ const Sidebar = () => {
 			{/* Mobile overlay */}
 			{isMobileOpen && (
 				<div
+					role="presentation"
 					className="lg:hidden fixed inset-0 bg-black/50 z-40"
 					onClick={() => setIsMobileOpen(false)}
+					onKeyDown={(e) => {
+						if (e.key === 'Escape') setIsMobileOpen(false);
+					}}
 				/>
 			)}
 
@@ -59,7 +61,7 @@ const Sidebar = () => {
 				className={cn(
 					'fixed lg:relative h-full flex-shrink-0 bg-card border-r transition-all duration-300 ease-in-out z-40 overflow-y-auto',
 					isCollapsed ? 'w-16' : 'w-64',
-					isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+					isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
 				)}
 			>
 				<div className="p-4">
@@ -107,7 +109,7 @@ const Sidebar = () => {
 												isActive
 													? 'bg-primary text-primary-foreground'
 													: 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-												isCollapsed && 'justify-center'
+												isCollapsed && 'justify-center',
 											)
 										}
 										title={isCollapsed ? item.label : ''}
@@ -145,7 +147,7 @@ const Sidebar = () => {
 														isActive
 															? 'bg-primary text-primary-foreground'
 															: 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-														isCollapsed && 'justify-center'
+														isCollapsed && 'justify-center',
 													)
 												}
 												title={isCollapsed ? item.label : ''}

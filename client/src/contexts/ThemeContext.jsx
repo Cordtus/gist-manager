@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 const ThemeContext = createContext();
 
@@ -17,7 +17,7 @@ export const ThemeProvider = ({ children }) => {
 			return storedTheme;
 		}
 
-		if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+		if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
 			return 'dark';
 		}
 
@@ -32,7 +32,7 @@ export const ThemeProvider = ({ children }) => {
 		const root = window.document.documentElement;
 
 		// Remove all theme classes
-		THEMES.forEach(t => root.classList.remove(t));
+		THEMES.forEach((t) => root.classList.remove(t));
 
 		// Add current theme class
 		root.classList.add(theme);
@@ -57,17 +57,19 @@ export const ThemeProvider = ({ children }) => {
 
 	const toggleTheme = () => {
 		// Simple toggle between light and dark for compatibility
-		setThemeState(prev => prev === 'light' ? 'dark' : 'light');
+		setThemeState((prev) => (prev === 'light' ? 'dark' : 'light'));
 	};
 
 	return (
-		<ThemeContext.Provider value={{
-			theme,
-			themes: THEMES,
-			setTheme,
-			cycleTheme,
-			toggleTheme
-		}}>
+		<ThemeContext.Provider
+			value={{
+				theme,
+				themes: THEMES,
+				setTheme,
+				cycleTheme,
+				toggleTheme,
+			}}
+		>
 			{children}
 		</ThemeContext.Provider>
 	);

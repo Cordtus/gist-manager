@@ -4,10 +4,10 @@
  * @module contexts/AuthContext
  */
 
-import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import { setAuthToken } from '../services/api/github';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import authService from '../services/api/auth';
-import { logInfo, logError, trackError, ErrorCategory } from '../utils/logger';
+import { setAuthToken } from '../services/api/github';
+import { ErrorCategory, logError, logInfo, trackError } from '../utils/logger';
 
 const AuthContext = createContext();
 
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }) => {
 					const sessionData = sessionStorage.getItem('gist_manager_session');
 					if (sessionData) {
 						const { token: sessionToken, expiration } = JSON.parse(sessionData);
-						if (expiration && new Date().getTime() < expiration) {
+						if (expiration && Date.now() < expiration) {
 							savedToken = sessionToken;
 						}
 					}
@@ -136,7 +136,7 @@ export const AuthProvider = ({ children }) => {
 			logInfo('Received token_invalid event, logging out');
 			trackError(new Error('Token became invalid'), ErrorCategory.AUTHENTICATION, {
 				action: 'auto_logout',
-				reason: 'token_invalid_event'
+				reason: 'token_invalid_event',
 			});
 			logout();
 		};
@@ -172,7 +172,8 @@ export const AuthProvider = ({ children }) => {
 			sessionStorage.setItem('code_verifier', codeVerifier);
 			sessionStorage.setItem('oauth_state', state);
 
-			const redirectUri = process.env.REACT_APP_REDIRECT_URI || `${window.location.origin}/callback`;
+			const redirectUri =
+				process.env.REACT_APP_REDIRECT_URI || `${window.location.origin}/callback`;
 			const scopes = 'gist user user:email';
 
 			// Build GitHub authorization URL with PKCE
@@ -182,7 +183,7 @@ export const AuthProvider = ({ children }) => {
 				scope: scopes,
 				state: state,
 				code_challenge: codeChallenge,
-				code_challenge_method: 'S256'
+				code_challenge_method: 'S256',
 			});
 
 			const authUrl = `https://github.com/login/oauth/authorize?${params.toString()}`;
@@ -238,8 +239,8 @@ export const AuthProvider = ({ children }) => {
 			sessionStorage.setItem('github_token', accessToken);
 			const sessionData = {
 				token: accessToken,
-				expiration: new Date().getTime() + (24 * 60 * 60 * 1000),
-				createdAt: new Date().toISOString()
+				expiration: Date.now() + 24 * 60 * 60 * 1000,
+				createdAt: new Date().toISOString(),
 			};
 			sessionStorage.setItem('gist_manager_session', JSON.stringify(sessionData));
 
@@ -273,14 +274,10 @@ export const AuthProvider = ({ children }) => {
 		error,
 		clearError,
 		initiateGithubLogin,
-		isAuthenticated: !!user
+		isAuthenticated: !!user,
 	};
 
-	return (
-		<AuthContext.Provider value={contextValue}>
-			{children}
-		</AuthContext.Provider>
-	);
+	return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };
 
 export default AuthContext;

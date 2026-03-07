@@ -200,5 +200,5 @@
 
 /* Viewer page layout override */
 .gist-viewer-page main {
-	overflow-y: auto !important;
+	overflow-y: auto;
 }

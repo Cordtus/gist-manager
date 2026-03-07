@@ -4,15 +4,15 @@
  * Focus: State validation, PKCE flow, token handling, session security.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import axios from 'axios';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('axios', () => ({
 	default: {
 		get: vi.fn(),
 		post: vi.fn(),
-		defaults: { headers: { common: {} } }
-	}
+		defaults: { headers: { common: {} } },
+	},
 }));
 
 vi.mock('./github', () => ({ setAuthToken: vi.fn() }));
@@ -21,7 +21,13 @@ vi.mock('../../utils/logger', () => ({
 	logError: vi.fn(),
 	logWarning: vi.fn(),
 	trackError: vi.fn(),
-	ErrorCategory: { AUTHENTICATION: 'auth', API: 'api', NETWORK: 'network', UI: 'ui', UNKNOWN: 'unknown' }
+	ErrorCategory: {
+		AUTHENTICATION: 'auth',
+		API: 'api',
+		NETWORK: 'network',
+		UI: 'ui',
+		UNKNOWN: 'unknown',
+	},
 }));
 
 const authService = await import('./auth');
@@ -86,17 +92,17 @@ describe('Authentication Service', () => {
 			sessionStorage.setItem('oauth_state', 'valid_state');
 			sessionStorage.setItem('code_verifier', 'test_verifier');
 
-			await expect(
-				authService.handleOAuthCallback('code', 'wrong_state')
-			).rejects.toThrow('Invalid state parameter');
+			await expect(authService.handleOAuthCallback('code', 'wrong_state')).rejects.toThrow(
+				'Invalid state parameter',
+			);
 		});
 
 		it('handleOAuthCallback rejects missing code verifier', async () => {
 			sessionStorage.setItem('oauth_state', 'valid_state');
 
-			await expect(
-				authService.handleOAuthCallback('code', 'valid_state')
-			).rejects.toThrow('Missing code verifier');
+			await expect(authService.handleOAuthCallback('code', 'valid_state')).rejects.toThrow(
+				'Missing code verifier',
+			);
 		});
 
 		it('handleOAuthCallback exchanges code for token on valid state', async () => {
@@ -116,19 +122,15 @@ describe('Authentication Service', () => {
 		it('exchangeCodeForToken throws on missing token response', async () => {
 			axios.post.mockResolvedValue({ data: {} });
 
-			await expect(
-				authService.exchangeCodeForToken('code', 'verifier')
-			).rejects.toThrow();
+			await expect(authService.exchangeCodeForToken('code', 'verifier')).rejects.toThrow();
 		});
 
 		it('exchangeCodeForToken throws on error response', async () => {
 			axios.post.mockResolvedValue({
-				data: { error: 'bad_verification_code', error_description: 'The code passed is incorrect' }
+				data: { error: 'bad_verification_code', error_description: 'The code passed is incorrect' },
 			});
 
-			await expect(
-				authService.exchangeCodeForToken('bad_code', 'verifier')
-			).rejects.toThrow();
+			await expect(authService.exchangeCodeForToken('bad_code', 'verifier')).rejects.toThrow();
 		});
 
 		it('exchangeCodeForToken calls local proxy endpoint', async () => {
@@ -138,25 +140,31 @@ describe('Authentication Service', () => {
 
 			expect(axios.post).toHaveBeenCalledWith('/api/auth/token', {
 				code: 'test_code',
-				code_verifier: 'test_verifier'
+				code_verifier: 'test_verifier',
 			});
 		});
 	});
 
 	describe('Session Management', () => {
 		it('isAuthenticated returns false for expired session', () => {
-			sessionStorage.setItem('gist_manager_session', JSON.stringify({
-				token: mockToken,
-				expiration: Date.now() - 1000
-			}));
+			sessionStorage.setItem(
+				'gist_manager_session',
+				JSON.stringify({
+					token: mockToken,
+					expiration: Date.now() - 1000,
+				}),
+			);
 			expect(authService.isAuthenticated()).toBe(false);
 		});
 
 		it('isAuthenticated returns true for valid session', () => {
-			sessionStorage.setItem('gist_manager_session', JSON.stringify({
-				token: mockToken,
-				expiration: Date.now() + 3600000
-			}));
+			sessionStorage.setItem(
+				'gist_manager_session',
+				JSON.stringify({
+					token: mockToken,
+					expiration: Date.now() + 3600000,
+				}),
+			);
 			expect(authService.isAuthenticated()).toBe(true);
 		});
 
@@ -165,10 +173,13 @@ describe('Authentication Service', () => {
 		});
 
 		it('isSessionExpired returns false for valid session', () => {
-			sessionStorage.setItem('gist_manager_session', JSON.stringify({
-				token: mockToken,
-				expiration: Date.now() + 3600000
-			}));
+			sessionStorage.setItem(
+				'gist_manager_session',
+				JSON.stringify({
+					token: mockToken,
+					expiration: Date.now() + 3600000,
+				}),
+			);
 			expect(authService.isSessionExpired()).toBe(false);
 		});
 
@@ -193,10 +204,13 @@ describe('Authentication Service', () => {
 
 		it('refreshTokenIfNeeded extends session when near expiry', async () => {
 			const nearExpiry = Date.now() + 30 * 60 * 1000; // 30 minutes
-			sessionStorage.setItem('gist_manager_session', JSON.stringify({
-				token: mockToken,
-				expiration: nearExpiry
-			}));
+			sessionStorage.setItem(
+				'gist_manager_session',
+				JSON.stringify({
+					token: mockToken,
+					expiration: nearExpiry,
+				}),
+			);
 
 			const refreshed = await authService.refreshTokenIfNeeded();
 
@@ -207,10 +221,13 @@ describe('Authentication Service', () => {
 
 		it('refreshTokenIfNeeded does not extend when not near expiry', async () => {
 			const farExpiry = Date.now() + 12 * 60 * 60 * 1000; // 12 hours
-			sessionStorage.setItem('gist_manager_session', JSON.stringify({
-				token: mockToken,
-				expiration: farExpiry
-			}));
+			sessionStorage.setItem(
+				'gist_manager_session',
+				JSON.stringify({
+					token: mockToken,
+					expiration: farExpiry,
+				}),
+			);
 
 			const refreshed = await authService.refreshTokenIfNeeded();
 
@@ -231,7 +248,7 @@ describe('Authentication Service', () => {
 
 			expect(result).toEqual(mockUser);
 			expect(axios.get).toHaveBeenCalledWith('https://api.github.com/user', {
-				headers: { Authorization: `Bearer ${mockToken}` }
+				headers: { Authorization: `Bearer ${mockToken}` },
 			});
 		});
 

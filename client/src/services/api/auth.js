@@ -5,8 +5,8 @@
  */
 
 import axios from 'axios';
+import { ErrorCategory, logError, logInfo, trackError } from '../../utils/logger';
 import { setAuthToken } from './github';
-import { logInfo, logError, trackError, ErrorCategory } from '../../utils/logger';
 
 /**
  * Generate a cryptographically secure random string for PKCE code verifier
@@ -61,7 +61,7 @@ export const generateOAuthState = () => {
 			array[i] = Math.floor(Math.random() * 256);
 		}
 	}
-	return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+	return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
 };
 
 /**
@@ -78,15 +78,16 @@ export const exchangeCodeForToken = async (code, codeVerifier) => {
 
 		const response = await axios.post('/api/auth/token', {
 			code,
-			code_verifier: codeVerifier
+			code_verifier: codeVerifier,
 		});
 
 		if (!response.data || !response.data.access_token) {
-			const errorMsg = response.data?.error_description || response.data?.error || 'No access token received';
+			const errorMsg =
+				response.data?.error_description || response.data?.error || 'No access token received';
 			logError('Token exchange failed', { error: errorMsg });
 			trackError(new Error(errorMsg), ErrorCategory.AUTHENTICATION, {
 				step: 'exchangeCodeForToken',
-				hasError: !!response.data?.error
+				hasError: !!response.data?.error,
 			});
 			throw new Error(errorMsg);
 		}
@@ -100,12 +101,12 @@ export const exchangeCodeForToken = async (code, codeVerifier) => {
 	} catch (error) {
 		logError('GitHub token exchange error', {
 			message: error.message,
-			status: error.response?.status
+			status: error.response?.status,
 		});
 
 		trackError(error, ErrorCategory.AUTHENTICATION, {
 			step: 'exchangeCodeForToken',
-			status: error.response?.status
+			status: error.response?.status,
 		});
 
 		if (error.response?.data?.error_description) {
@@ -127,7 +128,7 @@ export const getCurrentUser = async () => {
 			const sessionData = sessionStorage.getItem('gist_manager_session');
 			if (sessionData) {
 				const { token: sessionToken, expiration } = JSON.parse(sessionData);
-				if (expiration && new Date().getTime() < expiration) {
+				if (expiration && Date.now() < expiration) {
 					token = sessionToken;
 				}
 			}
@@ -160,7 +161,7 @@ export const getCurrentUser = async () => {
 
 		trackError(error, ErrorCategory.AUTHENTICATION, {
 			step: 'getCurrentUser',
-			status: error.response?.status
+			status: error.response?.status,
 		});
 
 		if (error.response?.status === 401) {
@@ -205,8 +206,8 @@ export const handleOAuthCallback = async (code, state) => {
 
 		const sessionData = {
 			token: accessToken,
-			expiration: new Date().getTime() + (24 * 60 * 60 * 1000),
-			createdAt: new Date().toISOString()
+			expiration: Date.now() + 24 * 60 * 60 * 1000,
+			createdAt: new Date().toISOString(),
 		};
 		sessionStorage.setItem('gist_manager_session', JSON.stringify(sessionData));
 
@@ -233,7 +234,7 @@ export const isAuthenticated = () => {
 		}
 
 		const { expiration } = JSON.parse(sessionData);
-		return expiration && new Date().getTime() < expiration;
+		return expiration && Date.now() < expiration;
 	} catch (error) {
 		logError('Error checking authentication', { error: error.message });
 		return false;
@@ -252,7 +253,7 @@ export const isSessionExpired = () => {
 		}
 
 		const { expiration } = JSON.parse(sessionData);
-		return !expiration || new Date().getTime() >= expiration;
+		return !expiration || Date.now() >= expiration;
 	} catch (error) {
 		logError('Error checking session expiration', { error: error.message });
 		return true;
@@ -272,13 +273,13 @@ export const refreshTokenIfNeeded = async () => {
 
 		const parsed = JSON.parse(sessionData);
 		const { expiration } = parsed;
-		const timeUntilExpiry = expiration - new Date().getTime();
+		const timeUntilExpiry = expiration - Date.now();
 
 		if (timeUntilExpiry < 60 * 60 * 1000) {
 			logInfo('Session refresh needed');
 			const sessionUpdate = {
 				...parsed,
-				expiration: new Date().getTime() + (24 * 60 * 60 * 1000)
+				expiration: Date.now() + 24 * 60 * 60 * 1000,
 			};
 			sessionStorage.setItem('gist_manager_session', JSON.stringify(sessionUpdate));
 			return true;
@@ -355,7 +356,7 @@ const authService = {
 	refreshTokenIfNeeded,
 	logout,
 	clearSession,
-	saveSession
+	saveSession,
 };
 
 export default authService;
