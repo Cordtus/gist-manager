@@ -157,7 +157,7 @@ export const AuthProvider = ({ children }) => {
 			const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
 
 			if (!clientId) {
-				const errorMsg = 'GitHub OAuth is not configured. Missing REACT_APP_GITHUB_CLIENT_ID.';
+				const errorMsg = 'GitHub OAuth is not configured. Missing VITE_GITHUB_CLIENT_ID.';
 				setError(errorMsg);
 				logError(errorMsg);
 				return;
