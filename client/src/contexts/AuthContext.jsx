@@ -154,7 +154,7 @@ export const AuthProvider = ({ children }) => {
 	 */
 	const initiateGithubLogin = useCallback(async () => {
 		try {
-			const clientId = process.env.REACT_APP_GITHUB_CLIENT_ID;
+			const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
 
 			if (!clientId) {
 				const errorMsg = 'GitHub OAuth is not configured. Missing REACT_APP_GITHUB_CLIENT_ID.';
@@ -173,7 +173,7 @@ export const AuthProvider = ({ children }) => {
 			sessionStorage.setItem('oauth_state', state);
 
 			const redirectUri =
-				process.env.REACT_APP_REDIRECT_URI || `${window.location.origin}/callback`;
+				import.meta.env.VITE_REDIRECT_URI || `${window.location.origin}/callback`;
 			const scopes = 'gist user user:email';
 
 			// Build GitHub authorization URL with PKCE

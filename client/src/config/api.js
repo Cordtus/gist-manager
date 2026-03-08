@@ -8,9 +8,9 @@
  * GitHub OAuth configuration
  */
 export const GITHUB_CONFIG = {
-	clientId: process.env.REACT_APP_GITHUB_CLIENT_ID,
+	clientId: import.meta.env.VITE_GITHUB_CLIENT_ID,
 	redirectUri:
-		process.env.REACT_APP_REDIRECT_URI ||
+		import.meta.env.VITE_REDIRECT_URI ||
 		(typeof window !== 'undefined'
 			? `${window.location.origin}/callback`
 			: 'http://localhost:3000/callback'),
