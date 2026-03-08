@@ -125,3 +125,4 @@ ERROR_STATE_IMPLEMENTATION_PLAN.md
 UI_IMPROVEMENTS.md
 .playwright-mcp/
 .serena/
+client/server/
