@@ -23,6 +23,15 @@
 .gist-editor-page main {
 	overflow: hidden;
 	padding: 0.75rem;
+	display: flex;
+	flex-direction: column;
+}
+
+.gist-editor-page main > div {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
 }
 
 /* Form header */
