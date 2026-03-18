@@ -172,8 +172,7 @@ export const AuthProvider = ({ children }) => {
 			sessionStorage.setItem('code_verifier', codeVerifier);
 			sessionStorage.setItem('oauth_state', state);
 
-			const redirectUri =
-				import.meta.env.VITE_REDIRECT_URI || `${window.location.origin}/callback`;
+			const redirectUri = import.meta.env.VITE_REDIRECT_URI || `${window.location.origin}/callback`;
 			const scopes = 'gist user user:email';
 
 			// Build GitHub authorization URL with PKCE
