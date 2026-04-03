@@ -840,16 +840,21 @@ const GistEditor = () => {
 			<div className="file-tabs">
 				<div className="tabs-container">
 					{Object.keys(gist.files).map((filename) => (
-						<button
+						<div
 							key={filename}
-							type="button"
+							role="tab"
+							tabIndex={0}
 							onClick={() => setActiveFile(filename)}
 							onDoubleClick={() => {
 								setEditingTab(filename);
 								setEditingName(filename);
 							}}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') setActiveFile(filename);
+							}}
 							className={`tab ${activeFile === filename ? 'active' : ''}`}
 							title="Double-click to rename"
+							aria-selected={activeFile === filename}
 						>
 							{editingTab === filename ? (
 								<input
@@ -888,7 +893,7 @@ const GistEditor = () => {
 									x
 								</button>
 							)}
-						</button>
+						</div>
 					))}
 				</div>
 			</div>

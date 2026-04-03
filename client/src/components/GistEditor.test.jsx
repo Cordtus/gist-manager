@@ -175,16 +175,16 @@ describe('GistEditor Component', () => {
 			renderEditor();
 
 			const initialTabCount = screen
-				.getAllByRole('button')
-				.filter((btn) => btn.textContent.includes('untitled')).length;
+				.getAllByRole('tab')
+				.filter((tab) => tab.textContent.includes('untitled')).length;
 
 			const addBtn = screen.getByRole('button', { name: /add file/i });
 			fireEvent.click(addBtn);
 
 			await waitFor(() => {
 				const newTabCount = screen
-					.getAllByRole('button')
-					.filter((btn) => btn.textContent.includes('untitled')).length;
+					.getAllByRole('tab')
+					.filter((tab) => tab.textContent.includes('untitled')).length;
 				expect(newTabCount).toBeGreaterThan(initialTabCount);
 			});
 		});

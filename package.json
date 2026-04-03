@@ -18,7 +18,7 @@
 		"format": "biome format --write client/src/ server/"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.4.6",
-		"concurrently": "^9.2.0"
+		"@biomejs/biome": "^2.4.10",
+		"concurrently": "^9.2.1"
 	}
 }
