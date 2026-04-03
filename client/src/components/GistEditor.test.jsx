@@ -176,7 +176,7 @@ describe('GistEditor Component', () => {
 
 			const initialTabCount = screen
 				.getAllByRole('button')
-				.filter((btn) => btn.textContent.includes('newfile')).length;
+				.filter((btn) => btn.textContent.includes('untitled')).length;
 
 			const addBtn = screen.getByRole('button', { name: /add file/i });
 			fireEvent.click(addBtn);
@@ -184,7 +184,7 @@ describe('GistEditor Component', () => {
 			await waitFor(() => {
 				const newTabCount = screen
 					.getAllByRole('button')
-					.filter((btn) => btn.textContent.includes('newfile')).length;
+					.filter((btn) => btn.textContent.includes('untitled')).length;
 				expect(newTabCount).toBeGreaterThan(initialTabCount);
 			});
 		});
