@@ -189,6 +189,24 @@
 	background: hsl(var(--muted));
 }
 
+/* Inline rename input inside file tabs */
+.tab-rename-input {
+	background: hsl(var(--background));
+	border: 1px solid hsl(var(--ring));
+	border-radius: calc(var(--radius) - 4px);
+	color: hsl(var(--foreground));
+	font-size: 0.875rem;
+	font-family: inherit;
+	padding: 0.1rem 0.4rem;
+	width: 12ch;
+	min-width: 6ch;
+	outline: none;
+}
+
+.tab-rename-input:focus {
+	box-shadow: 0 0 0 2px hsl(var(--ring) / 0.3);
+}
+
 /* Enhanced Toolbar */
 .toolbar {
 	display: flex;
@@ -244,6 +262,29 @@
 	height: 1.5rem;
 	background: hsl(var(--border));
 	margin: 0;
+}
+
+/* Code toolbar extras */
+.toolbar-label {
+	font-size: 0.8rem;
+	color: hsl(var(--muted-foreground));
+	user-select: none;
+}
+
+.toolbar-file-type {
+	margin-left: auto;
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: hsl(var(--muted-foreground));
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	padding: 0.25rem 0.5rem;
+	background: hsl(var(--muted));
+	border-radius: calc(var(--radius) - 2px);
+}
+
+.format-button {
+	font-family: "JetBrains Mono", "Fira Code", Consolas, Monaco, monospace;
 }
 
 /* Split panel container */

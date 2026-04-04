@@ -19,7 +19,7 @@ export const UserProfile = () => {
 
 	useEffect(() => {
 		const fetchUserData = async () => {
-			if (!auth || !auth.user || !auth.token) return;
+			if (!auth?.user || !auth.token) return;
 
 			setIsLoading(true);
 			try {

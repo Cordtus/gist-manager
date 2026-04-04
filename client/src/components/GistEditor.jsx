@@ -311,12 +311,42 @@ const MarkdownToolbar = ({ onInsert, activeFile }) => {
 };
 
 /**
+ * Resolves the Prettier parser name for a given file extension.
+ * @param {string} ext - Lowercase file extension (without dot)
+ * @returns {{ parser: string, plugins?: string[] } | null} Prettier config or null if unsupported
+ */
+const getPrettierConfig = (ext) => {
+	const map = {
+		js: { parser: 'babel' },
+		jsx: { parser: 'babel' },
+		mjs: { parser: 'babel' },
+		ts: { parser: 'typescript' },
+		tsx: { parser: 'typescript' },
+		css: { parser: 'css' },
+		scss: { parser: 'scss' },
+		less: { parser: 'less' },
+		html: { parser: 'html' },
+		htm: { parser: 'html' },
+		json: { parser: 'json' },
+		json5: { parser: 'json5' },
+		yaml: { parser: 'yaml' },
+		yml: { parser: 'yaml' },
+		md: { parser: 'markdown' },
+		markdown: { parser: 'markdown' },
+		mdx: { parser: 'mdx' },
+		graphql: { parser: 'graphql' },
+		gql: { parser: 'graphql' },
+	};
+	return map[ext] || null;
+};
+
+/**
  * Main GistEditor Component with Enhanced Split Panel
  */
 const GistEditor = () => {
 	const [gist, setGist] = useState({
 		description: '',
-		files: { 'newfile.md': { content: '' } },
+		files: { untitled: { content: '' } },
 		public: false,
 	});
 	const [loading, setLoading] = useState(false);
@@ -324,6 +354,9 @@ const GistEditor = () => {
 	const [previewMode, setPreviewMode] = useState('split');
 	const [wrapText, setWrapText] = useState(true);
 	const [activeFile, setActiveFile] = useState(null);
+	const [editingTab, setEditingTab] = useState(null);
+	const [editingName, setEditingName] = useState('');
+	const [formatting, setFormatting] = useState(false);
 
 	const { id } = useParams();
 	const navigate = useNavigate();
@@ -332,6 +365,7 @@ const GistEditor = () => {
 
 	const editorRef = useRef(null);
 	const previewRef = useRef(null);
+	const tabInputRef = useRef(null);
 
 	// Debounce preview content so large markdown doesn't block the editor
 	const [debouncedContent, setDebouncedContent] = useState('');
@@ -370,7 +404,9 @@ const GistEditor = () => {
 		if (id) {
 			fetchGist(id);
 		} else {
-			setActiveFile('newfile.md');
+			setActiveFile('untitled');
+			setEditingTab('untitled');
+			setEditingName('untitled');
 		}
 	}, [id, fetchGist]);
 
@@ -379,6 +415,14 @@ const GistEditor = () => {
 			setActiveFile(Object.keys(gist.files)[0]);
 		}
 	}, [gist, activeFile]);
+
+	// Auto-focus the tab input when entering edit mode
+	useEffect(() => {
+		if (editingTab && tabInputRef.current) {
+			tabInputRef.current.focus();
+			tabInputRef.current.select();
+		}
+	}, [editingTab]);
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -419,12 +463,58 @@ const GistEditor = () => {
 		setGist((prev) => ({ ...prev, files: { ...prev.files, [fileName]: { content } } }));
 	}, []);
 
+	/**
+	 * Renames a file in the gist state, preserving key order.
+	 * @param {string} oldName - Current filename
+	 * @param {string} newName - Desired filename
+	 */
+	const renameFile = useCallback(
+		(oldName, newName) => {
+			const trimmed = newName.trim();
+			if (!trimmed || trimmed === oldName) return;
+			if (gist.files[trimmed]) {
+				setError(`A file named "${trimmed}" already exists.`);
+				return;
+			}
+
+			setGist((prev) => {
+				const rebuilt = {};
+				for (const [key, value] of Object.entries(prev.files)) {
+					if (key === oldName) {
+						rebuilt[trimmed] = value;
+					} else {
+						rebuilt[key] = value;
+					}
+				}
+				return { ...prev, files: rebuilt };
+			});
+
+			if (activeFile === oldName) {
+				setActiveFile(trimmed);
+			}
+		},
+		[gist.files, activeFile],
+	);
+
+	/**
+	 * Commits the current tab rename and exits edit mode.
+	 */
+	const commitTabRename = useCallback(() => {
+		if (editingTab) {
+			renameFile(editingTab, editingName);
+			setEditingTab(null);
+			setEditingName('');
+		}
+	}, [editingTab, editingName, renameFile]);
+
 	const addNewFile = () => {
-		let name = 'newfile.md',
+		let name = 'untitled',
 			i = 1;
-		while (gist.files[name]) name = `newfile_${i++}.md`;
+		while (gist.files[name]) name = `untitled_${i++}`;
 		setGist((prev) => ({ ...prev, files: { ...prev.files, [name]: { content: '' } } }));
 		setActiveFile(name);
+		setEditingTab(name);
+		setEditingName(name);
 	};
 
 	const removeFile = (fn) => {
@@ -437,6 +527,73 @@ const GistEditor = () => {
 		setGist((prev) => ({ ...prev, files }));
 		if (activeFile === fn) setActiveFile(Object.keys(files)[0]);
 	};
+
+	/**
+	 * Formats the active file content using Prettier (loaded on demand).
+	 */
+	const formatActiveFile = useCallback(async () => {
+		if (!activeFile) return;
+		const ext = activeFile.includes('.') ? activeFile.split('.').pop().toLowerCase() : '';
+		const config = getPrettierConfig(ext);
+		if (!config) {
+			toast.error(`No formatter available for .${ext || '(no extension)'} files.`);
+			return;
+		}
+
+		setFormatting(true);
+		try {
+			const prettier = await import('prettier/standalone');
+			const plugins = [];
+
+			if (['babel', 'babel-ts'].includes(config.parser) || config.parser === 'typescript') {
+				const mod = await import('prettier/plugins/babel');
+				plugins.push(mod.default || mod);
+				const estree = await import('prettier/plugins/estree');
+				plugins.push(estree.default || estree);
+				if (config.parser === 'typescript') {
+					const tsMod = await import('prettier/plugins/typescript');
+					plugins.push(tsMod.default || tsMod);
+				}
+			} else if (['css', 'scss', 'less'].includes(config.parser)) {
+				const mod = await import('prettier/plugins/postcss');
+				plugins.push(mod.default || mod);
+			} else if (config.parser === 'html') {
+				const mod = await import('prettier/plugins/html');
+				plugins.push(mod.default || mod);
+			} else if (['markdown', 'mdx'].includes(config.parser)) {
+				const mod = await import('prettier/plugins/markdown');
+				plugins.push(mod.default || mod);
+			} else if (['yaml'].includes(config.parser)) {
+				const mod = await import('prettier/plugins/yaml');
+				plugins.push(mod.default || mod);
+			} else if (['graphql'].includes(config.parser)) {
+				const mod = await import('prettier/plugins/graphql');
+				plugins.push(mod.default || mod);
+			} else if (['json', 'json5'].includes(config.parser)) {
+				const estree = await import('prettier/plugins/estree');
+				plugins.push(estree.default || estree);
+				const mod = await import('prettier/plugins/babel');
+				plugins.push(mod.default || mod);
+			}
+
+			const formatted = await prettier.format(currentFileContent, {
+				parser: config.parser,
+				plugins,
+				useTabs: true,
+				tabWidth: 2,
+				printWidth: 100,
+				singleQuote: true,
+				trailingComma: 'all',
+			});
+			handleFileChange(activeFile, formatted);
+			toast.success('Formatted');
+		} catch (err) {
+			logError('Prettier format failed', err);
+			toast.error(`Format failed: ${err.message}`);
+		} finally {
+			setFormatting(false);
+		}
+	}, [activeFile, currentFileContent, handleFileChange, toast]);
 
 	const syncScroll = useCallback(
 		(e) => {
@@ -472,6 +629,12 @@ const GistEditor = () => {
 
 	useEffect(() => {
 		const onKeyDown = (e) => {
+			// Shift+Alt+F: format active file (works globally in editor)
+			if (e.shiftKey && e.altKey && e.key === 'F') {
+				e.preventDefault();
+				formatActiveFile();
+				return;
+			}
 			if (document.activeElement !== editorRef.current) return;
 			if (e.metaKey || e.ctrlKey) {
 				switch (e.key) {
@@ -502,13 +665,15 @@ const GistEditor = () => {
 		};
 		document.addEventListener('keydown', onKeyDown);
 		return () => document.removeEventListener('keydown', onKeyDown);
-	}, [insertText]);
+	}, [insertText, formatActiveFile]);
 
 	const isMarkdownFile = (fn) => fn?.match(/\.(md|markdown|mdx)$/i);
 	const getFileLanguage = (fn) => {
 		const ext = fn.split('.').pop().toLowerCase();
 		const map = {
 			js: 'javascript',
+			mjs: 'javascript',
+			cjs: 'javascript',
 			jsx: 'jsx',
 			ts: 'typescript',
 			tsx: 'tsx',
@@ -516,17 +681,51 @@ const GistEditor = () => {
 			rb: 'ruby',
 			java: 'java',
 			go: 'go',
+			rs: 'rust',
+			c: 'c',
+			cpp: 'cpp',
+			h: 'c',
+			hpp: 'cpp',
+			cs: 'csharp',
+			swift: 'swift',
+			kt: 'kotlin',
 			html: 'html',
+			htm: 'html',
 			css: 'css',
 			scss: 'scss',
+			less: 'less',
 			json: 'json',
 			yaml: 'yaml',
 			yml: 'yaml',
+			toml: 'toml',
+			xml: 'xml',
+			sql: 'sql',
+			graphql: 'graphql',
+			gql: 'graphql',
 			sh: 'bash',
+			bash: 'bash',
+			zsh: 'bash',
+			fish: 'bash',
+			ps1: 'powershell',
+			dockerfile: 'docker',
+			tf: 'hcl',
+			lua: 'lua',
+			r: 'r',
+			php: 'php',
+			pl: 'perl',
+			ex: 'elixir',
+			exs: 'elixir',
+			erl: 'erlang',
+			hs: 'haskell',
 			txt: 'text',
 		};
 		return map[ext] || 'text';
 	};
+
+	/** @returns {boolean} Whether the active file has a Prettier-supported extension */
+	const canFormat = activeFile
+		? getPrettierConfig(activeFile.includes('.') ? activeFile.split('.').pop().toLowerCase() : '')
+		: null;
 
 	// Add page class to body for layout targeting
 	useEffect(() => {
@@ -641,14 +840,46 @@ const GistEditor = () => {
 			<div className="file-tabs">
 				<div className="tabs-container">
 					{Object.keys(gist.files).map((filename) => (
-						<button
+						<div
 							key={filename}
-							type="button"
+							role="tab"
+							tabIndex={0}
 							onClick={() => setActiveFile(filename)}
+							onDoubleClick={() => {
+								setEditingTab(filename);
+								setEditingName(filename);
+							}}
+							onKeyDown={(e) => {
+								if (e.key === 'Enter' || e.key === ' ') setActiveFile(filename);
+							}}
 							className={`tab ${activeFile === filename ? 'active' : ''}`}
+							title="Double-click to rename"
+							aria-selected={activeFile === filename}
 						>
-							{filename}
-							{Object.keys(gist.files).length > 1 && (
+							{editingTab === filename ? (
+								<input
+									ref={tabInputRef}
+									type="text"
+									value={editingName}
+									onChange={(e) => setEditingName(e.target.value)}
+									onBlur={commitTabRename}
+									onKeyDown={(e) => {
+										if (e.key === 'Enter') {
+											e.preventDefault();
+											commitTabRename();
+										} else if (e.key === 'Escape') {
+											setEditingTab(null);
+											setEditingName('');
+										}
+									}}
+									onClick={(e) => e.stopPropagation()}
+									className="tab-rename-input"
+									aria-label={`Rename file ${filename}`}
+								/>
+							) : (
+								filename
+							)}
+							{Object.keys(gist.files).length > 1 && editingTab !== filename && (
 								<button
 									type="button"
 									onClick={(e) => {
@@ -662,13 +893,35 @@ const GistEditor = () => {
 									x
 								</button>
 							)}
-						</button>
+						</div>
 					))}
 				</div>
 			</div>
 
-			{/* Toolbar */}
-			<MarkdownToolbar onInsert={insertText} activeFile={activeFile} />
+			{/* Toolbar -- context-sensitive based on file type */}
+			{activeFile && isMarkdownFile(activeFile) ? (
+				<MarkdownToolbar onInsert={insertText} activeFile={activeFile} />
+			) : (
+				<div className="toolbar">
+					<div className="toolbar-group">
+						<button
+							type="button"
+							onClick={formatActiveFile}
+							className="toolbar-button format-button"
+							disabled={!activeFile || !canFormat || formatting}
+							title={
+								canFormat
+									? `Format file (Shift+Alt+F)`
+									: 'No formatter available for this file type'
+							}
+						>
+							{formatting ? '...' : '{ }'}
+						</button>
+						<span className="toolbar-label">{formatting ? 'Formatting...' : 'Format'}</span>
+					</div>
+					{activeFile && <span className="toolbar-file-type">{getFileLanguage(activeFile)}</span>}
+				</div>
+			)}
 
 			{/* Editor & Preview */}
 			{activeFile && (
