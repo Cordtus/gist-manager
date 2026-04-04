@@ -917,15 +917,9 @@ const GistEditor = () => {
 						>
 							{formatting ? '...' : '{ }'}
 						</button>
-						<span className="toolbar-label">
-							{formatting ? 'Formatting...' : 'Format'}
-						</span>
+						<span className="toolbar-label">{formatting ? 'Formatting...' : 'Format'}</span>
 					</div>
-					{activeFile && (
-						<span className="toolbar-file-type">
-							{getFileLanguage(activeFile)}
-						</span>
-					)}
+					{activeFile && <span className="toolbar-file-type">{getFileLanguage(activeFile)}</span>}
 				</div>
 			)}
 

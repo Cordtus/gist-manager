@@ -46,7 +46,7 @@ export const inferDescriptionFromMarkdown = (content = '', maxWords = 12) => {
  * @returns {Object} - Contains preview text, file info, and language detection
  */
 export const generateGistPreview = (gist, maxLength = 100) => {
-	if (!gist || !gist.files) {
+	if (!gist?.files) {
 		return {
 			preview: 'No content available',
 			fileCount: 0,

@@ -81,7 +81,7 @@ export const exchangeCodeForToken = async (code, codeVerifier) => {
 			code_verifier: codeVerifier,
 		});
 
-		if (!response.data || !response.data.access_token) {
+		if (!response.data?.access_token) {
 			const errorMsg =
 				response.data?.error_description || response.data?.error || 'No access token received';
 			logError('Token exchange failed', { error: errorMsg });
