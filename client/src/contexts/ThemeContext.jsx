@@ -4,7 +4,8 @@ const ThemeContext = createContext();
 
 export const useTheme = () => useContext(ThemeContext);
 
-const THEMES = ['light', 'dark', 'terminal', 'retro'];
+const THEMES = ['light', 'dark', 'terminal', 'retro', 'retro-dark'];
+const DARK_MODE_THEMES = new Set(['dark', 'retro-dark']);
 
 export const ThemeProvider = ({ children }) => {
 	const getInitialTheme = () => {
@@ -34,7 +35,10 @@ export const ThemeProvider = ({ children }) => {
 		// Remove all theme classes
 		THEMES.forEach((t) => root.classList.remove(t));
 
-		// Add current theme class
+		// Add current theme class. Dark variants also opt into Tailwind's .dark utilities.
+		if (DARK_MODE_THEMES.has(theme) && theme !== 'dark') {
+			root.classList.add('dark');
+		}
 		root.classList.add(theme);
 		root.setAttribute('data-theme', theme);
 

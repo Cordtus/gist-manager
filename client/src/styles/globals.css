@@ -99,6 +99,30 @@
 		--ring: 180 100% 50%;
 		--radius: 0rem;
 	}
+
+	/* Retro dark theme - deeper vaporwave */
+	.retro-dark {
+		--background: 265 55% 4%;
+		--foreground: 300 100% 92%;
+		--card: 265 50% 8%;
+		--card-foreground: 300 100% 92%;
+		--popover: 265 50% 8%;
+		--popover-foreground: 300 100% 92%;
+		--primary: 185 100% 54%;
+		--primary-foreground: 265 55% 4%;
+		--secondary: 285 45% 16%;
+		--secondary-foreground: 310 100% 88%;
+		--muted: 265 35% 15%;
+		--muted-foreground: 300 35% 68%;
+		--accent: 320 100% 62%;
+		--accent-foreground: 265 55% 4%;
+		--destructive: 0 100% 65%;
+		--destructive-foreground: 0 0% 100%;
+		--border: 190 85% 35%;
+		--input: 265 45% 12%;
+		--ring: 185 100% 54%;
+		--radius: 0rem;
+	}
 }
 
 @layer base {
@@ -143,7 +167,8 @@
 }
 
 /* Retro theme scrollbar */
-.retro ::-webkit-scrollbar-thumb {
+.retro ::-webkit-scrollbar-thumb,
+.retro-dark ::-webkit-scrollbar-thumb {
 	background-color: hsl(180 100% 50% / 0.4);
 	border-radius: 0;
 }
@@ -178,7 +203,8 @@ html {
 }
 
 /* Retro theme specific */
-.retro {
+.retro,
+.retro-dark {
 	font-family: "JetBrains Mono", "Fira Code", monospace;
 }
 
@@ -190,6 +216,10 @@ html {
 .retro .shadow-sm,
 .retro .shadow,
 .retro .shadow-md,
-.retro .shadow-lg {
+.retro .shadow-lg,
+.retro-dark .shadow-sm,
+.retro-dark .shadow,
+.retro-dark .shadow-md,
+.retro-dark .shadow-lg {
 	box-shadow: none;
 }

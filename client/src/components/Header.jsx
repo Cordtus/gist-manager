@@ -11,6 +11,7 @@ const themeIcons = {
 	dark: Moon,
 	terminal: Terminal,
 	retro: Sparkles,
+	'retro-dark': Sparkles,
 };
 
 const themeLabels = {
@@ -18,6 +19,7 @@ const themeLabels = {
 	dark: 'Dark',
 	terminal: 'Terminal',
 	retro: 'Retro',
+	'retro-dark': 'Retro Dark',
 };
 
 const Header = () => {
@@ -65,7 +67,7 @@ const Header = () => {
 							{showThemeMenu && (
 								<div className="absolute right-0 top-full mt-1 py-1 bg-popover border rounded-[var(--radius)] shadow-lg min-w-[120px]">
 									{themes.map((t) => {
-										const Icon = themeIcons[t];
+										const Icon = themeIcons[t] || Moon;
 										return (
 											<button
 												type="button"

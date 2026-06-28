@@ -15,7 +15,7 @@ Modern web application for creating, editing, and managing GitHub Gists with adv
 
 ### Theme System
 - **Modern CSS variable-based theming** - Consistent design across the app
-- **Three theme modes** - Light, Dark, and Custom themes
+- **Theme presets** - Light, Dark, Terminal, Retro, and Retro Dark themes
 - **Theme Sandbox** - Visual theme editor with live preview
 - **Customizable colors** - Modify 12+ color properties including:
   - Primary colors (buttons, links, highlights)
