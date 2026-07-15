@@ -1,0 +1,26 @@
+[Unit]
+Description=Update Gist Manager from origin/main
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/gist-manager
+Environment=HOME=/root
+EnvironmentFile=/etc/gist-manager/gist-manager-updater.env
+ExecStart=/opt/gist-manager/scripts/update-production.sh
+TimeoutStartSec=20min
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+ReadWritePaths=/opt/gist-manager

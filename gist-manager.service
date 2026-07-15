@@ -1,0 +1,31 @@
+[Unit]
+Description=Gist Manager web application
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=gistui
+Group=gistui
+WorkingDirectory=/opt/gist-manager/server
+EnvironmentFile=/etc/gist-manager/gist-manager.env
+ExecStart=/usr/bin/node index.js
+Restart=on-failure
+RestartSec=5s
+UMask=0027
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+ReadWritePaths=/opt/gist-manager/data /opt/gist-manager/logs
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=Check for Gist Manager updates every 12 hours
+
+[Timer]
+OnBootSec=12h
+OnUnitActiveSec=12h
+Persistent=true
+Unit=gist-manager-updater.service
+
+[Install]
+WantedBy=timers.target
