@@ -105,24 +105,33 @@ yarn.lock
 /data
 /sessions
 
-# Deployment scripts and docs
-DEPLOYMENT.md
-build-production.sh
-check-production.sh
-debug-oauth.md
-deploy.sh
-quick-deploy.sh
-*-deploy.sh
-
 # ESM cache
 .esm-cache/
 
-# Claude Code
-.claude/
-CLAUDE.md
-# Internal documentation
-ERROR_STATE_IMPLEMENTATION_PLAN.md
-UI_IMPROVEMENTS.md
-.playwright-mcp/
-.serena/
+# Local agent and planning artifacts
+/.codex/
+/.agents/
+/.serena/
+/.claude/
+/.playwright-mcp/
+/CLAUDE.md
+/docs/superpowers/
+/docs/handoffs/
+/scratch/
+/context.md
+/context-*.md
+/CONTEXT.md
+/handoff.md
+/handoff-*.md
+/HANDOFF.md
+/ERROR_STATE_IMPLEMENTATION_PLAN.md
+/UI_IMPROVEMENTS.md
+
+# Temporary and diagnostic artifacts
+/.tmp/
+/tmp/
+/temp/
+*.tmp
+*.orig
+*.rej
 client/server/
