@@ -109,11 +109,11 @@ yarn.lock
 .esm-cache/
 
 # Local agent and planning artifacts
-/.codex/
-/.agents/
-/.serena/
-/.claude/
-/.playwright-mcp/
+/.codex
+/.agents
+/.serena
+/.claude
+/.playwright-mcp
 /CLAUDE.md
 /docs/superpowers/
 /docs/handoffs/
