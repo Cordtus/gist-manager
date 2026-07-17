@@ -18,18 +18,18 @@ if [ -z "$node_version" ]; then
     errors+=("Node.js is not installed")
 else
     major_version=$(echo $node_version | cut -d. -f1)
-    if [ "$major_version" -lt 16 ]; then
-        errors+=("Node.js version $node_version is too old (requires 16+)")
+    if [ "$major_version" -lt 24 ]; then
+        errors+=("Node.js version $node_version is too old (requires 24+)")
     else
         echo -e "${GREEN}✅ Node.js $node_version${NC}"
     fi
 fi
 
-# Check Yarn
-if ! command -v yarn &> /dev/null; then
-    errors+=("Yarn is not installed")
+# Check Bun
+if ! command -v bun &> /dev/null; then
+    errors+=("Bun is not installed")
 else
-    echo -e "${GREEN}✅ Yarn $(yarn -v)${NC}"
+    echo -e "${GREEN}✅ Bun $(bun -v)${NC}"
 fi
 
 # Check environment files
@@ -94,7 +94,7 @@ fi
 if [ ${#errors[@]} -eq 0 ]; then
     echo -e "${GREEN}🎉 Setup validation complete!${NC}"
     if [ ${#warnings[@]} -eq 0 ]; then
-        echo -e "${GREEN}Ready to run: yarn dev${NC}"
+        echo -e "${GREEN}Ready to run: bun run dev${NC}"
     else
         echo -e "${YELLOW}You may want to address the warnings above${NC}"
     fi

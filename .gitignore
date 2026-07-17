@@ -60,7 +60,10 @@ jspm_packages/
 
 # Yarn (legacy)
 .yarn-integrity
+/.yarn/
+/.yarnrc.yml
 yarn.lock
+package-lock.json
 
 # dotenv environment variables file
 .env
