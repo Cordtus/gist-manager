@@ -33,7 +33,7 @@ Modern web application for creating, editing, and managing GitHub Gists with adv
 
 ## Requirements
 
-- Node.js 18+
+- Node.js 24+
 - Bun (production uses `/opt/bun/bin/bun`)
 - GitHub account
 - GitHub OAuth application credentials

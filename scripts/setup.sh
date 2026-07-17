@@ -41,11 +41,17 @@ validate_github_creds() {
     return 0
 }
 
+# Require the canonical package/runtime tool before doing any setup work.
+if ! command -v bun >/dev/null 2>&1; then
+    echo -e "${RED}❌ Bun is not installed${NC}"
+    exit 1
+fi
+
 # Generate session secret
-SESSION_SECRET=$(node -e "console.log(require('crypto').randomBytes(32).toString('hex'))" 2>/dev/null)
+SESSION_SECRET=$(bun -e "console.log(require('crypto').randomBytes(32).toString('hex'))" 2>/dev/null)
 
 if [ -z "$SESSION_SECRET" ]; then
-    echo -e "${RED}❌ Failed to generate session secret. Is Node.js installed?${NC}"
+    echo -e "${RED}❌ Failed to generate session secret with Bun${NC}"
     exit 1
 fi
 
@@ -171,19 +177,19 @@ echo -e "${BLUE}🔍 Checking dependencies...${NC}"
 
 if [ ! -d "node_modules" ]; then
     echo -e "${YELLOW}⚠️  Root dependencies not installed${NC}"
-    echo "Run: yarn install"
+    echo "Run: bun install --frozen-lockfile"
     exit 1
 fi
 
 if [ ! -d "client/node_modules" ]; then
     echo -e "${YELLOW}⚠️  Client dependencies not installed${NC}"
-    echo "Run: yarn install"
+    echo "Run: bun install --frozen-lockfile"
     exit 1
 fi
 
 if [ ! -d "server/node_modules" ]; then
     echo -e "${YELLOW}⚠️  Server dependencies not installed${NC}"
-    echo "Run: yarn install"
+    echo "Run: bun install --frozen-lockfile"
     exit 1
 fi
 
@@ -193,7 +199,7 @@ echo -e "${GREEN}✅ Dependencies are installed${NC}"
 if [ ! -d "client/build" ]; then
     echo -e "${YELLOW}⚠️  Client build not found${NC}"
     echo "Building client..."
-    yarn build
+    bun run --cwd client build
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✅ Client built successfully${NC}"
     else
@@ -214,7 +220,7 @@ echo "   - Homepage URL: http://localhost:3020"
 echo "   - Callback URL: http://localhost:3020/callback"
 echo
 echo "2. Start development:"
-echo -e "   ${GREEN}yarn dev${NC}"
+echo -e "   ${GREEN}bun run dev${NC}"
 echo
 echo "3. Open your browser:"
 echo "   - Frontend: http://localhost:3020"
