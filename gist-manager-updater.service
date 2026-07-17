@@ -8,9 +8,13 @@ Type=oneshot
 User=root
 WorkingDirectory=/opt/gist-manager
 Environment=HOME=/root
+Environment=BUN_INSTALL_CACHE_DIR=/var/cache/gist-manager-updater/bun
+Environment=XDG_CACHE_HOME=/var/cache/gist-manager-updater
 EnvironmentFile=/etc/gist-manager/gist-manager-updater.env
 ExecStart=/opt/gist-manager/scripts/update-production.sh
 TimeoutStartSec=20min
+CacheDirectory=gist-manager-updater
+CacheDirectoryMode=0700
 
 NoNewPrivileges=true
 PrivateTmp=true
