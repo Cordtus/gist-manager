@@ -154,8 +154,8 @@ export const getGistPage = ({
 	const cacheKey = getPageCacheKey(page, perPage);
 	const entry = pages.get(cacheKey) || { page, perPage, value: null, eTag: null, pending: null };
 
-	if (!force && entry.value) return Promise.resolve(entry.value);
 	if (entry.pending) return entry.pending;
+	if (!force && entry.value) return Promise.resolve(entry.value);
 
 	const headers = {
 		Accept: GITHUB_ACCEPT_HEADER,
