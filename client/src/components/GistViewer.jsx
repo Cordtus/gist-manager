@@ -19,6 +19,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useAuth } from '../contexts/AuthContext';
+import { useGistData } from '../contexts/GistDataContext';
 import { useToast } from '../contexts/ToastContext';
 import { forkGist, getGist, getPublicGist } from '../services/api/gists';
 import { copyToClipboard, downloadFile, getShareableUrl } from '../utils/download';
@@ -119,6 +120,7 @@ const GistViewer = () => {
 	const { id, filename: urlFilename } = useParams();
 	const navigate = useNavigate();
 	const { user, token } = useAuth();
+	const { upsertGist } = useGistData();
 	const toast = useToast();
 
 	const [gist, setGist] = useState(null);
@@ -211,7 +213,8 @@ const GistViewer = () => {
 
 		try {
 			setForking(true);
-			const forkedGist = await forkGist(id, token, setError);
+			const forkedGist = await forkGist(id, token, setError, user?.id);
+			upsertGist(forkedGist);
 			toast.success('Gist forked successfully!');
 			navigate(`/gist/${forkedGist.id}`);
 		} catch (err) {

@@ -54,33 +54,10 @@ export const AuthProvider = ({ children }) => {
 	}, []);
 
 	/**
-	 * Fetch current user data from GitHub
-	 */
-	const fetchUser = useCallback(async () => {
-		if (!token) {
-			setLoading(false);
-			return;
-		}
-
-		try {
-			setLoading(true);
-
-			const userData = await authService.getCurrentUser();
-			setUser(userData);
-			setError(null);
-		} catch (error) {
-			logError('Error fetching user', error);
-			setError('Failed to retrieve user information');
-			logout();
-		} finally {
-			setLoading(false);
-		}
-	}, [token, logout]);
-
-	/**
 	 * Check authentication status on load
 	 */
 	useEffect(() => {
+		let isCurrent = true;
 		const checkAuthStatus = async () => {
 			try {
 				setLoading(true);
@@ -105,28 +82,33 @@ export const AuthProvider = ({ children }) => {
 				}
 
 				if (savedToken) {
-					setToken(savedToken);
 					setAuthToken(savedToken);
 					logInfo('Found existing session token');
+					const userData = await authService.getCurrentUser();
+					if (!isCurrent) return;
+					setToken(savedToken);
+					setUser(userData);
+					setError(null);
 				}
 			} catch (error) {
 				logError('Error checking authentication status:', error);
+				if (!isCurrent) return;
+				setToken(null);
+				setUser(null);
+				setAuthToken(null);
+				setError('Failed to retrieve user information');
+				sessionStorage.removeItem('github_token');
+				sessionStorage.removeItem('gist_manager_session');
 			} finally {
-				setLoading(false);
+				if (isCurrent) setLoading(false);
 			}
 		};
 
 		checkAuthStatus();
+		return () => {
+			isCurrent = false;
+		};
 	}, []);
-
-	/**
-	 * Fetch user when token changes
-	 */
-	useEffect(() => {
-		if (token) {
-			fetchUser();
-		}
-	}, [token, fetchUser]);
 
 	/**
 	 * Listen for token invalid events
@@ -210,7 +192,7 @@ export const AuthProvider = ({ children }) => {
 	 * @param {string} state - State parameter for CSRF verification
 	 * @returns {Promise<boolean>} Success status
 	 */
-	const login = async (code, state) => {
+	const login = useCallback(async (code, state) => {
 		try {
 			setLoading(true);
 			setError(null);
@@ -246,6 +228,8 @@ export const AuthProvider = ({ children }) => {
 			// Set token in state and API
 			setToken(accessToken);
 			setAuthToken(accessToken);
+			const userData = await authService.getCurrentUser();
+			setUser(userData);
 
 			logInfo('Login successful');
 			return true;
@@ -253,16 +237,21 @@ export const AuthProvider = ({ children }) => {
 			const errorMessage = error.message || 'Authentication failed';
 			logError('Login error:', { message: errorMessage, error });
 			setError(errorMessage);
+			setToken(null);
+			setUser(null);
+			setAuthToken(null);
 
 			// Clear any partial OAuth state
 			sessionStorage.removeItem('oauth_state');
 			sessionStorage.removeItem('code_verifier');
+			sessionStorage.removeItem('github_token');
+			sessionStorage.removeItem('gist_manager_session');
 
 			return false;
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, []);
 
 	const contextValue = {
 		user,

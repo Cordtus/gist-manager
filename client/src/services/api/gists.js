@@ -6,6 +6,13 @@
  */
 
 import { handleApiError, logError, logInfo } from '../../utils/logger';
+import {
+	clearAllGistPageMetadata,
+	clearGistPageMetadata,
+	clearUserGistPageMetadata,
+	loadUserGistPageMetadata,
+	saveGistPageMetadata,
+} from '../gistMetadataStore';
 import { githubApi } from './github';
 
 /**
@@ -13,6 +20,8 @@ import { githubApi } from './github';
  * Tokens authenticate requests but are never used as cache keys.
  */
 const cacheByUser = new Map();
+const hydratedUsers = new Set();
+const hydrationByUser = new Map();
 const GITHUB_ACCEPT_HEADER = 'application/vnd.github+json';
 
 const hasValue = (value) => value !== null && value !== undefined && value !== '';
@@ -63,6 +72,57 @@ const getUserPages = (userId) => {
 	return pages;
 };
 
+const hydrateUserPages = (userId) => {
+	if (hydratedUsers.has(userId)) return null;
+
+	const existingHydration = hydrationByUser.get(userId);
+	if (existingHydration) return existingHydration;
+
+	hydratedUsers.add(userId);
+	const hydration = loadUserGistPageMetadata(userId)
+		.then((records) => {
+			const pages = getUserPages(userId);
+			records.forEach((record) => {
+				const cacheKey = getPageCacheKey(record.page, record.perPage);
+				const entry = pages.get(cacheKey);
+				const value = {
+					gists: record.gists,
+					page: record.page,
+					perPage: record.perPage,
+					hasNextPage: record.hasNextPage,
+					nextPage: record.nextPage,
+					eTag: record.eTag,
+				};
+
+				if (entry) {
+					if (!entry.value) {
+						entry.value = value;
+						entry.eTag = record.eTag;
+					}
+					return;
+				}
+
+				pages.set(cacheKey, {
+					page: record.page,
+					perPage: record.perPage,
+					value,
+					eTag: record.eTag,
+					pending: null,
+				});
+			});
+		})
+		.catch((error) => {
+			logError('Unable to restore gist metadata', { error: error.message, userId });
+		});
+
+	hydrationByUser.set(userId, hydration);
+	hydration.then(
+		() => hydrationByUser.delete(userId),
+		() => hydrationByUser.delete(userId),
+	);
+	return hydration;
+};
+
 const invalidateGistsForUser = (userId) => {
 	if (hasValue(userId)) {
 		invalidateUserGistsCache(userId);
@@ -91,6 +151,9 @@ export const invalidateGistPageCache = (userId, page, perPage = null) => {
 	}
 
 	if (pages.size === 0) cacheByUser.delete(userId);
+	void clearGistPageMetadata(userId, page, perPage).catch((error) =>
+		logError('Unable to clear cached gist metadata page', { error: error.message, page, userId }),
+	);
 	logInfo('User gist page cache invalidated', { page, userId });
 };
 
@@ -100,6 +163,9 @@ export const invalidateGistPageCache = (userId, page, perPage = null) => {
 export const invalidateUserGistsCache = (userId) => {
 	if (!hasValue(userId)) return;
 	cacheByUser.delete(userId);
+	void clearUserGistPageMetadata(userId).catch((error) =>
+		logError('Unable to clear cached gist metadata', { error: error.message, userId }),
+	);
 	logInfo('User gist cache invalidated', { userId });
 };
 
@@ -108,6 +174,9 @@ export const invalidateUserGistsCache = (userId) => {
  */
 export const clearGistsCache = () => {
 	cacheByUser.clear();
+	void clearAllGistPageMetadata().catch((error) =>
+		logError('Unable to clear cached gist metadata', { error: error.message }),
+	);
 	logInfo('All gist caches cleared');
 };
 
@@ -153,61 +222,69 @@ export const getGistPage = ({
 	const pages = getUserPages(userId);
 	const cacheKey = getPageCacheKey(page, perPage);
 	const entry = pages.get(cacheKey) || { page, perPage, value: null, eTag: null, pending: null };
+	pages.set(cacheKey, entry);
 
 	if (entry.pending) return entry.pending;
-	if (!force && entry.value) return Promise.resolve(entry.value);
 
-	const headers = {
-		Accept: GITHUB_ACCEPT_HEADER,
-		Authorization: `Bearer ${token}`,
+	const hydration = hydrateUserPages(userId);
+	const fetchPage = () => {
+		if (!force && entry.value) return Promise.resolve(entry.value);
+
+		const headers = {
+			Accept: GITHUB_ACCEPT_HEADER,
+			Authorization: `Bearer ${token}`,
+		};
+		if (force && entry.eTag) headers['If-None-Match'] = entry.eTag;
+
+		logInfo('Fetching gist page', { page, perPage, userId });
+
+		let responsePromise;
+		try {
+			responsePromise = githubApi.get('/gists', {
+				headers,
+				params: { per_page: perPage, page },
+				signal,
+				validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
+			});
+		} catch (error) {
+			return Promise.reject(error);
+		}
+
+		return Promise.resolve(responsePromise)
+			.then((response) => {
+				if (response.status === 304) {
+					if (!entry.value) throw new Error('Received 304 without a cached gist page');
+					return entry.value;
+				}
+
+				const nextPage = getNextPage(getResponseHeader(response.headers, 'link'));
+				const value = {
+					gists: Array.isArray(response.data) ? response.data : [],
+					page,
+					perPage,
+					hasNextPage: nextPage !== null,
+					nextPage,
+					eTag: getResponseHeader(response.headers, 'etag'),
+				};
+
+				entry.eTag = value.eTag;
+				entry.value = value;
+				void saveGistPageMetadata({ userId, ...value }).catch((error) =>
+					logError('Unable to save gist metadata', { error: error.message, page, userId }),
+				);
+				return value;
+			})
+			.catch((error) => {
+				logError('Error fetching gist page', { error: error.message, page, userId });
+				throw error;
+			});
 	};
-	if (force && entry.eTag) headers['If-None-Match'] = entry.eTag;
 
-	logInfo('Fetching gist page', { page, perPage, userId });
-
-	let responsePromise;
-	try {
-		responsePromise = githubApi.get('/gists', {
-			headers,
-			params: { per_page: perPage, page },
-			signal,
-			validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
-		});
-	} catch (error) {
-		return Promise.reject(error);
-	}
-
-	const request = Promise.resolve(responsePromise)
-		.then((response) => {
-			if (response.status === 304) {
-				if (!entry.value) throw new Error('Received 304 without a cached gist page');
-				return entry.value;
-			}
-
-			const nextPage = getNextPage(getResponseHeader(response.headers, 'link'));
-			const value = {
-				gists: Array.isArray(response.data) ? response.data : [],
-				page,
-				perPage,
-				hasNextPage: nextPage !== null,
-				nextPage,
-				eTag: getResponseHeader(response.headers, 'etag'),
-			};
-
-			entry.eTag = value.eTag;
-			entry.value = value;
-			return value;
-		})
-		.catch((error) => {
-			logError('Error fetching gist page', { error: error.message, page, userId });
-			throw error;
-		});
-
-	entry.pending = request.finally(() => {
+	const request = (hydration ? hydration.then(fetchPage) : fetchPage()).finally(() => {
 		entry.pending = null;
 	});
-	pages.set(cacheKey, entry);
-	return entry.pending;
+	entry.pending = request;
+	return request;
 };
 
 /**

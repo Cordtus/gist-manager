@@ -51,7 +51,7 @@ describe('paged gist API', () => {
 		const secondRequest = getGistPage({ token: 'token-a', userId: 'user-a' });
 
 		expect(secondRequest).toBe(firstRequest);
-		expect(mocks.githubApi.get).toHaveBeenCalledTimes(1);
+		await vi.waitFor(() => expect(mocks.githubApi.get).toHaveBeenCalledTimes(1));
 
 		request.resolve({ data: gists, headers: {} });
 

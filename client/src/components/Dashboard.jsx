@@ -1,79 +1,58 @@
 import { Github } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getGists } from '../services/api/gists';
+import { useGistData } from '../contexts/GistDataContext';
 import { generateGistPreview } from '../utils/describeGist';
-import { logError } from '../utils/logger';
 import Spinner from './common/Spinner';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { ErrorState } from './ui/error-state';
 
-const Dashboard = () => {
-	const [gists, setGists] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
-	const [metrics, setMetrics] = useState({
-		totalGists: 0,
-		totalFiles: 0,
-		avgFilesPerGist: 0,
-		mostRecentUpdate: null,
-		fileTypes: {},
+const summarizeGists = (gists) => {
+	let totalFiles = 0;
+	let mostRecentUpdate = null;
+	const fileTypes = {};
+
+	gists.forEach((gist) => {
+		const files = Object.values(gist.files || {});
+		totalFiles += files.length;
+
+		files.forEach((file) => {
+			const extension = file.filename?.split('.').pop()?.toLowerCase() || 'unknown';
+			fileTypes[extension] = (fileTypes[extension] || 0) + 1;
+		});
+
+		const updateDate = new Date(gist.updated_at);
+		if (
+			!Number.isNaN(updateDate.valueOf()) &&
+			(!mostRecentUpdate || updateDate > mostRecentUpdate)
+		) {
+			mostRecentUpdate = updateDate;
+		}
 	});
-	const { user, token, initiateGithubLogin } = useAuth();
 
-	const fetchGists = useCallback(async () => {
-		try {
-			setLoading(true);
-			setError(null);
-			const gistsData = await getGists(token, setError, user?.id);
+	return {
+		avgFilesPerGist: gists.length ? (totalFiles / gists.length).toFixed(1) : 0,
+		fileTypes,
+		mostRecentUpdate,
+		totalFiles,
+		totalGists: gists.length,
+	};
+};
 
-			const totalGists = gistsData.length;
-			let totalFiles = 0;
-			let mostRecentUpdate = null;
-			const fileTypes = {};
-
-			gistsData.forEach((gist) => {
-				const filesCount = Object.keys(gist.files).length;
-				totalFiles += filesCount;
-
-				Object.values(gist.files).forEach((file) => {
-					const extension = file.filename.split('.').pop().toLowerCase() || 'unknown';
-					fileTypes[extension] = (fileTypes[extension] || 0) + 1;
-				});
-
-				const updateDate = new Date(gist.updated_at);
-				if (!mostRecentUpdate || updateDate > mostRecentUpdate) {
-					mostRecentUpdate = updateDate;
-				}
-			});
-
-			setMetrics({
-				totalGists,
-				totalFiles,
-				avgFilesPerGist: totalGists ? (totalFiles / totalGists).toFixed(1) : 0,
-				mostRecentUpdate,
-				fileTypes,
-			});
-
-			setGists(gistsData.slice(0, 5));
-		} catch (error) {
-			logError('Error fetching gists', error);
-			setError('Failed to fetch gists. Please try again later.');
-		} finally {
-			setLoading(false);
-		}
-	}, [token, user]);
-
-	useEffect(() => {
-		if (user && token) {
-			fetchGists();
-		} else {
-			setLoading(false);
-		}
-	}, [user, token, fetchGists]);
+const Dashboard = () => {
+	const { initiateGithubLogin, user } = useAuth();
+	const { error, gists, indexedPageCount, isIndexing, refresh, status } = useGistData();
+	const metrics = useMemo(() => summarizeGists(gists), [gists]);
+	const topFileTypes = useMemo(
+		() =>
+			Object.entries(metrics.fileTypes)
+				.sort(([, firstCount], [, secondCount]) => secondCount - firstCount)
+				.slice(0, 3),
+		[metrics.fileTypes],
+	);
 
 	if (!user) {
 		return (
@@ -90,21 +69,12 @@ const Dashboard = () => {
 		);
 	}
 
-	if (loading) {
-		return <Spinner />;
-	}
-
-	if (error) {
-		return <ErrorState message={error} variant="card" />;
-	}
-
-	const topFileTypes = Object.entries(metrics.fileTypes)
-		.sort((a, b) => b[1] - a[1])
-		.slice(0, 3);
+	if (status === 'loading' && gists.length === 0) return <Spinner />;
+	if (error && gists.length === 0)
+		return <ErrorState message={error} variant="card" onRetry={refresh} />;
 
 	return (
 		<div className="space-y-6">
-			{/* Stats */}
 			<div className="flex flex-wrap gap-6 text-sm">
 				<div>
 					<span className="text-muted-foreground">Gists</span>
@@ -124,9 +94,15 @@ const Dashboard = () => {
 						<span className="ml-2 font-mono">{metrics.mostRecentUpdate.toLocaleDateString()}</span>
 					</div>
 				)}
+				{isIndexing && (
+					<p className="text-muted-foreground" role="status">
+						Indexing page {indexedPageCount + 1}…
+					</p>
+				)}
 			</div>
 
-			{/* File Types */}
+			{error && <ErrorState message={error} variant="banner" onRetry={refresh} />}
+
 			{topFileTypes.length > 0 && (
 				<div className="flex flex-wrap gap-2">
 					{topFileTypes.map(([type, count]) => (
@@ -137,16 +113,16 @@ const Dashboard = () => {
 				</div>
 			)}
 
-			{/* Recent Gists */}
 			<Card>
 				<CardHeader>
 					<CardTitle>Recent Gists</CardTitle>
 				</CardHeader>
 				<CardContent>
-					{Array.isArray(gists) && gists.length > 0 ? (
+					{gists.length > 0 ? (
 						<div className="divide-y divide-border">
-							{gists.map((gist) => {
+							{gists.slice(0, 5).map((gist) => {
 								const preview = generateGistPreview(gist);
+								const fileCount = Object.keys(gist.files || {}).length;
 								return (
 									<Link
 										key={gist.id}
@@ -161,8 +137,7 @@ const Dashboard = () => {
 										</p>
 										<div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
 											<span>
-												{Object.keys(gist.files).length}{' '}
-												{Object.keys(gist.files).length === 1 ? 'file' : 'files'}
+												{fileCount} {fileCount === 1 ? 'file' : 'files'}
 											</span>
 											<span>&middot;</span>
 											<span>{new Date(gist.updated_at).toLocaleDateString()}</span>

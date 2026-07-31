@@ -1,134 +1,93 @@
-/**
- * Tests for GistList Component
- * Tests gist fetching, filtering, and CRUD operations.
- */
-
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ToastProvider } from '../contexts/ToastContext';
-import * as gistsApi from '../services/api/gists';
-import { mockGistList, mockUser } from '../test/fixtures';
+import { mockGistList } from '../test/fixtures';
 import GistList from './GistList';
 
-vi.mock('../services/api/gists');
+const mocks = vi.hoisted(() => ({
+	gistData: {},
+	refresh: vi.fn(),
+}));
 
-vi.mock('../contexts/AuthContext', async () => {
-	const actual = await vi.importActual('../contexts/AuthContext');
-	return {
-		...actual,
-		useAuth: vi.fn(() => ({
-			user: mockUser,
-			token: 'test-token',
-			isAuthenticated: true,
-			loading: false,
-		})),
-	};
-});
+vi.mock('../contexts/AuthContext', () => ({
+	useAuth: () => ({
+		token: 'test-token',
+		user: { id: 123, login: 'testuser' },
+	}),
+}));
 
-const renderList = () => {
-	return render(
+vi.mock('../contexts/GistDataContext', () => ({
+	useGistData: () => mocks.gistData,
+}));
+
+vi.mock('../services/api/gists', () => ({
+	deleteGist: vi.fn(),
+	getGists: vi.fn(() => Promise.resolve([])),
+	updateGist: vi.fn(),
+}));
+
+const renderList = () =>
+	render(
 		<BrowserRouter>
-			<ToastProvider>
-				<GistList />
-			</ToastProvider>
+			<GistList />
 		</BrowserRouter>,
 	);
-};
 
-describe('GistList Component', () => {
+describe('GistList', () => {
 	beforeEach(() => {
-		vi.clearAllMocks();
-		sessionStorage.clear();
+		mocks.refresh.mockReset();
+		mocks.gistData = {
+			error: null,
+			gists: mockGistList,
+			isIndexing: false,
+			refresh: mocks.refresh,
+			removeGist: vi.fn(),
+			status: 'ready',
+			upsertGist: vi.fn(),
+		};
 	});
 
-	describe('Fetching gists', () => {
-		it('calls getGists API on mount', async () => {
-			gistsApi.getGists.mockResolvedValue(mockGistList);
+	it('narrows visible gist cards and result count when a user searches', () => {
+		renderList();
 
-			renderList();
-
-			await waitFor(() => {
-				expect(gistsApi.getGists).toHaveBeenCalledWith(
-					'test-token',
-					expect.any(Function),
-					mockUser.id,
-				);
-			});
+		fireEvent.change(screen.getByPlaceholderText(/search gists/i), {
+			target: { value: 'another' },
 		});
 
-		it('displays gist descriptions after loading', async () => {
-			gistsApi.getGists.mockResolvedValue(mockGistList);
-
-			renderList();
-
-			await waitFor(() => {
-				// Use getAllByText since description appears in multiple places
-				const matches = screen.getAllByText('Test Gist Description');
-				expect(matches.length).toBeGreaterThan(0);
-			});
-		});
-
-		it('shows loading indicator initially', () => {
-			gistsApi.getGists.mockImplementation(() => new Promise(() => {}));
-
-			renderList();
-
-			expect(screen.getByText(/loading/i)).toBeInTheDocument();
-		});
-
-		it('displays error message on fetch failure', async () => {
-			gistsApi.getGists.mockRejectedValue(new Error('API Error'));
-
-			renderList();
-
-			await waitFor(() => {
-				expect(screen.getByText(/failed/i)).toBeInTheDocument();
-			});
-		});
-
-		it('shows empty state when no gists exist', async () => {
-			gistsApi.getGists.mockResolvedValue([]);
-
-			renderList();
-
-			await waitFor(() => {
-				expect(screen.getByText(/no gists/i)).toBeInTheDocument();
-			});
-		});
+		expect(screen.getByText('Showing 1 of 3 gists')).toBeInTheDocument();
+		expect(screen.getAllByText('Another Test Gist').length).toBeGreaterThan(0);
+		expect(screen.queryByText('Test Gist Description')).not.toBeInTheDocument();
 	});
 
-	describe('Search functionality', () => {
-		beforeEach(() => {
-			gistsApi.getGists.mockResolvedValue(mockGistList);
-		});
+	it('keeps existing cards visible while a refresh is underway', () => {
+		mocks.gistData = { ...mocks.gistData, status: 'refreshing' };
 
-		it('has search input', async () => {
-			renderList();
+		renderList();
 
-			await waitFor(() => {
-				const matches = screen.getAllByText('Test Gist Description');
-				expect(matches.length).toBeGreaterThan(0);
-			});
-
-			const searchInput = screen.getByPlaceholderText(/search/i);
-			expect(searchInput).toBeInTheDocument();
-		});
+		expect(screen.getByText('Refreshing…')).toBeInTheDocument();
+		expect(screen.getAllByText('Test Gist Description').length).toBeGreaterThan(0);
 	});
 
-	describe('Unauthenticated state', () => {
-		it('shows login prompt when user is not authenticated', async () => {
-			const { useAuth } = await import('../contexts/AuthContext');
-			useAuth.mockReturnValue({
-				user: null,
-				token: null,
-				isAuthenticated: false,
-				loading: false,
-			});
+	it('offers retry after an initial collection-load error', () => {
+		mocks.gistData = {
+			...mocks.gistData,
+			error: 'Failed to load your gists. Please try again.',
+			gists: [],
+			status: 'error',
+		};
 
-			renderList();
+		renderList();
 
-			expect(screen.getByText(/log in/i)).toBeInTheDocument();
-		});
+		fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+		expect(mocks.refresh).toHaveBeenCalledTimes(1);
+	});
+
+	it('does not claim the collection is empty before the first request settles', () => {
+		mocks.gistData = { ...mocks.gistData, gists: [], status: 'loading' };
+
+		renderList();
+
+		expect(screen.getByText(/loading your gists/i)).toBeInTheDocument();
+		expect(screen.queryByText('No gists yet')).not.toBeInTheDocument();
 	});
 });

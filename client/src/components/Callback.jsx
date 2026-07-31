@@ -4,7 +4,7 @@
  * @module components/Callback
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Spinner from './common/Spinner';
@@ -18,6 +18,7 @@ const Callback = () => {
 	const navigate = useNavigate();
 	const [error, setError] = useState(null);
 	const [isProcessing, setIsProcessing] = useState(true);
+	const processedReturnRef = useRef(null);
 
 	useEffect(() => {
 		const handleCallback = async () => {
@@ -72,6 +73,10 @@ const Callback = () => {
 					setIsProcessing(false);
 					return;
 				}
+
+				const returnKey = `${code}:${returnedState}`;
+				if (processedReturnRef.current === returnKey) return;
+				processedReturnRef.current = returnKey;
 
 				// Call login which handles state verification and token exchange
 				const success = await login(code, returnedState);

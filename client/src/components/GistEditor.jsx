@@ -5,6 +5,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useAuth } from '../contexts/AuthContext';
+import { useGistData } from '../contexts/GistDataContext';
 import { useToast } from '../contexts/ToastContext';
 import { createGist, getGist, updateGist } from '../services/api/gists';
 import { logError } from '../utils/logger';
@@ -12,7 +13,6 @@ import MarkdownPreview from './markdown/MarkdownPreview';
 import { ErrorState } from './ui/error-state';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from './ui/resizable';
 import '../styles/gistEditor.css';
-import '../styles/markdownPreview.css';
 
 /**
  * Enhanced Toolbar Component with all Markdown controls
@@ -361,6 +361,7 @@ const GistEditor = () => {
 	const { id } = useParams();
 	const navigate = useNavigate();
 	const { user, token } = useAuth();
+	const { upsertGist } = useGistData();
 	const toast = useToast();
 
 	const editorRef = useRef(null);
@@ -440,10 +441,12 @@ const GistEditor = () => {
 
 		try {
 			if (id) {
-				await updateGist(id, gist, token, setError, user?.id);
+				const updatedGist = await updateGist(id, gist, token, setError, user?.id);
+				upsertGist(updatedGist || gist);
 				toast.success('Gist updated successfully!');
 			} else {
 				const newG = await createGist(gist, token, setError, user?.id);
+				upsertGist(newG);
 				toast.success('Gist created successfully!');
 				navigate(`/gist/${newG.id}`);
 			}
