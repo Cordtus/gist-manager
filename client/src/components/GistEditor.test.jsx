@@ -35,6 +35,10 @@ vi.mock('../contexts/AuthContext', async () => {
 	};
 });
 
+vi.mock('../contexts/GistDataContext', () => ({
+	useGistData: () => ({ upsertGist: vi.fn() }),
+}));
+
 const renderEditor = (props = {}) => {
 	return render(
 		<BrowserRouter>

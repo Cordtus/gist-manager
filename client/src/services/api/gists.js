@@ -6,57 +6,189 @@
  */
 
 import { handleApiError, logError, logInfo } from '../../utils/logger';
+import {
+	clearAllGistPageMetadata,
+	clearGistPageMetadata,
+	clearUserGistPageMetadata,
+	loadUserGistPageMetadata,
+	saveGistPageMetadata,
+} from '../gistMetadataStore';
 import { githubApi } from './github';
 
 /**
- * In-memory cache structure with user isolation
- * Cache is cleared on logout to prevent data leakage
+ * In-memory cache structure with user/page isolation.
+ * Tokens authenticate requests but are never used as cache keys.
  */
 const cacheByUser = new Map();
-const FETCH_COOLDOWN = 5000;
-const CACHE_TTL = 60000;
+const hydratedUsers = new Set();
+const hydrationByUser = new Map();
+const GITHUB_ACCEPT_HEADER = 'application/vnd.github+json';
 
-/**
- * Generate a secure cache key based on token and user ID
- * This prevents cache pollution between users
- */
-const getCacheKey = (token, userId) => {
-	if (!token) {
-		// No token = no cache (security requirement)
+const hasValue = (value) => value !== null && value !== undefined && value !== '';
+
+const getPageCacheKey = (page, perPage) => `${page}:${perPage}`;
+
+const getResponseHeader = (headers, name) => {
+	if (!headers) return null;
+	if (typeof headers.get === 'function') return headers.get(name) || null;
+
+	const matchingKey = Object.keys(headers).find((key) => key.toLowerCase() === name.toLowerCase());
+	return matchingKey ? headers[matchingKey] : null;
+};
+
+const getNextPage = (linkHeader) => {
+	if (!linkHeader) return null;
+
+	const nextLink = linkHeader
+		.split(',')
+		.find((link) => /\brel\s*=\s*(?:"[^"]*\bnext\b[^"]*"|next)/i.test(link));
+	const url = nextLink?.match(/<([^>]+)>/)?.[1];
+
+	if (!url) return null;
+
+	try {
+		const nextPage = Number.parseInt(new URL(url).searchParams.get('page'), 10);
+		return Number.isInteger(nextPage) && nextPage > 0 ? nextPage : null;
+	} catch {
 		return null;
 	}
-	// Include user ID if available for additional security
-	const key = userId ? `${token}_${userId}` : token;
-	// Hash the key for security (prevent token exposure in memory dumps)
-	return btoa(key).substring(0, 32); // Simple obfuscation
+};
+
+const validatePageOptions = (token, userId, page, perPage) => {
+	if (!token) return new Error('Authentication required to fetch gists');
+	if (!hasValue(userId)) return new Error('User ID required to fetch gists');
+	if (!Number.isInteger(page) || page < 1) return new Error('Page must be a positive integer');
+	if (!Number.isInteger(perPage) || perPage < 1)
+		return new Error('perPage must be a positive integer');
+	return null;
+};
+
+const getUserPages = (userId) => {
+	let pages = cacheByUser.get(userId);
+	if (!pages) {
+		pages = new Map();
+		cacheByUser.set(userId, pages);
+	}
+	return pages;
+};
+
+const hydrateUserPages = (userId) => {
+	if (hydratedUsers.has(userId)) return null;
+
+	const existingHydration = hydrationByUser.get(userId);
+	if (existingHydration) return existingHydration;
+
+	hydratedUsers.add(userId);
+	const hydration = loadUserGistPageMetadata(userId)
+		.then((records) => {
+			const pages = getUserPages(userId);
+			records.forEach((record) => {
+				const cacheKey = getPageCacheKey(record.page, record.perPage);
+				const entry = pages.get(cacheKey);
+				const value = {
+					gists: record.gists,
+					page: record.page,
+					perPage: record.perPage,
+					hasNextPage: record.hasNextPage,
+					nextPage: record.nextPage,
+					eTag: record.eTag,
+				};
+
+				if (entry) {
+					if (!entry.value) {
+						entry.value = value;
+						entry.eTag = record.eTag;
+					}
+					return;
+				}
+
+				pages.set(cacheKey, {
+					page: record.page,
+					perPage: record.perPage,
+					value,
+					eTag: record.eTag,
+					pending: null,
+				});
+			});
+		})
+		.catch((error) => {
+			logError('Unable to restore gist metadata', { error: error.message, userId });
+		});
+
+	hydrationByUser.set(userId, hydration);
+	hydration.then(
+		() => hydrationByUser.delete(userId),
+		() => hydrationByUser.delete(userId),
+	);
+	return hydration;
+};
+
+const invalidateGistsForUser = (userId) => {
+	if (hasValue(userId)) {
+		invalidateUserGistsCache(userId);
+		return;
+	}
+
+	clearGistsCache();
 };
 
 /**
- * Invalidate all cached gists (e.g., after create/update/delete)
- * Can optionally clear only specific user's cache
+ * Invalidate a cached page for one user. Without a per-page count, all cached
+ * variants of that page are removed.
  */
-export const invalidateGistsCache = (token = null, userId = null) => {
-	if (token && userId) {
-		const key = getCacheKey(token, userId);
-		if (key) {
-			cacheByUser.delete(key);
-			logInfo('User-specific gists cache invalidated');
+export const invalidateGistPageCache = (userId, page, perPage = null) => {
+	if (!hasValue(userId)) return;
+
+	const pages = cacheByUser.get(userId);
+	if (!pages) return;
+
+	if (perPage === null || perPage === undefined) {
+		for (const [key, entry] of pages) {
+			if (entry.page === page) pages.delete(key);
 		}
 	} else {
-		// Clear all caches (e.g., on logout)
-		cacheByUser.clear();
-		logInfo('All gists caches invalidated');
+		pages.delete(getPageCacheKey(page, perPage));
 	}
+
+	if (pages.size === 0) cacheByUser.delete(userId);
+	void clearGistPageMetadata(userId, page, perPage).catch((error) =>
+		logError('Unable to clear cached gist metadata page', { error: error.message, page, userId }),
+	);
+	logInfo('User gist page cache invalidated', { page, userId });
 };
 
 /**
- * Clear cache for current user on logout
- * SECURITY: Prevents next user from seeing previous user's data
+ * Invalidate every cached page for one user after that user's gist mutation.
  */
-export const clearUserCache = () => {
-	cacheByUser.clear();
-	logInfo('User cache cleared for security');
+export const invalidateUserGistsCache = (userId) => {
+	if (!hasValue(userId)) return;
+	cacheByUser.delete(userId);
+	void clearUserGistPageMetadata(userId).catch((error) =>
+		logError('Unable to clear cached gist metadata', { error: error.message, userId }),
+	);
+	logInfo('User gist cache invalidated', { userId });
 };
+
+/**
+ * Clear all user caches, for logout and token-invalid events.
+ */
+export const clearGistsCache = () => {
+	cacheByUser.clear();
+	void clearAllGistPageMetadata().catch((error) =>
+		logError('Unable to clear cached gist metadata', { error: error.message }),
+	);
+	logInfo('All gist caches cleared');
+};
+
+/**
+ * Legacy invalidation signature retained for existing callers. The token is
+ * intentionally ignored: it must never become cache identity.
+ */
+export const invalidateGistsCache = (_token = null, userId = null) => {
+	invalidateGistsForUser(userId);
+};
+
+export const clearUserCache = clearGistsCache;
 
 // Listen for logout events to clear cache
 if (typeof window !== 'undefined') {
@@ -65,96 +197,117 @@ if (typeof window !== 'undefined') {
 }
 
 /**
- * Fetch all gists for the authenticated user, with pagination
- * Utilizes per-user caching with proper isolation
+ * Fetch one page of the authenticated user's gists.
  *
- * @param {string} token - REQUIRED: GitHub access token
- * @param {Function} [setError] - Error handler
- * @param {string} [userId] - Optional user ID for cache isolation
- * @returns {Promise<Array>}
+ * @param {Object} options - Page request options
+ * @param {string} options.token - GitHub access token
+ * @param {string|number} options.userId - Required cache identity
+ * @param {number} [options.page=1] - One-indexed page number
+ * @param {number} [options.perPage=20] - Number of gists per page
+ * @param {boolean} [options.force=false] - Revalidate a cached page
+ * @param {AbortSignal} [options.signal] - Request cancellation signal
+ * @returns {Promise<{gists: Array, page: number, perPage: number, hasNextPage: boolean, nextPage: number|null, eTag: string|null}>}
  */
-export const getGists = async (token, setError, userId = null) => {
-	// SECURITY: Require token for all gist fetching
-	if (!token) {
-		const error = new Error('Authentication required to fetch gists');
-		logError('getGists called without token - security violation');
-		if (setError) setError('Authentication required');
-		throw error;
-	}
+export const getGistPage = ({
+	token,
+	userId,
+	page = 1,
+	perPage = 20,
+	force = false,
+	signal,
+} = {}) => {
+	const validationError = validatePageOptions(token, userId, page, perPage);
+	if (validationError) return Promise.reject(validationError);
 
-	const cacheKey = getCacheKey(token, userId);
-	if (!cacheKey) {
-		// Should not happen with token present, but handle gracefully
-		logError('Failed to generate cache key');
-		throw new Error('Cache key generation failed');
-	}
+	const pages = getUserPages(userId);
+	const cacheKey = getPageCacheKey(page, perPage);
+	const entry = pages.get(cacheKey) || { page, perPage, value: null, eTag: null, pending: null };
+	pages.set(cacheKey, entry);
 
-	const now = Date.now();
-	let entry = cacheByUser.get(cacheKey);
+	if (entry.pending) return entry.pending;
 
-	if (!entry) {
-		entry = { data: null, ts: 0, fetching: false, userId };
-		cacheByUser.set(cacheKey, entry);
-	}
+	const hydration = hydrateUserPages(userId);
+	const fetchPage = () => {
+		if (!force && entry.value) return Promise.resolve(entry.value);
 
-	// Validate cache entry belongs to correct user
-	if (userId && entry.userId && entry.userId !== userId) {
-		logError('Cache entry user mismatch - clearing cache');
-		cacheByUser.delete(cacheKey);
-		entry = { data: null, ts: 0, fetching: false, userId };
-		cacheByUser.set(cacheKey, entry);
-	}
+		const headers = {
+			Accept: GITHUB_ACCEPT_HEADER,
+			Authorization: `Bearer ${token}`,
+		};
+		if (force && entry.eTag) headers['If-None-Match'] = entry.eTag;
 
-	// Return cached if fresh
-	if (entry.data && now - entry.ts < CACHE_TTL) {
-		logInfo('Using cached gists data', { cacheAge: now - entry.ts });
-		return entry.data;
-	}
+		logInfo('Fetching gist page', { page, perPage, userId });
 
-	// Prevent concurrent fetches
-	if (entry.fetching) {
-		logInfo('Fetch prevented: Already fetching gists');
-		return entry.data || [];
-	}
-
-	// Respect cooldown
-	if (now - entry.ts < FETCH_COOLDOWN) {
-		logInfo('Fetch prevented: Cooldown period not elapsed');
-		return entry.data || [];
-	}
-
-	try {
-		logInfo('Fetching gists for authenticated user');
-		entry.fetching = true;
-
-		const allGists = [];
-		const perPage = 100;
-		let page = 1;
-
-		// Always use the provided token for authorization
-		const headers = { Authorization: `Bearer ${token}` };
-
-		while (true) {
-			const response = await githubApi.get(`/gists?per_page=${perPage}&page=${page}`, { headers });
-			const gists = response.data;
-			allGists.push(...gists);
-			if (gists.length < perPage) break;
-			page++;
+		let responsePromise;
+		try {
+			responsePromise = githubApi.get('/gists', {
+				headers,
+				params: { per_page: perPage, page },
+				signal,
+				validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
+			});
+		} catch (error) {
+			return Promise.reject(error);
 		}
 
-		// Cache result with user association
-		entry.data = allGists;
-		entry.ts = Date.now();
-		entry.userId = userId;
-		logInfo(`Successfully fetched ${allGists.length} gists`);
+		return Promise.resolve(responsePromise)
+			.then((response) => {
+				if (response.status === 304) {
+					if (!entry.value) throw new Error('Received 304 without a cached gist page');
+					return entry.value;
+				}
 
+				const nextPage = getNextPage(getResponseHeader(response.headers, 'link'));
+				const value = {
+					gists: Array.isArray(response.data) ? response.data : [],
+					page,
+					perPage,
+					hasNextPage: nextPage !== null,
+					nextPage,
+					eTag: getResponseHeader(response.headers, 'etag'),
+				};
+
+				entry.eTag = value.eTag;
+				entry.value = value;
+				void saveGistPageMetadata({ userId, ...value }).catch((error) =>
+					logError('Unable to save gist metadata', { error: error.message, page, userId }),
+				);
+				return value;
+			})
+			.catch((error) => {
+				logError('Error fetching gist page', { error: error.message, page, userId });
+				throw error;
+			});
+	};
+
+	const request = (hydration ? hydration.then(fetchPage) : fetchPage()).finally(() => {
+		entry.pending = null;
+	});
+	entry.pending = request;
+	return request;
+};
+
+/**
+ * Legacy all-gists helper. It aggregates paged reads but deliberately owns no
+ * separate cache, so mutations and revalidation have one source of truth.
+ */
+export const getGists = async (token, setError, userId = null) => {
+	try {
+		const allGists = [];
+		let page = 1;
+
+		while (page !== null) {
+			const pageResult = await getGistPage({ token, userId, page, perPage: 100 });
+			allGists.push(...pageResult.gists);
+			page = pageResult.hasNextPage ? pageResult.nextPage : null;
+		}
+
+		logInfo(`Successfully fetched ${allGists.length} gists`);
 		return allGists;
 	} catch (error) {
 		logError('Error fetching gists', { error: error.message });
 		handleApiError(error, setError);
 		throw error;
-	} finally {
-		entry.fetching = false;
 	}
 };
 

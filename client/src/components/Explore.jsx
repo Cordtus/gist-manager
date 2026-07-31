@@ -8,6 +8,7 @@ import { ArrowRight, Eye, FileText, GitFork, Globe, Search } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useGistData } from '../contexts/GistDataContext';
 import { useToast } from '../contexts/ToastContext';
 import { forkGist } from '../services/api/gists';
 import { getUserGists } from '../services/api/github';
@@ -81,6 +82,7 @@ const Explore = () => {
 
 	const navigate = useNavigate();
 	const { user, token } = useAuth();
+	const { upsertGist } = useGistData();
 	const toast = useToast();
 
 	const handleSearch = useCallback(
@@ -148,6 +150,7 @@ const Explore = () => {
 		try {
 			setForkingId(gistId);
 			const forked = await forkGist(gistId, token, null, user?.id);
+			upsertGist(forked);
 			toast.success('Gist forked successfully!');
 			navigate(`/gist/${forked.id}`);
 		} catch (err) {

@@ -9,10 +9,11 @@ import {
 	Search,
 	Trash2,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { deleteGist, getGists, updateGist } from '../services/api/gists';
+import { useGistData } from '../contexts/GistDataContext';
+import { deleteGist, updateGist } from '../services/api/gists';
 import { generateGistPreview } from '../utils/describeGist';
 import { logError } from '../utils/logger';
 import ConfirmationDialog from './ConfirmationDialog';
@@ -25,23 +26,16 @@ import { Input } from './ui/input';
 import { Separator } from './ui/separator';
 
 const GistList = () => {
-	const [gists, setGists] = useState([]);
-	const [filteredGists, setFilteredGists] = useState([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState(null);
 	const [gistToDelete, setGistToDelete] = useState(null);
 	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [currentPage, setCurrentPage] = useState(1);
 	const [gistsPerPage] = useState(12);
 	const [searchTerm, setSearchTerm] = useState('');
-	const [searchIndex, setSearchIndex] = useState({});
 	const [sortOption, setSortOption] = useState('updated_at');
 	const [sortDirection, setSortDirection] = useState('desc');
 	const [isAdvancedSearch, setIsAdvancedSearch] = useState(false);
 	const [editingGist, setEditingGist] = useState(null);
 	const [editingDescription, setEditingDescription] = useState('');
-	const hasDataFetchedRef = useRef(false);
-	const searchTimeoutRef = useRef(null);
 	const [filterOptions, setFilterOptions] = useState({
 		fileType: '',
 		minFiles: '',
@@ -50,160 +44,93 @@ const GistList = () => {
 		dateTo: '',
 	});
 	const { user, token } = useAuth();
+	const { error, gists, indexedPageCount, isIndexing, refresh, removeGist, status, upsertGist } =
+		useGistData();
 	const navigate = useNavigate();
 
-	// Build search index
-	const buildSearchIndex = useCallback((gistsData) => {
-		if (!gistsData || !Array.isArray(gistsData)) return;
-
-		const index = {};
-		gistsData.forEach((gist) => {
-			index[gist.id] = {
-				description: gist.description?.toLowerCase() || '',
-				filenames: Object.keys(gist.files).map((name) => name.toLowerCase()),
-				content: [],
-				fileTypes: new Set(),
-				filesCount: Object.keys(gist.files).length,
-			};
-
-			Object.entries(gist.files).forEach(([filename, file]) => {
-				const extension = filename.includes('.') ? filename.split('.').pop().toLowerCase() : '';
-				if (extension) {
-					index[gist.id].fileTypes.add(extension);
-				}
-				if (file.content && file.content.length < 100000) {
-					index[gist.id].content.push(file.content.toLowerCase());
-				}
-			});
-		});
-
-		setSearchIndex(index);
-	}, []);
-
-	// Apply filters and sort
-	const applyFiltersAndSort = useCallback(
-		(gistsData, search, filters, sort, direction) => {
-			if (!gistsData || !Array.isArray(gistsData) || !gistsData.length) {
-				setFilteredGists([]);
-				return;
-			}
-
-			let results = [...gistsData];
-
-			// Search
-			if (search && search.trim() !== '') {
-				const searchLower = search.toLowerCase().trim();
-				results = results.filter((gist) => {
-					const indexEntry = searchIndex[gist.id];
-					if (!indexEntry) return false;
-					return (
-						indexEntry.description.includes(searchLower) ||
-						indexEntry.filenames.some((name) => name.includes(searchLower)) ||
-						indexEntry.content.some((content) => content.includes(searchLower))
-					);
-				});
-			}
-
-			// Filters
-			if (filters.fileType && filters.fileType.trim() !== '') {
-				const fileType = filters.fileType.toLowerCase().trim();
-				results = results.filter((gist) => {
-					const indexEntry = searchIndex[gist.id];
-					return indexEntry?.fileTypes.has(fileType);
-				});
-			}
-
-			if (filters.minFiles && !Number.isNaN(parseInt(filters.minFiles, 10))) {
-				results = results.filter(
-					(gist) => Object.keys(gist.files).length >= parseInt(filters.minFiles, 10),
-				);
-			}
-
-			if (filters.maxFiles && !Number.isNaN(parseInt(filters.maxFiles, 10))) {
-				results = results.filter(
-					(gist) => Object.keys(gist.files).length <= parseInt(filters.maxFiles, 10),
-				);
-			}
-
-			if (filters.dateFrom) {
-				const fromDate = new Date(filters.dateFrom);
-				results = results.filter((gist) => new Date(gist.updated_at) >= fromDate);
-			}
-
-			if (filters.dateTo) {
-				const toDate = new Date(filters.dateTo);
-				toDate.setHours(23, 59, 59, 999);
-				results = results.filter((gist) => new Date(gist.updated_at) <= toDate);
-			}
-
-			// Sort
-			results.sort((a, b) => {
-				if (sort === 'description') {
-					const aVal = (a.description || '').toLowerCase();
-					const bVal = (b.description || '').toLowerCase();
-					return direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-				} else if (sort === 'files_count') {
-					const aCount = Object.keys(a.files).length;
-					const bCount = Object.keys(b.files).length;
-					return direction === 'asc' ? aCount - bCount : bCount - aCount;
-				} else {
-					return direction === 'asc'
-						? new Date(a[sort]) - new Date(b[sort])
-						: new Date(b[sort]) - new Date(a[sort]);
-				}
-			});
-
-			setFilteredGists(results);
-			setCurrentPage(1);
-		},
-		[searchIndex],
+	const searchIndex = useMemo(
+		() =>
+			Object.fromEntries(
+				gists.map((gist) => {
+					const files = Object.entries(gist.files || {});
+					return [
+						gist.id,
+						{
+							content: files
+								.map(([, file]) => file.content)
+								.filter((content) => content && content.length < 100000)
+								.map((content) => content.toLowerCase()),
+							description: gist.description?.toLowerCase() || '',
+							fileTypes: new Set(
+								files.map(([filename]) => filename.split('.').pop()?.toLowerCase()).filter(Boolean),
+							),
+							filenames: files.map(([filename]) => filename.toLowerCase()),
+						},
+					];
+				}),
+			),
+		[gists],
 	);
 
-	// Fetch gists
-	const fetchGists = useCallback(async () => {
-		if (hasDataFetchedRef.current) return;
+	const filteredGists = useMemo(() => {
+		let results = [...gists];
+		const search = searchTerm.trim().toLowerCase();
+		if (search) {
+			results = results.filter((gist) => {
+				const entry = searchIndex[gist.id];
+				return (
+					entry?.description.includes(search) ||
+					entry?.filenames.some((filename) => filename.includes(search)) ||
+					entry?.content.some((content) => content.includes(search))
+				);
+			});
+		}
 
-		try {
-			setLoading(true);
-			setError(null);
-			const gistsData = await getGists(token, setError, user?.id);
-			if (Array.isArray(gistsData)) {
-				setGists(gistsData);
-				buildSearchIndex(gistsData);
-				applyFiltersAndSort(gistsData, '', {}, 'updated_at', 'desc');
+		if (filterOptions.fileType) {
+			const fileType = filterOptions.fileType.trim().toLowerCase();
+			results = results.filter((gist) => searchIndex[gist.id]?.fileTypes.has(fileType));
+		}
+		if (filterOptions.minFiles) {
+			results = results.filter(
+				(gist) =>
+					Object.keys(gist.files || {}).length >= Number.parseInt(filterOptions.minFiles, 10),
+			);
+		}
+		if (filterOptions.maxFiles) {
+			results = results.filter(
+				(gist) =>
+					Object.keys(gist.files || {}).length <= Number.parseInt(filterOptions.maxFiles, 10),
+			);
+		}
+		if (filterOptions.dateFrom) {
+			results = results.filter(
+				(gist) => new Date(gist.updated_at) >= new Date(filterOptions.dateFrom),
+			);
+		}
+		if (filterOptions.dateTo) {
+			const endOfDay = new Date(filterOptions.dateTo);
+			endOfDay.setHours(23, 59, 59, 999);
+			results = results.filter((gist) => new Date(gist.updated_at) <= endOfDay);
+		}
+
+		return results.sort((first, second) => {
+			if (sortOption === 'description') {
+				return sortDirection === 'asc'
+					? (first.description || '').localeCompare(second.description || '')
+					: (second.description || '').localeCompare(first.description || '');
 			}
-		} catch (error) {
-			logError('Error fetching gists', error);
-			setError('Failed to fetch gists.');
-		} finally {
-			hasDataFetchedRef.current = true;
-			setLoading(false);
-		}
-	}, [token, user, buildSearchIndex, applyFiltersAndSort]);
-
-	useEffect(() => {
-		if (user && !hasDataFetchedRef.current) {
-			fetchGists();
-		}
-	}, [user, fetchGists]);
-
-	// Search debounce
-	useEffect(() => {
-		if (searchTimeoutRef.current) {
-			clearTimeout(searchTimeoutRef.current);
-		}
-		if (gists.length === 0) return;
-		searchTimeoutRef.current = setTimeout(() => {
-			applyFiltersAndSort(gists, searchTerm, filterOptions, sortOption, sortDirection);
-		}, 300);
-		return () => {
-			if (searchTimeoutRef.current) {
-				clearTimeout(searchTimeoutRef.current);
+			if (sortOption === 'files_count') {
+				const difference =
+					Object.keys(first.files || {}).length - Object.keys(second.files || {}).length;
+				return sortDirection === 'asc' ? difference : -difference;
 			}
-		};
-	}, [searchTerm, filterOptions, sortOption, sortDirection, gists, applyFiltersAndSort]);
+			const difference = new Date(first[sortOption]) - new Date(second[sortOption]);
+			return sortDirection === 'asc' ? difference : -difference;
+		});
+	}, [filterOptions, gists, searchIndex, searchTerm, sortDirection, sortOption]);
 
 	const handleSortChange = (option) => {
+		setCurrentPage(1);
 		if (option === sortOption) {
 			setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
 		} else {
@@ -222,12 +149,10 @@ const GistList = () => {
 	const confirmDelete = async () => {
 		if (gistToDelete) {
 			try {
-				await deleteGist(gistToDelete.id, token, setError, user?.id);
-				setGists(gists.filter((g) => g.id !== gistToDelete.id));
-				setFilteredGists(filteredGists.filter((g) => g.id !== gistToDelete.id));
+				await deleteGist(gistToDelete.id, token, undefined, user?.id);
+				removeGist(gistToDelete.id);
 			} catch (error) {
 				logError('Error deleting gist', error);
-				setError('Failed to delete gist.');
 			}
 		}
 		setIsConfirmOpen(false);
@@ -235,17 +160,16 @@ const GistList = () => {
 	};
 
 	const resetFilters = () => {
+		setCurrentPage(1);
 		setSearchTerm('');
 		setFilterOptions({ fileType: '', minFiles: '', maxFiles: '', dateFrom: '', dateTo: '' });
 		setIsAdvancedSearch(false);
-		if (gists.length > 0) {
-			applyFiltersAndSort(gists, '', {}, sortOption, sortDirection);
-		}
 	};
 
-	const refreshGists = async () => {
-		hasDataFetchedRef.current = false;
-		await fetchGists();
+	const refreshGists = () => refresh();
+	const updateFilters = (updater) => {
+		setCurrentPage(1);
+		setFilterOptions(updater);
 	};
 
 	const handleEditDescription = (gist, e) => {
@@ -262,18 +186,12 @@ const GistList = () => {
 		}
 		try {
 			const updatedGist = { ...gist, description: editingDescription };
-			await updateGist(gist.id, updatedGist, token, setError, user?.id);
-			setGists((prevGists) =>
-				prevGists.map((g) => (g.id === gist.id ? { ...g, description: editingDescription } : g)),
-			);
-			setFilteredGists((prevGists) =>
-				prevGists.map((g) => (g.id === gist.id ? { ...g, description: editingDescription } : g)),
-			);
+			const savedGist = await updateGist(gist.id, updatedGist, token, undefined, user?.id);
+			upsertGist(savedGist || { ...gist, description: editingDescription });
 			setEditingGist(null);
 			setEditingDescription('');
 		} catch (error) {
 			logError('Error updating description', error);
-			setError('Failed to update description.');
 		}
 	};
 
@@ -304,7 +222,7 @@ const GistList = () => {
 		);
 	}
 
-	if (loading && gists.length === 0) {
+	if (status === 'loading' && gists.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center py-12">
 				<Spinner />
@@ -313,7 +231,7 @@ const GistList = () => {
 		);
 	}
 
-	if (error && gists.length === 0) {
+	if (error && gists.length === 0 && status === 'error') {
 		return <ErrorState message={error} variant="card" onRetry={refreshGists} />;
 	}
 
@@ -325,6 +243,7 @@ const GistList = () => {
 
 	return (
 		<div className="space-y-6">
+			{error && <ErrorState message={error} variant="banner" onRetry={refreshGists} />}
 			{/* Search and Filters Card */}
 			<Card>
 				<CardHeader>
@@ -339,8 +258,17 @@ const GistList = () => {
 								<Filter className="h-4 w-4 mr-2" />
 								{isAdvancedSearch ? 'Hide' : 'Show'} Filters
 							</Button>
-							<Button onClick={refreshGists} variant="ghost" size="sm">
-								<RefreshCw className="h-4 w-4" />
+							<Button
+								onClick={refreshGists}
+								variant="ghost"
+								size="sm"
+								disabled={status === 'refreshing'}
+							>
+								{status === 'refreshing' ? (
+									<span>Refreshing…</span>
+								) : (
+									<RefreshCw className="h-4 w-4" />
+								)}
 							</Button>
 						</div>
 					</div>
@@ -353,7 +281,10 @@ const GistList = () => {
 							type="text"
 							placeholder="Search gists by title, filename, or content..."
 							value={searchTerm}
-							onChange={(e) => setSearchTerm(e.target.value)}
+							onChange={(e) => {
+								setCurrentPage(1);
+								setSearchTerm(e.target.value);
+							}}
 							className="pl-10"
 						/>
 					</div>
@@ -369,9 +300,7 @@ const GistList = () => {
 									id="filter-file-type"
 									name="fileType"
 									value={filterOptions.fileType}
-									onChange={(e) =>
-										setFilterOptions((prev) => ({ ...prev, fileType: e.target.value }))
-									}
+									onChange={(e) => updateFilters((prev) => ({ ...prev, fileType: e.target.value }))}
 									className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
 								>
 									<option value="">Any type</option>
@@ -391,9 +320,7 @@ const GistList = () => {
 									type="number"
 									name="minFiles"
 									value={filterOptions.minFiles}
-									onChange={(e) =>
-										setFilterOptions((prev) => ({ ...prev, minFiles: e.target.value }))
-									}
+									onChange={(e) => updateFilters((prev) => ({ ...prev, minFiles: e.target.value }))}
 									placeholder="Min"
 									min="1"
 								/>
@@ -407,9 +334,7 @@ const GistList = () => {
 									type="number"
 									name="maxFiles"
 									value={filterOptions.maxFiles}
-									onChange={(e) =>
-										setFilterOptions((prev) => ({ ...prev, maxFiles: e.target.value }))
-									}
+									onChange={(e) => updateFilters((prev) => ({ ...prev, maxFiles: e.target.value }))}
 									placeholder="Max"
 									min="1"
 								/>
@@ -423,9 +348,7 @@ const GistList = () => {
 									type="date"
 									name="dateFrom"
 									value={filterOptions.dateFrom}
-									onChange={(e) =>
-										setFilterOptions((prev) => ({ ...prev, dateFrom: e.target.value }))
-									}
+									onChange={(e) => updateFilters((prev) => ({ ...prev, dateFrom: e.target.value }))}
 								/>
 							</div>
 							<div>
@@ -437,9 +360,7 @@ const GistList = () => {
 									type="date"
 									name="dateTo"
 									value={filterOptions.dateTo}
-									onChange={(e) =>
-										setFilterOptions((prev) => ({ ...prev, dateTo: e.target.value }))
-									}
+									onChange={(e) => updateFilters((prev) => ({ ...prev, dateTo: e.target.value }))}
 								/>
 							</div>
 							<div className="flex items-end">
@@ -473,6 +394,11 @@ const GistList = () => {
 						Showing {filteredGists.length} of {gists.length} gists
 						{searchTerm && <span> matching "{searchTerm}"</span>}
 					</div>
+					{isIndexing && (
+						<p className="text-sm text-muted-foreground" role="status">
+							Indexing page {indexedPageCount + 1}…
+						</p>
+					)}
 				</CardContent>
 			</Card>
 
@@ -584,6 +510,11 @@ const GistList = () => {
 							</Card>
 						);
 					})}
+				</div>
+			) : isIndexing && gists.length === 0 ? (
+				<div className="flex flex-col items-center justify-center py-12" role="status">
+					<Spinner />
+					<p className="mt-4 text-muted-foreground">Indexing your gists...</p>
 				</div>
 			) : (
 				<Card>
