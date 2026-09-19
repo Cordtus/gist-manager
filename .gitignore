@@ -117,7 +117,22 @@ package-lock.json
 /.serena
 /.claude
 /.playwright-mcp
+/.cursor
+/.cursorrules
+/.windsurf
+/.continue
+/.aider*
+/.gemini
+/.opencode
+/opencode.json
+/opencode.jsonc
+/.github/copilot-instructions.md
 /CLAUDE.md
+/GEMINI.md
+/codex.md
+/CODEX.md
+/*.prompt.md
+/*.prompts.md
 /docs/superpowers/
 /docs/handoffs/
 /scratch/
@@ -127,6 +142,7 @@ package-lock.json
 /handoff.md
 /handoff-*.md
 /HANDOFF.md
+/dev-docs/
 /ERROR_STATE_IMPLEMENTATION_PLAN.md
 /UI_IMPROVEMENTS.md
 
