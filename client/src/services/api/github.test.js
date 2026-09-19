@@ -1,6 +1,6 @@
 /**
  * GitHub API Service Tests
- * Tests API call behavior for user gists and fork operations.
+ * Tests API call behavior for user gists.
  */
 
 import axios from 'axios';
@@ -57,37 +57,6 @@ describe('GitHub API Service', () => {
 			axios._instance.get.mockRejectedValue(createMockError(403, 'API rate limit exceeded'));
 
 			await expect(githubApi.getUserGists('testuser')).rejects.toThrow();
-		});
-	});
-
-	describe('forkGist', () => {
-		it('forks gist and returns new gist data', async () => {
-			const forkedGist = { id: 'forked-123', description: 'Forked' };
-			axios._instance.post.mockResolvedValue({ data: forkedGist });
-
-			const result = await githubApi.forkGist('original-123');
-
-			expect(axios._instance.post).toHaveBeenCalledWith('/gists/original-123/forks');
-			expect(result.id).toBe('forked-123');
-		});
-
-		it('propagates auth errors', async () => {
-			axios._instance.post.mockRejectedValue(createMockError(401, 'Requires authentication'));
-
-			await expect(githubApi.forkGist('gist-123')).rejects.toThrow();
-		});
-	});
-
-	describe('setAuthToken', () => {
-		it('sets token on githubApi defaults', () => {
-			githubApi.setAuthToken('test_token');
-			expect(githubApi.githubApi.defaults.headers.common.Authorization).toBe('Bearer test_token');
-		});
-
-		it('clears token when null passed', () => {
-			githubApi.setAuthToken('test_token');
-			githubApi.setAuthToken(null);
-			expect(githubApi.githubApi.defaults.headers.common.Authorization).toBeUndefined();
 		});
 	});
 });

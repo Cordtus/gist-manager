@@ -17,7 +17,6 @@ const Callback = () => {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const [error, setError] = useState(null);
-	const [isProcessing, setIsProcessing] = useState(true);
 	const processedReturnRef = useRef(null);
 
 	useEffect(() => {
@@ -36,8 +35,6 @@ const Callback = () => {
 			}
 
 			try {
-				setIsProcessing(true);
-
 				// Parse URL parameters
 				const searchParams = new URLSearchParams(location.search);
 				const code = searchParams.get('code');
@@ -49,20 +46,17 @@ const Callback = () => {
 				if (errorParam) {
 					const errorMsg = errorDescription || errorParam;
 					setError(`GitHub authentication error: ${errorMsg}`);
-					setIsProcessing(false);
 					return;
 				}
 
 				// Validate we have required params
 				if (!code) {
 					setError('No authorization code received from GitHub. Authentication failed.');
-					setIsProcessing(false);
 					return;
 				}
 
 				if (!returnedState) {
 					setError('No state parameter received. Authentication failed.');
-					setIsProcessing(false);
 					return;
 				}
 
@@ -70,7 +64,6 @@ const Callback = () => {
 				const codeVerifier = sessionStorage.getItem('code_verifier');
 				if (!codeVerifier) {
 					setError('OAuth flow was interrupted. Please try logging in again.');
-					setIsProcessing(false);
 					return;
 				}
 
@@ -85,12 +78,10 @@ const Callback = () => {
 					navigate('/');
 				} else {
 					setError('Authentication failed. Please try again.');
-					setIsProcessing(false);
 				}
 			} catch (error) {
 				const errorMsg = isDevelopment ? error.message : 'Please try again later.';
 				setError(`Authentication failed: ${errorMsg}`);
-				setIsProcessing(false);
 			}
 		};
 
@@ -125,9 +116,7 @@ const Callback = () => {
 	return (
 		<div className="flex flex-col items-center justify-center p-6">
 			<Spinner />
-			<p className="mt-4 text-lg font-medium">
-				{isProcessing ? 'Processing GitHub authentication...' : 'Redirecting...'}
-			</p>
+			<p className="mt-4 text-lg font-medium">Processing GitHub authentication...</p>
 			<p className="mt-2 text-sm text-secondary">
 				Please wait while we complete the GitHub authentication process.
 			</p>

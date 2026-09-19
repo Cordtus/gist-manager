@@ -16,8 +16,6 @@ const FileConverter = lazy(() => import('./components/FileConverter'));
 const GistEditor = lazy(() => import('./components/GistEditor'));
 const GistList = lazy(() => import('./components/GistList'));
 const GistViewer = lazy(() => import('./components/GistViewer'));
-const ThemeColorSelector = lazy(() => import('./components/ThemeColorSelector'));
-const ThemeSandbox = lazy(() => import('./components/ThemeSandbox'));
 const UserProfile = lazy(() =>
 	import('./components/UserProfile').then(({ UserProfile: Profile }) => ({ default: Profile })),
 );
@@ -54,12 +52,6 @@ const AppContent = () => {
 						<Route path="/view/:id/:filename" element={<GistViewer />} />
 						<Route path="/convert" element={<FileConverter />} />
 						<Route path="/profile" element={<UserProfile />} />
-						{process.env.NODE_ENV === 'development' && (
-							<>
-								<Route path="/theme-sandbox" element={<ThemeSandbox />} />
-								<Route path="/theme-colors" element={<ThemeColorSelector />} />
-							</>
-						)}
 					</Routes>
 				</Suspense>
 			)}

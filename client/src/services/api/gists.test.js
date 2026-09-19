@@ -23,9 +23,10 @@ import {
 	deleteGist,
 	forkGist,
 	getGistPage,
-	getGists,
 	updateGist,
 } from './gists';
+
+const mockHeaders = (map = {}) => ({ get: (name) => map[name] ?? null });
 
 const createDeferred = () => {
 	let resolve;
@@ -53,7 +54,7 @@ describe('paged gist API', () => {
 		expect(secondRequest).toBe(firstRequest);
 		await vi.waitFor(() => expect(mocks.githubApi.get).toHaveBeenCalledTimes(1));
 
-		request.resolve({ data: gists, headers: {} });
+		request.resolve({ data: gists, headers: mockHeaders() });
 
 		await expect(Promise.all([firstRequest, secondRequest])).resolves.toEqual([
 			{
@@ -85,7 +86,7 @@ describe('paged gist API', () => {
 	});
 
 	it('shares cached pages across token refreshes for the same user', async () => {
-		mocks.githubApi.get.mockResolvedValue({ data: [{ id: 'gist-1' }], headers: {} });
+		mocks.githubApi.get.mockResolvedValue({ data: [{ id: 'gist-1' }], headers: mockHeaders() });
 
 		const originalTokenPage = await getGistPage({ token: 'token-a', userId: 'user-a' });
 		const refreshedTokenPage = await getGistPage({ token: 'token-b', userId: 'user-a' });
@@ -99,9 +100,9 @@ describe('paged gist API', () => {
 		mocks.githubApi.get
 			.mockResolvedValueOnce({
 				data: cachedGists,
-				headers: { etag: '"page-1"' },
+				headers: mockHeaders({ etag: '"page-1"' }),
 			})
-			.mockResolvedValueOnce({ status: 304, data: undefined, headers: {} });
+			.mockResolvedValueOnce({ status: 304, data: undefined, headers: mockHeaders() });
 
 		const cachedPage = await getGistPage({ token: 'token-a', userId: 'user-a' });
 		const refreshedPage = await getGistPage({ token: 'token-a', userId: 'user-a', force: true });
@@ -118,7 +119,7 @@ describe('paged gist API', () => {
 	it('joins a forced refresh instead of returning a stale cached page', async () => {
 		mocks.githubApi.get.mockResolvedValueOnce({
 			data: [{ id: 'cached-gist' }],
-			headers: { etag: '"page-1"' },
+			headers: mockHeaders({ etag: '"page-1"' }),
 		});
 		const refresh = createDeferred();
 		mocks.githubApi.get.mockReturnValueOnce(refresh.promise);
@@ -129,7 +130,10 @@ describe('paged gist API', () => {
 
 		expect(normalRequest).toBe(forcedRequest);
 
-		refresh.resolve({ data: [{ id: 'refreshed-gist' }], headers: { etag: '"page-2"' } });
+		refresh.resolve({
+			data: [{ id: 'refreshed-gist' }],
+			headers: mockHeaders({ etag: '"page-2"' }),
+		});
 
 		await expect(normalRequest).resolves.toMatchObject({ gists: [{ id: 'refreshed-gist' }] });
 	});
@@ -138,9 +142,9 @@ describe('paged gist API', () => {
 		const controller = new AbortController();
 		mocks.githubApi.get.mockResolvedValue({
 			data: [{ id: 'gist-1' }],
-			headers: {
+			headers: mockHeaders({
 				link: '<https://api.github.com/gists?per_page=20&page=3>; rel="next"',
-			},
+			}),
 		});
 
 		await expect(
@@ -160,20 +164,10 @@ describe('paged gist API', () => {
 		expect(config.validateStatus(404)).toBe(false);
 	});
 
-	it('lets the legacy collection helper reuse the paged cache', async () => {
-		const gists = [{ id: 'gist-1' }];
-		mocks.githubApi.get.mockResolvedValue({ data: gists, headers: {} });
-
-		await getGistPage({ token: 'token-a', userId: 'user-a', perPage: 100 });
-		await expect(getGists('token-a', undefined, 'user-a')).resolves.toEqual(gists);
-
-		expect(mocks.githubApi.get).toHaveBeenCalledTimes(1);
-	});
-
 	it('fetches a user page again after creating a gist invalidates that user cache', async () => {
 		mocks.githubApi.get
-			.mockResolvedValueOnce({ data: [{ id: 'before-create' }], headers: {} })
-			.mockResolvedValueOnce({ data: [{ id: 'after-create' }], headers: {} });
+			.mockResolvedValueOnce({ data: [{ id: 'before-create' }], headers: mockHeaders() })
+			.mockResolvedValueOnce({ data: [{ id: 'after-create' }], headers: mockHeaders() });
 		mocks.githubApi.post.mockResolvedValue({ data: { id: 'created-gist' } });
 
 		await getGistPage({ token: 'token-a', userId: 'user-a' });
@@ -207,9 +201,9 @@ describe('paged gist API', () => {
 		],
 	])('%s a gist and invalidates only that user’s cached pages', async (_name, mutate, mockMutation) => {
 		mocks.githubApi.get
-			.mockResolvedValueOnce({ data: [{ id: 'user-a-before' }], headers: {} })
-			.mockResolvedValueOnce({ data: [{ id: 'user-b-cached' }], headers: {} })
-			.mockResolvedValueOnce({ data: [{ id: 'user-a-after' }], headers: {} });
+			.mockResolvedValueOnce({ data: [{ id: 'user-a-before' }], headers: mockHeaders() })
+			.mockResolvedValueOnce({ data: [{ id: 'user-b-cached' }], headers: mockHeaders() })
+			.mockResolvedValueOnce({ data: [{ id: 'user-a-after' }], headers: mockHeaders() });
 		mockMutation();
 
 		await getGistPage({ token: 'token-a', userId: 'user-a' });

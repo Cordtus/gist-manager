@@ -15,7 +15,6 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { Button } from './ui/button';
-import { Separator } from './ui/separator';
 
 const Sidebar = () => {
 	const [isCollapsed, setIsCollapsed] = useState(false);
@@ -28,9 +27,10 @@ const Sidebar = () => {
 		{ path: '/gist', icon: FilePlus, label: 'New Gist' },
 		{ path: '/convert', icon: ArrowLeftRight, label: 'Convert' },
 		{ path: '/profile', icon: User, label: 'Profile' },
+		...(process.env.NODE_ENV === 'development'
+			? [{ path: '/theme-sandbox', icon: Palette, label: 'Theme Sandbox' }]
+			: []),
 	];
-
-	const devItems = [{ path: '/theme-sandbox', icon: Palette, label: 'Theme Sandbox' }];
 
 	return (
 		<>
@@ -120,46 +120,6 @@ const Sidebar = () => {
 								</li>
 							);
 						})}
-
-						{/* Development Tools - only show in development mode */}
-						{process.env.NODE_ENV === 'development' && (
-							<>
-								<li className="pt-4 mt-4">
-									<Separator />
-								</li>
-								{!isCollapsed && (
-									<li className="px-3 py-2">
-										<span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">
-											Development
-										</span>
-									</li>
-								)}
-								{devItems.map((item) => {
-									const Icon = item.icon;
-									return (
-										<li key={item.path}>
-											<NavLink
-												to={item.path}
-												onClick={() => setIsMobileOpen(false)}
-												className={({ isActive }) =>
-													cn(
-														'flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-sm font-medium',
-														isActive
-															? 'bg-primary text-primary-foreground'
-															: 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-														isCollapsed && 'justify-center',
-													)
-												}
-												title={isCollapsed ? item.label : ''}
-											>
-												<Icon className="h-5 w-5 flex-shrink-0" />
-												{!isCollapsed && <span className="truncate">{item.label}</span>}
-											</NavLink>
-										</li>
-									);
-								})}
-							</>
-						)}
 					</ul>
 				</div>
 			</nav>

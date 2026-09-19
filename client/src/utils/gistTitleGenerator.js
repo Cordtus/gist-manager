@@ -20,18 +20,7 @@ export const generateSmartTitle = (files) => {
 		return formatFilenameAsTitle(filenames[0]);
 	}
 
-	// Multiple files - try to find a pattern or theme
-	const analysis = analyzeFileCollection(filenames);
-
-	if (analysis.projectName) {
-		return analysis.projectName;
-	}
-
-	if (analysis.primaryTech) {
-		return `${analysis.primaryTech} ${analysis.type}`;
-	}
-
-	// Fallback: list main files
+	// Multiple files - list the main ones
 	const mainFiles = findMainFiles(filenames);
 	if (mainFiles.length > 0) {
 		return mainFiles
@@ -90,122 +79,6 @@ const formatFilenameAsTitle = (filename) => {
 		.split(' ')
 		.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
 		.join(' ');
-};
-
-/**
- * Analyze a collection of files to determine project type and name
- * @param {Array} filenames - Array of filenames
- * @returns {Object} - Analysis results
- */
-const analyzeFileCollection = (filenames) => {
-	const result = {
-		projectName: null,
-		primaryTech: null,
-		type: 'Files',
-		category: null,
-	};
-
-	// Check for common project patterns
-	const patterns = [
-		// Web projects
-		{ files: ['package.json', 'index.js'], name: 'Node.js Project', tech: 'Node.js' },
-		{ files: ['package.json', 'index.html'], name: 'Web Application', tech: 'JavaScript' },
-		{ files: ['index.html', 'style.css', 'script.js'], name: 'Web Page', tech: 'HTML/CSS/JS' },
-		{ files: ['app.js', 'package.json'], name: 'Express App', tech: 'Express.js' },
-		{ files: ['App.js', 'package.json'], name: 'React App', tech: 'React' },
-		{ files: ['app.py', 'requirements.txt'], name: 'Python Application', tech: 'Python' },
-		{ files: ['main.py', 'requirements.txt'], name: 'Python Project', tech: 'Python' },
-		{ files: ['Gemfile', 'app.rb'], name: 'Ruby Application', tech: 'Ruby' },
-		{ files: ['go.mod', 'main.go'], name: 'Go Module', tech: 'Go' },
-		{ files: ['Cargo.toml', 'main.rs'], name: 'Rust Project', tech: 'Rust' },
-		{ files: ['pom.xml'], name: 'Maven Project', tech: 'Java' },
-		{ files: ['build.gradle'], name: 'Gradle Project', tech: 'Java' },
-
-		// Config collections
-		{ files: ['Dockerfile', 'docker-compose.yml'], name: 'Docker Setup', tech: 'Docker' },
-		{ files: ['.github/workflows'], name: 'GitHub Actions', tech: 'CI/CD' },
-		{ files: ['terraform.tf'], name: 'Terraform Config', tech: 'Terraform' },
-		{ files: ['kubernetes.yml'], name: 'Kubernetes Config', tech: 'Kubernetes' },
-		{ files: ['ansible.yml'], name: 'Ansible Playbook', tech: 'Ansible' },
-
-		// Documentation
-		{ files: ['README.md', 'LICENSE'], name: 'Project Documentation', tech: 'Documentation' },
-	];
-
-	// Check each pattern
-	for (const pattern of patterns) {
-		const hasAllFiles = pattern.files.every((file) =>
-			filenames.some((f) => f.toLowerCase().includes(file.toLowerCase())),
-		);
-		if (hasAllFiles) {
-			result.projectName = pattern.name;
-			result.primaryTech = pattern.tech;
-			result.type = 'Project';
-			return result;
-		}
-	}
-
-	// Analyze by file extensions
-	const extensions = filenames.map((f) => f.split('.').pop()?.toLowerCase()).filter(Boolean);
-	const extCounts = {};
-	extensions.forEach((ext) => {
-		extCounts[ext] = (extCounts[ext] || 0) + 1;
-	});
-
-	// Find dominant technology
-	const techMap = {
-		js: 'JavaScript',
-		jsx: 'React',
-		ts: 'TypeScript',
-		tsx: 'React TypeScript',
-		py: 'Python',
-		rb: 'Ruby',
-		go: 'Go',
-		rs: 'Rust',
-		java: 'Java',
-		cpp: 'C++',
-		c: 'C',
-		cs: 'C#',
-		php: 'PHP',
-		swift: 'Swift',
-		kt: 'Kotlin',
-		r: 'R',
-		scala: 'Scala',
-		sh: 'Shell',
-		sql: 'SQL',
-		md: 'Markdown',
-		json: 'JSON',
-		yaml: 'YAML',
-		yml: 'YAML',
-		toml: 'TOML',
-		xml: 'XML',
-		html: 'HTML',
-		css: 'CSS',
-	};
-
-	const sortedExts = Object.entries(extCounts).sort((a, b) => b[1] - a[1]);
-	if (sortedExts.length > 0 && sortedExts[0][1] >= 2) {
-		const dominantExt = sortedExts[0][0];
-		if (techMap[dominantExt]) {
-			result.primaryTech = techMap[dominantExt];
-
-			// Determine type based on files
-			if (extensions.length > 5) {
-				result.type = 'Collection';
-			} else if (
-				extensions.includes('test') ||
-				filenames.some((f) => f.includes('test') || f.includes('spec'))
-			) {
-				result.type = 'Tests';
-			} else if (extensions.includes('md') || extensions.includes('txt')) {
-				result.type = 'Documentation';
-			} else {
-				result.type = 'Code';
-			}
-		}
-	}
-
-	return result;
 };
 
 /**
@@ -330,53 +203,4 @@ const formatFileSize = (bytes) => {
 	if (bytes < 1024) return bytes + ' bytes';
 	if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
 	return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-};
-
-/**
- * Determine if a gist likely contains code or documentation
- * @param {Object} files - Gist files object
- * @returns {string} - 'code', 'docs', 'config', or 'mixed'
- */
-export const determineGistType = (files) => {
-	if (!files) return 'unknown';
-
-	const filenames = Object.keys(files);
-	let codeCount = 0;
-	let docCount = 0;
-	let configCount = 0;
-
-	const codeExts = [
-		'js',
-		'jsx',
-		'ts',
-		'tsx',
-		'py',
-		'rb',
-		'go',
-		'rs',
-		'java',
-		'cpp',
-		'c',
-		'cs',
-		'php',
-		'swift',
-	];
-	const docExts = ['md', 'txt', 'rst', 'adoc'];
-	const configExts = ['json', 'yaml', 'yml', 'toml', 'ini', 'xml', 'env'];
-
-	filenames.forEach((filename) => {
-		const ext = filename.split('.').pop()?.toLowerCase();
-		if (codeExts.includes(ext)) codeCount++;
-		else if (docExts.includes(ext)) docCount++;
-		else if (configExts.includes(ext)) configCount++;
-	});
-
-	const total = codeCount + docCount + configCount;
-	if (total === 0) return 'unknown';
-
-	if (codeCount > docCount && codeCount > configCount) return 'code';
-	if (docCount > codeCount && docCount > configCount) return 'docs';
-	if (configCount > codeCount && configCount > docCount) return 'config';
-
-	return 'mixed';
 };

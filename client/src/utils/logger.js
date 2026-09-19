@@ -46,17 +46,6 @@ export const logError = (message, meta = {}) => {
 };
 
 /**
- * Log a debug message (development only)
- * @param {string} message - Log message
- * @param {Object} [meta={}] - Additional metadata
- */
-export const logDebug = (message, meta = {}) => {
-	if (process.env.NODE_ENV !== 'production') {
-		console.debug(message, meta); // eslint-disable-line no-console
-	}
-};
-
-/**
  * Track an error with category and context
  * Stores recent errors in localStorage for debugging in development
  * @param {Error} error - The error object
@@ -125,32 +114,3 @@ export const handleApiError = (error, setError, onError) => {
 
 	return errorMessage;
 };
-
-/**
- * Hook helper for error boundary integration
- * @param {Function} [onError] - Error callback
- * @returns {Object} Object with handleError function
- */
-export const useErrorBoundary = (onError) => {
-	return {
-		handleError: (error, info) => {
-			trackError(error, ErrorCategory.UI, info);
-			if (onError) {
-				onError(error, info);
-			}
-		},
-	};
-};
-
-const loggerModule = {
-	handleApiError,
-	logInfo,
-	logWarning,
-	logError,
-	logDebug,
-	trackError,
-	useErrorBoundary,
-	ErrorCategory,
-};
-
-export default loggerModule;

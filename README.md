@@ -108,99 +108,10 @@ bun run clean
 
 ## Architecture
 
-### Authentication
-- **OAuth 2.0** - GitHub authorization code flow
-- **Session management** - Secure HTTP-only cookies
-- **Token caching** - Per-user isolated cache with security boundaries
-- **Automatic token refresh** - Seamless user experience
+Bun workspaces: `client/` is a React + Vite app, `server/` is a minimal Express token proxy. All gist CRUD goes client -> GitHub API directly, with a per-user in-memory page cache in `client/src/services/api/gists.js`. OAuth is client-side PKCE; the server's only route is `POST /api/auth/token` (GitHub's token endpoint has no CORS) plus an SPA fallback to `server/build/`.
 
-### API Endpoints
+Feature components live in `client/src/components/`, shared state in `client/src/contexts/`, API clients in `client/src/services/`, and styles in `client/src/styles/`. See `AGENTS.md` for commands, conventions, and the WinMX theme notes.
 
-#### Authentication
-- `GET /api/auth/github/login` - Get OAuth authorization URL
-- `POST /api/auth/github` - Exchange authorization code for token
-- `GET /api/auth/status` - Check authentication status
-- `POST /api/auth/logout` - Clear session and cache
-
-#### Gist Management
-- `GET /api/gists` - Fetch authenticated user's gists
-- `GET /api/gists/:id` - Get specific gist
-- `POST /api/gists` - Create new gist
-- `PATCH /api/gists/:id` - Update existing gist
-- `DELETE /api/gists/:id` - Delete gist
-
-#### Community Features
-- `GET /api/shared-gists` - Browse all shared gists
-- `POST /api/shared-gists` - Share a gist
-- `GET /api/shared-gists/check/:gistId` - Check if gist is shared
-- `GET /api/shared-gists/user` - Get user's shared gists
-- `DELETE /api/shared-gists/:gistId` - Unshare a gist
-
-## Project Structure
-
-```
-gist-manager/
-├── client/                    # React frontend workspace
-│   ├── public/               # Static assets
-│   ├── src/
-│   │   ├── components/       # React components
-│   │   │   ├── common/      # Reusable UI components
-│   │   │   ├── markdown/    # Markdown rendering
-│   │   │   └── ...         # Feature components
-│   │   ├── contexts/        # React contexts
-│   │   │   ├── AuthContext.js
-│   │   │   ├── ThemeContext.js
-│   │   │   └── ToastContext.js
-│   │   ├── services/        # API service layer
-│   │   │   └── api/        # API endpoints
-│   │   ├── styles/          # CSS and theme files
-│   │   │   ├── index.css
-│   │   │   ├── modern-theme.css
-│   │   │   └── ...        # Component styles
-│   │   └── utils/          # Utility functions
-│   └── package.json
-├── server/                   # Express backend workspace
-│   ├── controllers/         # Request handlers
-│   ├── routes/             # API route definitions
-│   ├── server.js           # Main server file
-│   └── package.json
-├── data/                    # Persistent data storage
-│   └── sharedGists.json    # Community gists database
-└── package.json            # Root workspace configuration
-```
-
-## Key Technologies
-
-### Frontend
-- **React 18** - Modern React with hooks and Context API
-- **React Router** - Client-side routing
-- **Tailwind CSS** - Utility-first styling
-- **shadcn/ui** - High-quality React component library
-- **CSS Variables** - Dynamic theming system
-- **Lucide React** - Modern icon library
-- **Prism.js** - Syntax highlighting
-
-### Backend
-- **Express.js** - Web framework
-- **express-session** - Session management
-- **node-cache** - In-memory caching with TTL
-- **axios** - HTTP client
-- **helmet** - Security headers
-- **winston** - Structured logging
-- **cors** - Cross-origin support
-
-### Testing
-- **Vitest** - Fast, modern test runner
-- **React Testing Library** - Component testing
-- **jsdom** - DOM simulation
-
-## Security Features
-
-- **Per-user cache isolation** - Prevents cross-user data leakage
-- **Secure session management** - HTTP-only cookies with proper SameSite settings
-- **Token validation** - Ensures tokens are valid before API calls
-- **CORS configuration** - Restricts API access to authorized origins
-- **Environment variable protection** - Sensitive data kept in `.env` files
 
 ## Production on `nodev2:tgbot`
 
