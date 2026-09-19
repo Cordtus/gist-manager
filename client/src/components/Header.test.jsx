@@ -43,4 +43,18 @@ describe('Header theme selector', () => {
 		expect(localStorage.getItem('theme')).toBe('retro-dark');
 		expect(screen.getByRole('button', { name: /retro dark/i })).toBeInTheDocument();
 	});
+
+	it('lets users select and persist the WinMX theme', async () => {
+		const user = userEvent.setup();
+
+		renderHeader();
+
+		await user.click(screen.getByRole('button', { name: /dark/i }));
+		await user.click(screen.getByRole('button', { name: /winmx/i }));
+
+		expect(document.documentElement).toHaveClass('winmx');
+		expect(document.documentElement).toHaveClass('dark');
+		expect(document.documentElement).toHaveAttribute('data-theme', 'winmx');
+		expect(localStorage.getItem('theme')).toBe('winmx');
+	});
 });

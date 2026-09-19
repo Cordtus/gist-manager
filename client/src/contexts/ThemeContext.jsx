@@ -4,8 +4,8 @@ const ThemeContext = createContext();
 
 export const useTheme = () => useContext(ThemeContext);
 
-const THEMES = ['light', 'dark', 'terminal', 'retro', 'retro-dark'];
-const DARK_MODE_THEMES = new Set(['dark', 'retro-dark']);
+const THEMES = ['light', 'dark', 'terminal', 'retro', 'retro-dark', 'winmx'];
+const DARK_MODE_THEMES = new Set(['dark', 'retro-dark', 'winmx']);
 
 export const ThemeProvider = ({ children }) => {
 	const getInitialTheme = () => {
@@ -14,15 +14,7 @@ export const ThemeProvider = ({ children }) => {
 		}
 
 		const storedTheme = localStorage.getItem('theme');
-		if (storedTheme && THEMES.includes(storedTheme)) {
-			return storedTheme;
-		}
-
-		if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
-			return 'dark';
-		}
-
-		return 'dark';
+		return storedTheme && THEMES.includes(storedTheme) ? storedTheme : 'dark';
 	};
 
 	const [theme, setThemeState] = useState(getInitialTheme);
@@ -53,30 +45,9 @@ export const ThemeProvider = ({ children }) => {
 		}
 	};
 
-	const cycleTheme = () => {
-		const currentIndex = THEMES.indexOf(theme);
-		const nextIndex = (currentIndex + 1) % THEMES.length;
-		setThemeState(THEMES[nextIndex]);
-	};
-
-	const toggleTheme = () => {
-		// Simple toggle between light and dark for compatibility
-		setThemeState((prev) => (prev === 'light' ? 'dark' : 'light'));
-	};
-
 	return (
-		<ThemeContext.Provider
-			value={{
-				theme,
-				themes: THEMES,
-				setTheme,
-				cycleTheme,
-				toggleTheme,
-			}}
-		>
+		<ThemeContext.Provider value={{ theme, themes: THEMES, setTheme }}>
 			{children}
 		</ThemeContext.Provider>
 	);
 };
-
-export default ThemeContext;

@@ -1,4 +1,4 @@
-import { ChevronDown, Github, Moon, Sparkles, Sun, Terminal } from 'lucide-react';
+import { ChevronDown, Github, Moon, Radio, Sparkles, Sun, Terminal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,6 +12,7 @@ const themeIcons = {
 	terminal: Terminal,
 	retro: Sparkles,
 	'retro-dark': Sparkles,
+	winmx: Radio,
 };
 
 const themeLabels = {
@@ -20,6 +21,7 @@ const themeLabels = {
 	terminal: 'Terminal',
 	retro: 'Retro',
 	'retro-dark': 'Retro Dark',
+	winmx: 'WinMX',
 };
 
 const Header = () => {

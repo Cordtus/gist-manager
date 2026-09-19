@@ -123,6 +123,30 @@
 		--ring: 185 100% 54%;
 		--radius: 0rem;
 	}
+
+	/* WinMX theme - black chrome with neon green and cyan */
+	.winmx {
+		--background: 0 0% 0%;
+		--foreground: 120 100% 80%;
+		--card: 0 0% 5%;
+		--card-foreground: 120 100% 80%;
+		--popover: 0 0% 5%;
+		--popover-foreground: 120 100% 80%;
+		--primary: 120 100% 50%;
+		--primary-foreground: 0 0% 0%;
+		--secondary: 0 0% 25%;
+		--secondary-foreground: 0 0% 100%;
+		--muted: 0 0% 15%;
+		--muted-foreground: 0 0% 50%;
+		--accent: 180 100% 25%;
+		--accent-foreground: 180 100% 80%;
+		--destructive: 0 100% 50%;
+		--destructive-foreground: 0 0% 100%;
+		--border: 0 0% 50%;
+		--input: 0 0% 10%;
+		--ring: 180 100% 50%;
+		--radius: 0rem;
+	}
 }
 
 @layer base {
@@ -173,6 +197,16 @@
 	border-radius: 0;
 }
 
+/* WinMX theme scrollbar */
+.winmx ::-webkit-scrollbar-thumb {
+	background-color: hsl(120 100% 50% / 0.35);
+	border-radius: 0;
+}
+
+.winmx ::-webkit-scrollbar-thumb:hover {
+	background-color: hsl(120 100% 50% / 0.6);
+}
+
 html {
 	scroll-behavior: smooth;
 }
@@ -220,6 +254,10 @@ html {
 .retro-dark .shadow-sm,
 .retro-dark .shadow,
 .retro-dark .shadow-md,
-.retro-dark .shadow-lg {
+.retro-dark .shadow-lg,
+.winmx .shadow-sm,
+.winmx .shadow,
+.winmx .shadow-md,
+.winmx .shadow-lg {
 	box-shadow: none;
 }
