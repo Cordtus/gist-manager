@@ -14,7 +14,7 @@ export const useToast = () => {
 export const ToastProvider = ({ children }) => {
 	const [toasts, setToasts] = useState([]);
 
-	const showToast = useCallback((message, type = 'info', duration = 5000) => {
+	const showToast = useCallback((message, type, duration = 5000) => {
 		const id = Date.now();
 		setToasts((prev) => [...prev, { id, message, type, duration }]);
 	}, []);
@@ -37,22 +37,8 @@ export const ToastProvider = ({ children }) => {
 		[showToast],
 	);
 
-	const warning = useCallback(
-		(message, duration) => {
-			showToast(message, 'warning', duration);
-		},
-		[showToast],
-	);
-
-	const info = useCallback(
-		(message, duration) => {
-			showToast(message, 'info', duration);
-		},
-		[showToast],
-	);
-
 	return (
-		<ToastContext.Provider value={{ showToast, success, error, warning, info }}>
+		<ToastContext.Provider value={{ success, error }}>
 			{children}
 			<div className="fixed top-0 right-0 z-50 p-4 space-y-4 pointer-events-none">
 				{toasts.map((toast) => (

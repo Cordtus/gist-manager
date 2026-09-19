@@ -15,12 +15,11 @@ import { getUserGists } from '../services/api/github';
 import { generateGistPreview } from '../utils/describeGist';
 import { logError } from '../utils/logger';
 import Spinner from './common/Spinner';
-import { Badge } from './ui/badge';
+import GistCard from './GistCard';
 import { Button } from './ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { ErrorState } from './ui/error-state';
 import { Input } from './ui/input';
-import { Separator } from './ui/separator';
 
 /**
  * Parse a gist ID from various input formats:
@@ -58,19 +57,6 @@ const parseGistId = (input) => {
 	return null;
 };
 
-/**
- * Determine if input looks like a gist reference (URL or ID) vs a username.
- * @param {string} input
- * @returns {'gist'|'user'}
- */
-const detectInputType = (input) => {
-	const trimmed = input.trim();
-	if (!trimmed) return 'user';
-	if (trimmed.includes('gist.github.com')) return 'gist';
-	if (/^[a-f0-9]{20,32}$/i.test(trimmed)) return 'gist';
-	return 'user';
-};
-
 const Explore = () => {
 	const [query, setQuery] = useState('');
 	const [gists, setGists] = useState([]);
@@ -98,16 +84,14 @@ const Explore = () => {
 			setResultLabel('');
 
 			try {
-				const inputType = detectInputType(trimmed);
-
-				if (inputType === 'gist') {
-					const gistId = parseGistId(trimmed);
-					if (!gistId) {
-						setError('Could not parse a gist ID from that input. Check the URL or ID format.');
-						return;
-					}
-					// Navigate directly to the viewer
+				const gistId = parseGistId(trimmed);
+				if (gistId) {
 					navigate(`/view/${gistId}`);
+					return;
+				}
+
+				if (trimmed.includes('gist.github.com')) {
+					setError('Could not parse a gist ID from that input. Check the URL or ID format.');
 					return;
 				}
 
@@ -215,51 +199,13 @@ const Explore = () => {
 							{gists.map((gist) => {
 								const preview = generateGistPreview(gist, 120);
 								return (
-									<Card key={gist.id} className="flex flex-col hover:shadow-lg transition-shadow">
-										<CardHeader className="pb-3">
-											<div className="flex items-start justify-between gap-2 mb-2">
-												<Badge variant="outline">
-													{preview.fileCount} {preview.fileCount === 1 ? 'file' : 'files'}
-												</Badge>
-												<Badge variant="secondary">{preview.primaryLanguage}</Badge>
-											</div>
-											<CardTitle
-												className="text-base hover:text-primary transition-colors line-clamp-1 cursor-pointer"
-												onClick={() => navigate(`/view/${gist.id}`)}
-											>
-												{gist.description || preview.generatedTitle || 'Untitled Gist'}
-											</CardTitle>
-										</CardHeader>
-
-										<CardContent
-											className="flex-1 pb-3 cursor-pointer"
-											onClick={() => navigate(`/view/${gist.id}`)}
-										>
-											<p className="text-sm text-muted-foreground line-clamp-3">
-												{preview.preview}
-											</p>
-											<div className="flex flex-wrap gap-1 mt-3">
-												{preview.fileTypes.slice(0, 3).map((fileType, index) => {
-													const filename = Object.keys(gist.files)[index];
-													return (
-														<Badge key={filename} variant="outline" className="text-xs">
-															{fileType.icon} {filename.split('.').pop()}
-														</Badge>
-													);
-												})}
-												{preview.fileCount > 3 && (
-													<Badge variant="outline" className="text-xs">
-														+{preview.fileCount - 3}
-													</Badge>
-												)}
-											</div>
-										</CardContent>
-
-										<Separator />
-
-										<CardFooter className="pt-3 flex items-center justify-between text-xs text-muted-foreground">
-											<span>Updated {new Date(gist.updated_at).toLocaleDateString()}</span>
-											<div className="flex gap-2">
+									<GistCard
+										key={gist.id}
+										gist={gist}
+										preview={preview}
+										to={`/view/${gist.id}`}
+										actions={
+											<>
 												<Button
 													variant="ghost"
 													size="sm"
@@ -281,9 +227,9 @@ const Explore = () => {
 														<GitFork className="h-3 w-3" />
 													</Button>
 												)}
-											</div>
-										</CardFooter>
-									</Card>
+											</>
+										}
+									/>
 								);
 							})}
 						</div>

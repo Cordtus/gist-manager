@@ -13,20 +13,11 @@ import { Button } from './button';
  * @param {string} props.message - Error message to display
  * @param {string} [props.title] - Optional error title
  * @param {'inline'|'card'|'banner'|'fullpage'} [props.variant='card'] - Display variant
- * @param {boolean} [props.showIcon=true] - Whether to show error icon
  * @param {() => void} [props.onRetry] - Retry callback
  * @param {() => void} [props.onDismiss] - Dismiss callback
  * @param {string} [props.className] - Additional CSS classes
  */
-const ErrorState = ({
-	message,
-	title,
-	variant = 'card',
-	showIcon = true,
-	onRetry,
-	onDismiss,
-	className,
-}) => {
+const ErrorState = ({ message, title, variant = 'card', onRetry, onDismiss, className }) => {
 	const baseClasses = 'bg-destructive/10 border-destructive/20 text-destructive';
 
 	const variantClasses = {
@@ -52,7 +43,7 @@ const ErrorState = ({
 			aria-live="polite"
 		>
 			<div className={cn(contentLayout[variant], variant === 'banner' && 'max-w-4xl mx-auto')}>
-				{showIcon && <XCircle className={cn(iconSize, 'flex-shrink-0')} aria-hidden="true" />}
+				<XCircle className={cn(iconSize, 'flex-shrink-0')} aria-hidden="true" />
 
 				<div
 					className={cn(variant === 'fullpage' && 'space-y-2', variant === 'inline' && 'flex-1')}

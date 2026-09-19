@@ -10,7 +10,7 @@ import { generateContentPreview, generateSmartTitle } from './gistTitleGenerator
  * @param {number} maxWords - Maximum number of words to include
  * @returns {string} - The inferred description
  */
-export const inferDescriptionFromMarkdown = (content = '', maxWords = 12) => {
+const inferDescriptionFromMarkdown = (content = '', maxWords = 12) => {
 	if (!content || typeof content !== 'string') return '';
 
 	// Remove markdown syntax
@@ -124,7 +124,6 @@ export const generateGistPreview = (gist, maxLength = 100) => {
 		fileCount,
 		primaryLanguage,
 		fileTypes,
-		hasDescription: !!gist.description?.trim(),
 		generatedTitle,
 	};
 };
@@ -134,101 +133,65 @@ export const generateGistPreview = (gist, maxLength = 100) => {
  * @param {string} extension - File extension
  * @returns {Object} - File type information
  */
-export const getFileTypeInfo = (extension) => {
+const getFileTypeInfo = (extension) => {
 	const typeMap = {
 		// Web languages
-		js: { language: 'JavaScript', icon: '🟨', category: 'code' },
-		jsx: { language: 'React', icon: '⚛️', category: 'code' },
-		ts: { language: 'TypeScript', icon: '🔷', category: 'code' },
-		tsx: { language: 'React TS', icon: '⚛️', category: 'code' },
-		html: { language: 'HTML', icon: '🌐', category: 'web' },
-		css: { language: 'CSS', icon: '🎨', category: 'style' },
-		scss: { language: 'SCSS', icon: '🎨', category: 'style' },
-		sass: { language: 'Sass', icon: '🎨', category: 'style' },
-		less: { language: 'Less', icon: '🎨', category: 'style' },
+		js: { language: 'JavaScript', icon: '🟨' },
+		jsx: { language: 'React', icon: '⚛️' },
+		ts: { language: 'TypeScript', icon: '🔷' },
+		tsx: { language: 'React TS', icon: '⚛️' },
+		html: { language: 'HTML', icon: '🌐' },
+		css: { language: 'CSS', icon: '🎨' },
+		scss: { language: 'SCSS', icon: '🎨' },
+		sass: { language: 'Sass', icon: '🎨' },
+		less: { language: 'Less', icon: '🎨' },
 
 		// Programming languages
-		py: { language: 'Python', icon: '🐍', category: 'code' },
-		java: { language: 'Java', icon: '☕', category: 'code' },
-		cpp: { language: 'C++', icon: '⚡', category: 'code' },
-		c: { language: 'C', icon: '⚡', category: 'code' },
-		cs: { language: 'C#', icon: '🔹', category: 'code' },
-		go: { language: 'Go', icon: '🐹', category: 'code' },
-		rs: { language: 'Rust', icon: '🦀', category: 'code' },
-		rb: { language: 'Ruby', icon: '💎', category: 'code' },
-		php: { language: 'PHP', icon: '🐘', category: 'code' },
-		swift: { language: 'Swift', icon: '🍎', category: 'code' },
-		kt: { language: 'Kotlin', icon: '🔷', category: 'code' },
+		py: { language: 'Python', icon: '🐍' },
+		java: { language: 'Java', icon: '☕' },
+		cpp: { language: 'C++', icon: '⚡' },
+		c: { language: 'C', icon: '⚡' },
+		cs: { language: 'C#', icon: '🔹' },
+		go: { language: 'Go', icon: '🐹' },
+		rs: { language: 'Rust', icon: '🦀' },
+		rb: { language: 'Ruby', icon: '💎' },
+		php: { language: 'PHP', icon: '🐘' },
+		swift: { language: 'Swift', icon: '🍎' },
+		kt: { language: 'Kotlin', icon: '🔷' },
 
 		// Data & config
-		json: { language: 'JSON', icon: '📋', category: 'data' },
-		xml: { language: 'XML', icon: '📄', category: 'data' },
-		yaml: { language: 'YAML', icon: '⚙️', category: 'config' },
-		yml: { language: 'YAML', icon: '⚙️', category: 'config' },
-		toml: { language: 'TOML', icon: '⚙️', category: 'config' },
-		ini: { language: 'INI', icon: '⚙️', category: 'config' },
-		env: { language: 'Environment', icon: '🔐', category: 'config' },
+		json: { language: 'JSON', icon: '📋' },
+		xml: { language: 'XML', icon: '📄' },
+		yaml: { language: 'YAML', icon: '⚙️' },
+		yml: { language: 'YAML', icon: '⚙️' },
+		toml: { language: 'TOML', icon: '⚙️' },
+		ini: { language: 'INI', icon: '⚙️' },
+		env: { language: 'Environment', icon: '🔐' },
 
 		// Documentation
-		md: { language: 'Markdown', icon: '📝', category: 'docs' },
-		markdown: { language: 'Markdown', icon: '📝', category: 'docs' },
-		mdx: { language: 'MDX', icon: '📝', category: 'docs' },
-		txt: { language: 'Text', icon: '📄', category: 'docs' },
+		md: { language: 'Markdown', icon: '📝' },
+		markdown: { language: 'Markdown', icon: '📝' },
+		mdx: { language: 'MDX', icon: '📝' },
+		txt: { language: 'Text', icon: '📄' },
 
 		// Shell & scripts
-		sh: { language: 'Shell', icon: '🐚', category: 'script' },
-		bash: { language: 'Bash', icon: '🐚', category: 'script' },
-		zsh: { language: 'Zsh', icon: '🐚', category: 'script' },
-		ps1: { language: 'PowerShell', icon: '💙', category: 'script' },
+		sh: { language: 'Shell', icon: '🐚' },
+		bash: { language: 'Bash', icon: '🐚' },
+		zsh: { language: 'Zsh', icon: '🐚' },
+		ps1: { language: 'PowerShell', icon: '💙' },
 
 		// Database
-		sql: { language: 'SQL', icon: '🗄️', category: 'database' },
+		sql: { language: 'SQL', icon: '🗄️' },
 
 		// Other
-		dockerfile: { language: 'Docker', icon: '🐳', category: 'config' },
-		gitignore: { language: 'Git', icon: '📋', category: 'config' },
+		dockerfile: { language: 'Docker', icon: '🐳' },
+		gitignore: { language: 'Git', icon: '📋' },
 	};
 
 	return (
 		typeMap[extension] || {
 			language: extension.toUpperCase(),
 			icon: '📄',
-			category: 'unknown',
 		}
 	);
-};
-
-/**
- * Generate quick actions based on gist content
- * @param {Object} gist - The gist object
- * @returns {Array} - Array of quick action objects
- */
-export const getQuickActions = (gist) => {
-	const actions = [];
-	const preview = generateGistPreview(gist);
-
-	// Based on primary language, suggest relevant actions
-	switch (preview.primaryLanguage) {
-		case 'JavaScript':
-		case 'TypeScript':
-			actions.push({ label: 'Run in CodePen', icon: '▶️', action: 'codepen' });
-			break;
-		case 'Python':
-			actions.push({ label: 'Run in Repl', icon: '▶️', action: 'repl' });
-			break;
-		case 'Markdown':
-			actions.push({ label: 'Convert to HTML', icon: '🔄', action: 'convert' });
-			break;
-		default:
-			// No language-specific actions
-			break;
-	}
-
-	// Always available actions
-	actions.push(
-		{ label: 'Copy Link', icon: '🔗', action: 'copy-link' },
-		{ label: 'Download ZIP', icon: '💾', action: 'download' },
-	);
-
-	return actions;
 };

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { FiAlertCircle, FiCheckCircle, FiInfo, FiX, FiXCircle } from 'react-icons/fi';
+import { FiCheckCircle, FiX, FiXCircle } from 'react-icons/fi';
 
-const Toast = ({ message, type = 'info', onClose, duration = 5000 }) => {
+const Toast = ({ message, type = 'success', onClose, duration = 5000 }) => {
 	const [isVisible, setIsVisible] = useState(true);
 	const [isExiting, setIsExiting] = useState(false);
 
@@ -32,17 +32,9 @@ const Toast = ({ message, type = 'info', onClose, duration = 5000 }) => {
 			className: 'alert danger',
 			icon: <FiXCircle className="w-5 h-5" />,
 		},
-		warning: {
-			className: 'alert warning',
-			icon: <FiAlertCircle className="w-5 h-5" />,
-		},
-		info: {
-			className: 'alert info',
-			icon: <FiInfo className="w-5 h-5" />,
-		},
 	};
 
-	const style = types[type] || types.info;
+	const style = types[type] || types.success;
 
 	return (
 		<div

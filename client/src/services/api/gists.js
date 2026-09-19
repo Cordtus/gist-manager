@@ -6,13 +6,6 @@
  */
 
 import { handleApiError, logError, logInfo } from '../../utils/logger';
-import {
-	clearAllGistPageMetadata,
-	clearGistPageMetadata,
-	clearUserGistPageMetadata,
-	loadUserGistPageMetadata,
-	saveGistPageMetadata,
-} from '../gistMetadataStore';
 import { githubApi } from './github';
 
 /**
@@ -20,21 +13,13 @@ import { githubApi } from './github';
  * Tokens authenticate requests but are never used as cache keys.
  */
 const cacheByUser = new Map();
-const hydratedUsers = new Set();
-const hydrationByUser = new Map();
 const GITHUB_ACCEPT_HEADER = 'application/vnd.github+json';
 
 const hasValue = (value) => value !== null && value !== undefined && value !== '';
 
 const getPageCacheKey = (page, perPage) => `${page}:${perPage}`;
 
-const getResponseHeader = (headers, name) => {
-	if (!headers) return null;
-	if (typeof headers.get === 'function') return headers.get(name) || null;
-
-	const matchingKey = Object.keys(headers).find((key) => key.toLowerCase() === name.toLowerCase());
-	return matchingKey ? headers[matchingKey] : null;
-};
+const getResponseHeader = (headers, name) => headers?.get?.(name) ?? null;
 
 const getNextPage = (linkHeader) => {
 	if (!linkHeader) return null;
@@ -72,100 +57,12 @@ const getUserPages = (userId) => {
 	return pages;
 };
 
-const hydrateUserPages = (userId) => {
-	if (hydratedUsers.has(userId)) return null;
-
-	const existingHydration = hydrationByUser.get(userId);
-	if (existingHydration) return existingHydration;
-
-	hydratedUsers.add(userId);
-	const hydration = loadUserGistPageMetadata(userId)
-		.then((records) => {
-			const pages = getUserPages(userId);
-			records.forEach((record) => {
-				const cacheKey = getPageCacheKey(record.page, record.perPage);
-				const entry = pages.get(cacheKey);
-				const value = {
-					gists: record.gists,
-					page: record.page,
-					perPage: record.perPage,
-					hasNextPage: record.hasNextPage,
-					nextPage: record.nextPage,
-					eTag: record.eTag,
-				};
-
-				if (entry) {
-					if (!entry.value) {
-						entry.value = value;
-						entry.eTag = record.eTag;
-					}
-					return;
-				}
-
-				pages.set(cacheKey, {
-					page: record.page,
-					perPage: record.perPage,
-					value,
-					eTag: record.eTag,
-					pending: null,
-				});
-			});
-		})
-		.catch((error) => {
-			logError('Unable to restore gist metadata', { error: error.message, userId });
-		});
-
-	hydrationByUser.set(userId, hydration);
-	hydration.then(
-		() => hydrationByUser.delete(userId),
-		() => hydrationByUser.delete(userId),
-	);
-	return hydration;
-};
-
-const invalidateGistsForUser = (userId) => {
-	if (hasValue(userId)) {
-		invalidateUserGistsCache(userId);
-		return;
-	}
-
-	clearGistsCache();
-};
-
-/**
- * Invalidate a cached page for one user. Without a per-page count, all cached
- * variants of that page are removed.
- */
-export const invalidateGistPageCache = (userId, page, perPage = null) => {
-	if (!hasValue(userId)) return;
-
-	const pages = cacheByUser.get(userId);
-	if (!pages) return;
-
-	if (perPage === null || perPage === undefined) {
-		for (const [key, entry] of pages) {
-			if (entry.page === page) pages.delete(key);
-		}
-	} else {
-		pages.delete(getPageCacheKey(page, perPage));
-	}
-
-	if (pages.size === 0) cacheByUser.delete(userId);
-	void clearGistPageMetadata(userId, page, perPage).catch((error) =>
-		logError('Unable to clear cached gist metadata page', { error: error.message, page, userId }),
-	);
-	logInfo('User gist page cache invalidated', { page, userId });
-};
-
 /**
  * Invalidate every cached page for one user after that user's gist mutation.
  */
 export const invalidateUserGistsCache = (userId) => {
 	if (!hasValue(userId)) return;
 	cacheByUser.delete(userId);
-	void clearUserGistPageMetadata(userId).catch((error) =>
-		logError('Unable to clear cached gist metadata', { error: error.message, userId }),
-	);
 	logInfo('User gist cache invalidated', { userId });
 };
 
@@ -174,26 +71,13 @@ export const invalidateUserGistsCache = (userId) => {
  */
 export const clearGistsCache = () => {
 	cacheByUser.clear();
-	void clearAllGistPageMetadata().catch((error) =>
-		logError('Unable to clear cached gist metadata', { error: error.message }),
-	);
 	logInfo('All gist caches cleared');
 };
 
-/**
- * Legacy invalidation signature retained for existing callers. The token is
- * intentionally ignored: it must never become cache identity.
- */
-export const invalidateGistsCache = (_token = null, userId = null) => {
-	invalidateGistsForUser(userId);
-};
-
-export const clearUserCache = clearGistsCache;
-
 // Listen for logout events to clear cache
 if (typeof window !== 'undefined') {
-	window.addEventListener('auth:logout', clearUserCache);
-	window.addEventListener('auth:token_invalid', clearUserCache);
+	window.addEventListener('auth:logout', clearGistsCache);
+	window.addEventListener('auth:token_invalid', clearGistsCache);
 }
 
 /**
@@ -226,7 +110,6 @@ export const getGistPage = ({
 
 	if (entry.pending) return entry.pending;
 
-	const hydration = hydrateUserPages(userId);
 	const fetchPage = () => {
 		if (!force && entry.value) return Promise.resolve(entry.value);
 
@@ -269,9 +152,6 @@ export const getGistPage = ({
 
 				entry.eTag = value.eTag;
 				entry.value = value;
-				void saveGistPageMetadata({ userId, ...value }).catch((error) =>
-					logError('Unable to save gist metadata', { error: error.message, page, userId }),
-				);
 				return value;
 			})
 			.catch((error) => {
@@ -280,35 +160,11 @@ export const getGistPage = ({
 			});
 	};
 
-	const request = (hydration ? hydration.then(fetchPage) : fetchPage()).finally(() => {
+	const request = fetchPage().finally(() => {
 		entry.pending = null;
 	});
 	entry.pending = request;
 	return request;
-};
-
-/**
- * Legacy all-gists helper. It aggregates paged reads but deliberately owns no
- * separate cache, so mutations and revalidation have one source of truth.
- */
-export const getGists = async (token, setError, userId = null) => {
-	try {
-		const allGists = [];
-		let page = 1;
-
-		while (page !== null) {
-			const pageResult = await getGistPage({ token, userId, page, perPage: 100 });
-			allGists.push(...pageResult.gists);
-			page = pageResult.hasNextPage ? pageResult.nextPage : null;
-		}
-
-		logInfo(`Successfully fetched ${allGists.length} gists`);
-		return allGists;
-	} catch (error) {
-		logError('Error fetching gists', { error: error.message });
-		handleApiError(error, setError);
-		throw error;
-	}
 };
 
 /**
@@ -390,7 +246,7 @@ export const forkGist = async (gistId, token, setError, userId = null) => {
 		logInfo(`Successfully forked gist: ${gistId} -> ${response.data.id}`);
 
 		// Invalidate user-specific cache since they now have a new gist
-		invalidateGistsCache(token, userId);
+		invalidateUserGistsCache(userId);
 
 		return response.data;
 	} catch (error) {
@@ -425,7 +281,7 @@ export const createGist = async (gistData, token, setError, userId = null) => {
 		logInfo(`Successfully created gist: ${response.data.id}`);
 
 		// Invalidate user-specific cache
-		invalidateGistsCache(token, userId);
+		invalidateUserGistsCache(userId);
 
 		return response.data;
 	} catch (error) {
@@ -461,7 +317,7 @@ export const updateGist = async (gistId, gistData, token, setError, userId = nul
 		logInfo(`Successfully updated gist: ${gistId}`);
 
 		// Invalidate user-specific cache
-		invalidateGistsCache(token, userId);
+		invalidateUserGistsCache(userId);
 
 		return response.data;
 	} catch (error) {
@@ -496,140 +352,11 @@ export const deleteGist = async (gistId, token, setError, userId = null) => {
 		logInfo(`Successfully deleted gist: ${gistId}`);
 
 		// Invalidate user-specific cache
-		invalidateGistsCache(token, userId);
+		invalidateUserGistsCache(userId);
 
 		return true;
 	} catch (error) {
 		logError(`Error deleting gist: ${gistId}`, { error: error.message });
-		handleApiError(error, setError);
-		throw error;
-	}
-};
-
-/**
- * Search through user's gists (client-side)
- * SECURITY: Requires authentication
- *
- * @param {string} query - The search query
- * @param {string} token - GitHub access token
- * @param {Function} [setError] - Optional state setter for error handling
- * @param {string} [userId] - Optional user ID for cache key
- * @returns {Promise<Array>}
- */
-export const searchGists = async (query, token, setError, userId = null) => {
-	if (!token) {
-		const error = new Error('Authentication required');
-		if (setError) setError('Authentication required');
-		throw error;
-	}
-
-	try {
-		logInfo(`Searching gists with query: ${query}`);
-		const allGists = await getGists(token, setError, userId);
-		const normalizedQuery = query.toLowerCase();
-		const results = allGists.filter((gist) => {
-			if (gist.description?.toLowerCase().includes(normalizedQuery)) return true;
-			if (Object.keys(gist.files).some((fn) => fn.toLowerCase().includes(normalizedQuery)))
-				return true;
-			return Object.values(gist.files).some((file) =>
-				file.content?.toLowerCase().includes(normalizedQuery),
-			);
-		});
-		logInfo(`Search returned ${results.length} results`);
-		return results;
-	} catch (error) {
-		logError('Error searching gists', { error: error.message, query });
-		handleApiError(error, setError);
-		throw error;
-	}
-};
-
-/**
- * Star a gist
- * SECURITY: Requires authentication
- *
- * @param {string} gistId - Gist ID
- * @param {string} token - GitHub access token
- * @param {Function} [setError] - Error handler
- * @returns {Promise<boolean>}
- */
-export const starGist = async (gistId, token, setError) => {
-	if (!token) {
-		const error = new Error('Authentication required');
-		if (setError) setError('Authentication required');
-		throw error;
-	}
-
-	try {
-		logInfo(`Starring gist: ${gistId}`);
-		const headers = { Authorization: `Bearer ${token}` };
-		await githubApi.put(`/gists/${gistId}/star`, {}, { headers });
-		logInfo(`Successfully starred gist: ${gistId}`);
-		return true;
-	} catch (error) {
-		logError(`Error starring gist: ${gistId}`, { error: error.message });
-		handleApiError(error, setError);
-		throw error;
-	}
-};
-
-/**
- * Unstar a gist
- * SECURITY: Requires authentication
- *
- * @param {string} gistId - Gist ID
- * @param {string} token - GitHub access token
- * @param {Function} [setError] - Error handler
- * @returns {Promise<boolean>}
- */
-export const unstarGist = async (gistId, token, setError) => {
-	if (!token) {
-		const error = new Error('Authentication required');
-		if (setError) setError('Authentication required');
-		throw error;
-	}
-
-	try {
-		logInfo(`Unstarring gist: ${gistId}`);
-		const headers = { Authorization: `Bearer ${token}` };
-		await githubApi.delete(`/gists/${gistId}/star`, { headers });
-		logInfo(`Successfully unstarred gist: ${gistId}`);
-		return true;
-	} catch (error) {
-		logError(`Error unstarring gist: ${gistId}`, { error: error.message });
-		handleApiError(error, setError);
-		throw error;
-	}
-};
-
-/**
- * Check if a gist is starred
- * SECURITY: Requires authentication
- *
- * @param {string} gistId - Gist ID
- * @param {string} token - GitHub access token
- * @param {Function} [setError] - Error handler
- * @returns {Promise<boolean>}
- */
-export const isGistStarred = async (gistId, token, setError) => {
-	if (!token) {
-		const error = new Error('Authentication required');
-		if (setError) setError('Authentication required');
-		throw error;
-	}
-
-	try {
-		logInfo(`Checking if gist is starred: ${gistId}`);
-		const headers = { Authorization: `Bearer ${token}` };
-		await githubApi.get(`/gists/${gistId}/star`, { headers });
-		logInfo(`Gist is starred: ${gistId}`);
-		return true;
-	} catch (error) {
-		if (error.response?.status === 404) {
-			logInfo(`Gist is not starred: ${gistId}`);
-			return false;
-		}
-		logError(`Error checking if gist is starred: ${gistId}`, { error: error.message });
 		handleApiError(error, setError);
 		throw error;
 	}

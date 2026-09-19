@@ -4,7 +4,6 @@ import { CheckCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import showdown from 'showdown';
 import TurndownService from 'turndown';
-import { useAuth } from '../contexts/AuthContext';
 import { ErrorState } from './ui/error-state';
 
 const turndownService = new TurndownService({
@@ -27,6 +26,13 @@ const FORMATS = {
 	json: { name: 'JSON', extensions: ['.json'], mimeType: 'application/json' },
 };
 
+const pickAlternativeFormat = (format) => {
+	if (format === 'markdown') return 'html';
+	if (format === 'html') return 'markdown';
+	if (format === 'json') return 'plaintext';
+	return 'markdown';
+};
+
 // Infer file type from input
 const inferType = (text) => {
 	try {
@@ -40,14 +46,12 @@ const inferType = (text) => {
 };
 
 const FileConverter = () => {
-	const { user } = useAuth();
 	const [inputContent, setInputContent] = useState('');
 	const [outputContent, setOutputContent] = useState('');
 	const [inputFormat, setInputFormat] = useState('markdown');
 	const [outputFormat, setOutputFormat] = useState('html');
 	const [inputFileName, setInputFileName] = useState('');
 	const [outputFileName, setOutputFileName] = useState('');
-	const [isConverting, setIsConverting] = useState(false);
 	const [history, setHistory] = useState([]);
 	const [successMessage, setSuccessMessage] = useState('');
 	const [error, setError] = useState('');
@@ -71,15 +75,7 @@ const FileConverter = () => {
 			setInputFormat(detectedFormat);
 			// If output format is same as input, change it
 			if (outputFormat === detectedFormat) {
-				const alternativeFormat =
-					detectedFormat === 'markdown'
-						? 'html'
-						: detectedFormat === 'html'
-							? 'markdown'
-							: detectedFormat === 'json'
-								? 'plaintext'
-								: 'markdown';
-				setOutputFormat(alternativeFormat);
+				setOutputFormat(pickAlternativeFormat(detectedFormat));
 			}
 		}
 	};
@@ -97,15 +93,7 @@ const FileConverter = () => {
 			setInputFormat(detectedFormat);
 			// If output format is same as input, change it
 			if (outputFormat === detectedFormat) {
-				const alternativeFormat =
-					detectedFormat === 'markdown'
-						? 'html'
-						: detectedFormat === 'html'
-							? 'markdown'
-							: detectedFormat === 'json'
-								? 'plaintext'
-								: 'markdown';
-				setOutputFormat(alternativeFormat);
+				setOutputFormat(pickAlternativeFormat(detectedFormat));
 			}
 		};
 		reader.readAsText(file);
@@ -123,16 +111,11 @@ const FileConverter = () => {
 		}
 		setError('');
 		setSuccessMessage('');
-		setIsConverting(true);
 
 		let result = '';
 		try {
-			// JSON → JSON (pretty-print)
-			if (inputFormat === 'json' && outputFormat === 'json') {
-				result = JSON.stringify(JSON.parse(inputContent), null, 2);
-			}
 			// Markdown → HTML
-			else if (inputFormat === 'markdown' && outputFormat === 'html') {
+			if (inputFormat === 'markdown' && outputFormat === 'html') {
 				result = showdownConverter.makeHtml(inputContent);
 			}
 			// HTML → Markdown
@@ -222,8 +205,6 @@ const FileConverter = () => {
 			setSuccessMessage('Conversion completed successfully!');
 		} catch (err) {
 			setError(`Conversion failed: ${err.message}`);
-		} finally {
-			setIsConverting(false);
 		}
 	};
 
@@ -243,16 +224,6 @@ const FileConverter = () => {
 		document.body.removeChild(a);
 		URL.revokeObjectURL(url);
 		setSuccessMessage('File downloaded successfully!');
-	};
-
-	// Save as gist
-	const handleSaveAsGist = () => {
-		if (!user || !outputContent) {
-			setError('No content to save or user not logged in');
-			return;
-		}
-		// stub: integrate your createGist call here
-		setSuccessMessage('Ready to save as Gist (stubbed).');
 	};
 
 	return (
@@ -293,15 +264,7 @@ const FileConverter = () => {
 									setHasManualFormat(true);
 									// If output format is same as new input format, change output
 									if (outputFormat === newFormat) {
-										const alternativeFormat =
-											newFormat === 'markdown'
-												? 'html'
-												: newFormat === 'html'
-													? 'markdown'
-													: newFormat === 'json'
-														? 'plaintext'
-														: 'markdown';
-										setOutputFormat(alternativeFormat);
+										setOutputFormat(pickAlternativeFormat(newFormat));
 									}
 								}}
 								className="w-full p-2 border border-default rounded bg-background text-primary"
@@ -395,10 +358,10 @@ const FileConverter = () => {
 				<button
 					type="button"
 					onClick={handleConvert}
-					disabled={isConverting || !inputContent.trim()}
-					className={`button primary ${isConverting || !inputContent.trim() ? 'opacity-50 cursor-not-allowed' : ''}`}
+					disabled={!inputContent.trim()}
+					className={`button primary ${!inputContent.trim() ? 'opacity-50 cursor-not-allowed' : ''}`}
 				>
-					{isConverting ? 'Converting…' : 'Convert'}
+					Convert
 				</button>
 				<button
 					type="button"
@@ -408,16 +371,6 @@ const FileConverter = () => {
 				>
 					Download
 				</button>
-				{user && (
-					<button
-						type="button"
-						onClick={handleSaveAsGist}
-						disabled={!outputContent}
-						className={`button secondary ${!outputContent ? 'opacity-50 cursor-not-allowed' : ''}`}
-					>
-						Save as Gist
-					</button>
-				)}
 			</div>
 
 			{/* History */}

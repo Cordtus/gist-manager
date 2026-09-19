@@ -18,18 +18,19 @@ import { generateGistPreview } from '../utils/describeGist';
 import { logError } from '../utils/logger';
 import ConfirmationDialog from './ConfirmationDialog';
 import Spinner from './common/Spinner';
+import GistCard from './GistCard';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { ErrorState } from './ui/error-state';
 import { Input } from './ui/input';
-import { Separator } from './ui/separator';
+
+const GISTS_PER_PAGE = 12;
 
 const GistList = () => {
 	const [gistToDelete, setGistToDelete] = useState(null);
 	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [currentPage, setCurrentPage] = useState(1);
-	const [gistsPerPage] = useState(12);
 	const [searchTerm, setSearchTerm] = useState('');
 	const [sortOption, setSortOption] = useState('updated_at');
 	const [sortDirection, setSortDirection] = useState('desc');
@@ -205,10 +206,10 @@ const GistList = () => {
 	};
 
 	// Pagination
-	const indexOfLastGist = currentPage * gistsPerPage;
-	const indexOfFirstGist = indexOfLastGist - gistsPerPage;
+	const indexOfLastGist = currentPage * GISTS_PER_PAGE;
+	const indexOfFirstGist = indexOfLastGist - GISTS_PER_PAGE;
 	const currentGists = filteredGists.slice(indexOfFirstGist, indexOfLastGist);
-	const totalPages = Math.ceil(filteredGists.length / gistsPerPage);
+	const totalPages = Math.ceil(filteredGists.length / GISTS_PER_PAGE);
 
 	const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
@@ -410,70 +411,33 @@ const GistList = () => {
 						const isEditing = editingGist === gist.id;
 
 						return (
-							<Card key={gist.id} className="flex flex-col hover:shadow-lg transition-shadow">
-								<CardHeader className="pb-3">
-									<div className="flex items-start justify-between gap-2 mb-2">
-										<div className="flex gap-2">
-											<Badge variant={gist.public ? 'default' : 'secondary'}>
-												{gist.public ? 'Public' : 'Private'}
-											</Badge>
-											<Badge variant="outline">
-												{preview.fileCount} {preview.fileCount === 1 ? 'file' : 'files'}
-											</Badge>
-										</div>
-										<Badge variant="secondary">{preview.primaryLanguage}</Badge>
-									</div>
-
-									{isEditing ? (
-										<div className="space-y-2">
-											<Input
-												value={editingDescription}
-												onChange={(e) => setEditingDescription(e.target.value)}
-												onKeyDown={(e) => {
-													if (e.key === 'Enter') handleSaveDescription(gist, e);
-													if (e.key === 'Escape') handleCancelEdit(e);
-												}}
-												onBlur={() => handleSaveDescription(gist)}
-												placeholder="Enter description..."
-												autoFocus
-											/>
-										</div>
-									) : (
-										<Link to={`/gist/${gist.id}`}>
-											<CardTitle className="text-base hover:text-primary transition-colors line-clamp-1">
-												{gist.description || preview.generatedTitle || 'Untitled Gist'}
-											</CardTitle>
-										</Link>
-									)}
-								</CardHeader>
-
-								<CardContent className="flex-1 pb-3">
-									<Link to={`/gist/${gist.id}`}>
-										<p className="text-sm text-muted-foreground line-clamp-3">{preview.preview}</p>
-									</Link>
-
-									<div className="flex flex-wrap gap-1 mt-3">
-										{preview.fileTypes.slice(0, 3).map((fileType, index) => {
-											const filename = Object.keys(gist.files)[index];
-											return (
-												<Badge key={filename} variant="outline" className="text-xs">
-													{fileType.icon} {filename.split('.').pop()}
-												</Badge>
-											);
-										})}
-										{preview.fileCount > 3 && (
-											<Badge variant="outline" className="text-xs">
-												+{preview.fileCount - 3}
-											</Badge>
-										)}
-									</div>
-								</CardContent>
-
-								<Separator />
-
-								<CardFooter className="pt-3 flex items-center justify-between text-xs text-muted-foreground">
-									<span>Updated {new Date(gist.updated_at).toLocaleDateString()}</span>
-									<div className="flex gap-2">
+							<GistCard
+								key={gist.id}
+								gist={gist}
+								preview={preview}
+								to={`/gist/${gist.id}`}
+								extraBadges={
+									<Badge variant={gist.public ? 'default' : 'secondary'}>
+										{gist.public ? 'Public' : 'Private'}
+									</Badge>
+								}
+								titleSlot={
+									isEditing ? (
+										<Input
+											value={editingDescription}
+											onChange={(e) => setEditingDescription(e.target.value)}
+											onKeyDown={(e) => {
+												if (e.key === 'Enter') handleSaveDescription(gist, e);
+												if (e.key === 'Escape') handleCancelEdit(e);
+											}}
+											onBlur={() => handleSaveDescription(gist)}
+											placeholder="Enter description..."
+											autoFocus
+										/>
+									) : null
+								}
+								actions={
+									<>
 										<Button
 											variant="ghost"
 											size="sm"
@@ -505,9 +469,9 @@ const GistList = () => {
 										>
 											<Trash2 className="h-3 w-3" />
 										</Button>
-									</div>
-								</CardFooter>
-							</Card>
+									</>
+								}
+							/>
 						);
 					})}
 				</div>

@@ -1,44 +1,25 @@
 import { ExternalLink } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { calculateUserTenure } from '../utils/dateUtils';
-import Spinner from './common/Spinner';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 
+const calculateUserTenure = (createdAt) => {
+	if (!createdAt) return '';
+
+	const created = new Date(createdAt);
+	const now = new Date();
+	const yearDiff = now.getFullYear() - created.getFullYear();
+
+	if (yearDiff > 0) {
+		return `${yearDiff} ${yearDiff === 1 ? 'year' : 'years'}`;
+	}
+
+	const monthDiff = now.getMonth() - created.getMonth() + yearDiff * 12;
+	return `${monthDiff} ${monthDiff === 1 ? 'month' : 'months'}`;
+};
+
 export const UserProfile = () => {
 	const auth = useAuth();
-	const [userStats, setUserStats] = useState({
-		publicRepos: 0,
-		followers: 0,
-		following: 0,
-		gistCount: 0,
-		userSince: '',
-	});
-	const [isLoading, setIsLoading] = useState(false);
-
-	useEffect(() => {
-		const fetchUserData = async () => {
-			if (!auth?.user || !auth.token) return;
-
-			setIsLoading(true);
-			try {
-				setUserStats({
-					publicRepos: auth.user.public_repos || 0,
-					followers: auth.user.followers || 0,
-					following: auth.user.following || 0,
-					gistCount: auth.user.public_gists || 0,
-					userSince: calculateUserTenure(auth.user.created_at),
-				});
-			} catch (_error) {
-				// Non-critical data
-			} finally {
-				setIsLoading(false);
-			}
-		};
-
-		fetchUserData();
-	}, [auth]);
 
 	if (!auth) return null;
 
@@ -53,7 +34,7 @@ export const UserProfile = () => {
 
 	if (!user) return null;
 
-	if (isLoading) return <Spinner />;
+	const userSince = calculateUserTenure(user.created_at);
 
 	return (
 		<div className="space-y-6">
@@ -96,25 +77,25 @@ export const UserProfile = () => {
 			<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 				<Card>
 					<CardContent className="pt-6 text-center">
-						<p className="text-2xl font-bold">{userStats.publicRepos}</p>
+						<p className="text-2xl font-bold">{user.public_repos || 0}</p>
 						<p className="text-sm text-muted-foreground">Repos</p>
 					</CardContent>
 				</Card>
 				<Card>
 					<CardContent className="pt-6 text-center">
-						<p className="text-2xl font-bold">{userStats.gistCount}</p>
+						<p className="text-2xl font-bold">{user.public_gists || 0}</p>
 						<p className="text-sm text-muted-foreground">Gists</p>
 					</CardContent>
 				</Card>
 				<Card>
 					<CardContent className="pt-6 text-center">
-						<p className="text-2xl font-bold">{userStats.followers}</p>
+						<p className="text-2xl font-bold">{user.followers || 0}</p>
 						<p className="text-sm text-muted-foreground">Followers</p>
 					</CardContent>
 				</Card>
 				<Card>
 					<CardContent className="pt-6 text-center">
-						<p className="text-2xl font-bold">{userStats.following}</p>
+						<p className="text-2xl font-bold">{user.following || 0}</p>
 						<p className="text-sm text-muted-foreground">Following</p>
 					</CardContent>
 				</Card>
@@ -142,10 +123,10 @@ export const UserProfile = () => {
 								<p className="font-medium">{user.company}</p>
 							</div>
 						)}
-						{userStats.userSince && (
+						{userSince && (
 							<div>
 								<p className="text-sm text-muted-foreground">Member since</p>
-								<p className="font-medium">{userStats.userSince}</p>
+								<p className="font-medium">{userSince}</p>
 							</div>
 						)}
 					</div>

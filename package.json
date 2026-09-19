@@ -7,15 +7,13 @@
 		"server"
 	],
 	"scripts": {
-		"install:all": "bun install",
 		"dev": "concurrently \"bun run --cwd server start\" \"bun run --cwd client start\"",
 		"build": "bun run --cwd client build && cp -r client/build server/",
 		"start": "bun run --cwd server start",
 		"clean": "bun run --cwd client clean && rm -rf node_modules server/build",
 		"test": "bun run --cwd client test",
 		"lint": "biome check client/src/ server/",
-		"lint:fix": "biome check --write client/src/ server/",
-		"format": "biome format --write client/src/ server/"
+		"lint:fix": "biome check --write client/src/ server/"
 	},
 	"engines": {
 		"node": ">=24.0.0"

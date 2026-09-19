@@ -12,6 +12,26 @@ import remarkMath from 'remark-math';
 import 'katex/dist/katex.min.css';
 import '../../styles/markdownPreview.css';
 
+const createHeading = (Tag) => {
+	const Heading = ({ children }) => {
+		const id =
+			children
+				?.toString()
+				.toLowerCase()
+				.replace(/\s+/g, '-')
+				.replace(/[^\w-]/g, '') || '';
+		return (
+			<Tag id={id} className="heading-anchor">
+				{children}
+				<a href={`#${id}`} className="anchor-link" aria-label="Link to heading">
+					#
+				</a>
+			</Tag>
+		);
+	};
+	return Heading;
+};
+
 const MarkdownPreview = memo(({ content }) => {
 	// Ensure content is a string
 	const markdownContent = content || '';
@@ -61,57 +81,10 @@ const MarkdownPreview = memo(({ content }) => {
 							return <hr className="hr-fancy" />;
 						},
 
-						// Custom heading with anchor links
-						h1({ children }) {
-							const id =
-								children
-									?.toString()
-									.toLowerCase()
-									.replace(/\s+/g, '-')
-									.replace(/[^\w-]/g, '') || '';
-							return (
-								<h1 id={id} className="heading-anchor">
-									{children}
-									<a href={`#${id}`} className="anchor-link" aria-label="Link to heading">
-										#
-									</a>
-								</h1>
-							);
-						},
-
-						h2({ children }) {
-							const id =
-								children
-									?.toString()
-									.toLowerCase()
-									.replace(/\s+/g, '-')
-									.replace(/[^\w-]/g, '') || '';
-							return (
-								<h2 id={id} className="heading-anchor">
-									{children}
-									<a href={`#${id}`} className="anchor-link" aria-label="Link to heading">
-										#
-									</a>
-								</h2>
-							);
-						},
-
-						h3({ children }) {
-							const id =
-								children
-									?.toString()
-									.toLowerCase()
-									.replace(/\s+/g, '-')
-									.replace(/[^\w-]/g, '') || '';
-							return (
-								<h3 id={id} className="heading-anchor">
-									{children}
-									<a href={`#${id}`} className="anchor-link" aria-label="Link to heading">
-										#
-									</a>
-								</h3>
-							);
-						},
+						// Custom headings with anchor links
+						h1: createHeading('h1'),
+						h2: createHeading('h2'),
+						h3: createHeading('h3'),
 
 						// Custom blockquote
 						blockquote({ children }) {

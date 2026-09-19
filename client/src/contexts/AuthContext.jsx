@@ -5,8 +5,14 @@
  */
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import authService from '../services/api/auth';
-import { setAuthToken } from '../services/api/github';
+import {
+	exchangeCodeForToken,
+	generateCodeChallenge,
+	generateCodeVerifier,
+	generateOAuthState,
+	getCurrentUser,
+} from '../services/api/auth';
+import { clearSession, getStoredToken, saveToken } from '../services/api/session';
 import { ErrorCategory, logError, logInfo, trackError } from '../utils/logger';
 
 const AuthContext = createContext();
@@ -36,14 +42,11 @@ export const AuthProvider = ({ children }) => {
 			setToken(null);
 			setError(null);
 
-			setAuthToken(null);
-
 			if (typeof window !== 'undefined') {
 				window.dispatchEvent(new CustomEvent('auth:logout'));
 			}
 
-			sessionStorage.removeItem('github_token');
-			sessionStorage.removeItem('gist_manager_session');
+			clearSession();
 			sessionStorage.removeItem('oauth_state');
 			sessionStorage.removeItem('code_verifier');
 
@@ -62,29 +65,11 @@ export const AuthProvider = ({ children }) => {
 			try {
 				setLoading(true);
 
-				// Check sessionStorage for existing token
-				let savedToken = null;
-
-				try {
-					const sessionData = sessionStorage.getItem('gist_manager_session');
-					if (sessionData) {
-						const { token: sessionToken, expiration } = JSON.parse(sessionData);
-						if (expiration && Date.now() < expiration) {
-							savedToken = sessionToken;
-						}
-					}
-				} catch (e) {
-					logError('Error reading session data', { error: e.message });
-				}
-
-				if (!savedToken) {
-					savedToken = sessionStorage.getItem('github_token');
-				}
+				const savedToken = getStoredToken();
 
 				if (savedToken) {
-					setAuthToken(savedToken);
 					logInfo('Found existing session token');
-					const userData = await authService.getCurrentUser();
+					const userData = await getCurrentUser();
 					if (!isCurrent) return;
 					setToken(savedToken);
 					setUser(userData);
@@ -95,10 +80,8 @@ export const AuthProvider = ({ children }) => {
 				if (!isCurrent) return;
 				setToken(null);
 				setUser(null);
-				setAuthToken(null);
 				setError('Failed to retrieve user information');
-				sessionStorage.removeItem('github_token');
-				sessionStorage.removeItem('gist_manager_session');
+				clearSession();
 			} finally {
 				if (isCurrent) setLoading(false);
 			}
@@ -146,16 +129,16 @@ export const AuthProvider = ({ children }) => {
 			}
 
 			// Generate PKCE verifier and challenge
-			const codeVerifier = authService.generateCodeVerifier();
-			const codeChallenge = await authService.generateCodeChallenge(codeVerifier);
-			const state = authService.generateOAuthState();
+			const codeVerifier = generateCodeVerifier();
+			const codeChallenge = await generateCodeChallenge(codeVerifier);
+			const state = generateOAuthState();
 
 			// Store verifier and state for callback
 			sessionStorage.setItem('code_verifier', codeVerifier);
 			sessionStorage.setItem('oauth_state', state);
 
 			const redirectUri = import.meta.env.VITE_REDIRECT_URI || `${window.location.origin}/callback`;
-			const scopes = 'gist user user:email';
+			const scopes = 'gist';
 
 			// Build GitHub authorization URL with PKCE
 			const params = new URLSearchParams({
@@ -210,25 +193,18 @@ export const AuthProvider = ({ children }) => {
 			}
 
 			// Exchange code for token directly with GitHub
-			const accessToken = await authService.exchangeCodeForToken(code, codeVerifier);
+			const accessToken = await exchangeCodeForToken(code, codeVerifier);
 
 			// Clear OAuth flow data
 			sessionStorage.removeItem('oauth_state');
 			sessionStorage.removeItem('code_verifier');
 
 			// Store token
-			sessionStorage.setItem('github_token', accessToken);
-			const sessionData = {
-				token: accessToken,
-				expiration: Date.now() + 24 * 60 * 60 * 1000,
-				createdAt: new Date().toISOString(),
-			};
-			sessionStorage.setItem('gist_manager_session', JSON.stringify(sessionData));
+			saveToken(accessToken);
 
-			// Set token in state and API
+			// Set token in state and fetch user
 			setToken(accessToken);
-			setAuthToken(accessToken);
-			const userData = await authService.getCurrentUser();
+			const userData = await getCurrentUser();
 			setUser(userData);
 
 			logInfo('Login successful');
@@ -239,13 +215,11 @@ export const AuthProvider = ({ children }) => {
 			setError(errorMessage);
 			setToken(null);
 			setUser(null);
-			setAuthToken(null);
 
 			// Clear any partial OAuth state
 			sessionStorage.removeItem('oauth_state');
 			sessionStorage.removeItem('code_verifier');
-			sessionStorage.removeItem('github_token');
-			sessionStorage.removeItem('gist_manager_session');
+			clearSession();
 
 			return false;
 		} finally {
@@ -267,5 +241,3 @@ export const AuthProvider = ({ children }) => {
 
 	return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };
-
-export default AuthContext;

@@ -23,72 +23,14 @@ import { useGistData } from '../contexts/GistDataContext';
 import { useToast } from '../contexts/ToastContext';
 import { forkGist, getGist, getPublicGist } from '../services/api/gists';
 import { copyToClipboard, downloadFile, getShareableUrl } from '../utils/download';
+import { getFileLanguage, isMarkdownFile } from '../utils/fileLanguage';
 import { logError } from '../utils/logger';
 import Spinner from './common/Spinner';
 import MarkdownPreview from './markdown/MarkdownPreview';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
+import { ErrorState } from './ui/error-state';
 import '../styles/gistViewer.css';
-
-/**
- * Determines the programming language from a filename extension.
- * @param {string} filename - The filename to analyze
- * @returns {string} - The language identifier for syntax highlighting
- */
-const getFileLanguage = (filename) => {
-	if (!filename) return 'text';
-	const ext = filename.split('.').pop().toLowerCase();
-	const languageMap = {
-		js: 'javascript',
-		jsx: 'jsx',
-		ts: 'typescript',
-		tsx: 'tsx',
-		py: 'python',
-		rb: 'ruby',
-		java: 'java',
-		go: 'go',
-		rs: 'rust',
-		html: 'html',
-		css: 'css',
-		scss: 'scss',
-		json: 'json',
-		yaml: 'yaml',
-		yml: 'yaml',
-		sh: 'bash',
-		bash: 'bash',
-		zsh: 'bash',
-		sql: 'sql',
-		c: 'c',
-		cpp: 'cpp',
-		h: 'c',
-		hpp: 'cpp',
-		cs: 'csharp',
-		php: 'php',
-		swift: 'swift',
-		kt: 'kotlin',
-		scala: 'scala',
-		r: 'r',
-		lua: 'lua',
-		vim: 'vim',
-		dockerfile: 'dockerfile',
-		makefile: 'makefile',
-		toml: 'toml',
-		ini: 'ini',
-		xml: 'xml',
-		txt: 'text',
-	};
-	return languageMap[ext] || 'text';
-};
-
-/**
- * Checks if a file is a markdown file.
- * @param {string} filename - The filename to check
- * @returns {boolean} - True if the file is markdown
- */
-const isMarkdownFile = (filename) => {
-	if (!filename) return false;
-	return /\.(md|markdown|mdx)$/i.test(filename);
-};
 
 /**
  * Formats a relative time string.
@@ -251,19 +193,20 @@ const GistViewer = () => {
 	// Error state
 	if (error || !gist) {
 		return (
-			<Card className="gist-viewer">
-				<CardContent className="viewer-error">
-					<p className="text-lg font-medium mb-2">Unable to load gist</p>
-					<p className="text-muted-foreground mb-4">{error || 'Gist not found'}</p>
-					<div className="flex gap-2">
-						<Button variant="outline" onClick={() => navigate(-1)}>
-							<ArrowLeft className="h-4 w-4 mr-2" />
-							Go Back
-						</Button>
-						{!token && <Button onClick={() => navigate('/')}>Log In</Button>}
-					</div>
-				</CardContent>
-			</Card>
+			<div className="gist-viewer space-y-4">
+				<ErrorState
+					title="Unable to load gist"
+					message={error || 'Gist not found'}
+					variant="card"
+				/>
+				<div className="flex gap-2">
+					<Button variant="outline" onClick={() => navigate(-1)}>
+						<ArrowLeft className="h-4 w-4 mr-2" />
+						Go Back
+					</Button>
+					{!token && <Button onClick={() => navigate('/')}>Log In</Button>}
+				</div>
+			</div>
 		);
 	}
 

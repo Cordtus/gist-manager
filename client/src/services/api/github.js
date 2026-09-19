@@ -1,61 +1,32 @@
 /**
  * GitHub API Service
- * Provides axios instances and core utilities for GitHub API interactions.
+ * Provides the axios instance for GitHub API interactions.
  * For gist-specific operations with caching, use gists.js instead.
  * @module services/api/github
  */
 
 import axios from 'axios';
-import { GITHUB_API } from '../../config/api';
-import { logError, logInfo, logWarning } from '../../utils/logger';
+import { logError, logInfo } from '../../utils/logger';
+import { clearSession, getStoredToken } from './session';
 
 /**
  * Axios instance for direct GitHub API requests
- * Configured with GitHub API base URL and accept headers
  * @type {import('axios').AxiosInstance}
  */
-export const githubApi = axios.create(GITHUB_API);
-
-// Response interceptor for rate limit monitoring and auth error handling
-githubApi.interceptors.response.use(
-	(response) => {
-		if (process.env.NODE_ENV !== 'production') {
-			const rateLimit = {
-				limit: response.headers['x-ratelimit-limit'],
-				remaining: response.headers['x-ratelimit-remaining'],
-				reset: response.headers['x-ratelimit-reset']
-					? new Date(response.headers['x-ratelimit-reset'] * 1000).toISOString()
-					: 'unknown',
-			};
-
-			if (
-				rateLimit.limit &&
-				rateLimit.remaining &&
-				parseInt(rateLimit.remaining, 10) / parseInt(rateLimit.limit, 10) < 0.1
-			) {
-				logWarning('GitHub API rate limit running low', rateLimit);
-			}
-		}
-
-		return response;
+export const githubApi = axios.create({
+	baseURL: 'https://api.github.com',
+	headers: {
+		Accept: 'application/vnd.github.v3+json',
 	},
+});
+
+// Clear the session and notify the app when GitHub rejects the token
+githubApi.interceptors.response.use(
+	(response) => response,
 	(error) => {
-		if (error.response?.status === 403 && error.response.headers['x-ratelimit-remaining'] === '0') {
-			const resetTime = error.response.headers['x-ratelimit-reset']
-				? new Date(error.response.headers['x-ratelimit-reset'] * 1000)
-				: new Date(Date.now() + 60000);
-
-			logWarning('GitHub API rate limit exceeded', {
-				resetTime: resetTime.toISOString(),
-				retryAfter: Math.ceil((resetTime - Date.now()) / 1000) + ' seconds',
-			});
-		}
-
 		if (error.response?.status === 401) {
 			logError('Unauthorized GitHub API request - token may be invalid');
-
-			sessionStorage.removeItem('github_token');
-			sessionStorage.removeItem('gist_manager_session');
+			clearSession();
 
 			if (typeof window !== 'undefined') {
 				window.dispatchEvent(new CustomEvent('auth:token_invalid'));
@@ -66,51 +37,15 @@ githubApi.interceptors.response.use(
 	},
 );
 
-// Request interceptor to add authorization header from sessionStorage
-githubApi.interceptors.request.use(
-	(config) => {
-		let token = null;
-
-		try {
-			const sessionData = sessionStorage.getItem('gist_manager_session');
-			if (sessionData) {
-				const { token: sessionToken, expiration } = JSON.parse(sessionData);
-				if (expiration && Date.now() < expiration) {
-					token = sessionToken;
-				}
-			}
-		} catch (error) {
-			logError('Error retrieving token from session data', { error: error.message });
-		}
-
-		if (!token) {
-			token = sessionStorage.getItem('github_token');
-		}
-
-		if (token) {
-			config.headers.Authorization = `Bearer ${token}`;
-		}
-
-		return config;
-	},
-	(error) => {
-		return Promise.reject(error);
-	},
-);
-
-/**
- * Set authorization token for GitHub API instance
- * @param {string|null} token - GitHub access token or null to clear
- */
-export const setAuthToken = (token) => {
+// Request interceptor to add authorization header from the stored session
+githubApi.interceptors.request.use((config) => {
+	const token = getStoredToken();
 	if (token) {
-		githubApi.defaults.headers.common.Authorization = `Bearer ${token}`;
-		logInfo('Auth token set for API requests');
-	} else {
-		delete githubApi.defaults.headers.common.Authorization;
-		logInfo('Auth token cleared from API requests');
+		config.headers.Authorization = `Bearer ${token}`;
 	}
-};
+
+	return config;
+});
 
 /**
  * Get gists for a specific user (not the authenticated user)
@@ -136,29 +71,3 @@ export const getUserGists = async (username, options = {}) => {
 		throw error;
 	}
 };
-
-/**
- * Fork a gist to the authenticated user's account
- * @param {string} gistId - ID of the gist to fork
- * @returns {Promise<Object>} The forked gist object
- */
-export const forkGist = async (gistId) => {
-	try {
-		logInfo('Forking gist', { gistId });
-		const response = await githubApi.post(`/gists/${gistId}/forks`);
-		logInfo('Successfully forked gist', { newGistId: response.data.id });
-		return response.data;
-	} catch (error) {
-		logError('Error forking gist', { gistId, error: error.message });
-		throw error;
-	}
-};
-
-const githubService = {
-	githubApi,
-	setAuthToken,
-	getUserGists,
-	forkGist,
-};
-
-export default githubService;
